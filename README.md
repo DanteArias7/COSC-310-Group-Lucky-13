@@ -1,1 +1,1 @@
-# COSC-310-Group-Lucky-13
+# COSC-310-Project-Lucky-13
