@@ -21,3 +21,4 @@ class UserCreate(BaseModel):
     password: str
     role: str
     
+    
