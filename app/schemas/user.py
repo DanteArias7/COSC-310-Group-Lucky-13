@@ -12,6 +12,7 @@ class User(SQLModel, table = True):
     password: str
     role: str
 
+
 class UserCreate(BaseModel):
     """Schema for creating a user"""
     name: str
@@ -20,5 +21,3 @@ class UserCreate(BaseModel):
     address: str
     password: str
     role: str
-    
-    
