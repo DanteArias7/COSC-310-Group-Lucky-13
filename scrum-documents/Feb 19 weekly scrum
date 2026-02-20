@@ -4,11 +4,11 @@ Type of meeting: weekly scrum
 Attendees: Dante Arias, Varun Garg, Zheng Xue
 
 Key discussion points:
-1. assigned the rest of the subissues for features 1 & 2
+1. reassigned subissues for feature 1 & 2
 2. reviewed pull requests from last scrum
 
 Action Items:
-- clarify 
+- clarify: 
   - requirements for testing-documents
   - what we need to use from the csv file
   - why multiple pull requests are merging together on github and if there's a way to separate them
