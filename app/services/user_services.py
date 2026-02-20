@@ -1,7 +1,6 @@
 """User service layer for user business logic"""
-from typing import Protocol
+from typing import Dict, Protocol
 import uuid
-from sqlmodel import SQLModel
 from app.schemas.user import User, UserCreate
 
 # pylint: disable=too-few-public-methods
@@ -22,10 +21,12 @@ class UserServices():
                     password=payload.password.strip(),
                     role=payload.role.strip()
                     )
-        self.repo.save_user(new_user)
+
+        user = new_user.model_dump()
+        self.repo.save_user(user)
         return new_user
 
 class IUserRepo(Protocol):
     """User Service Class"""
-    def save_user(self, user : SQLModel) -> None:
+    def save_user(self, user : Dict[str : any]) -> None:
         """save a user"""  
