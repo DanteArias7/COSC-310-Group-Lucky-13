@@ -50,6 +50,12 @@ def test_fetch_restaurant_success(mocker):
     result = fetch_restaurant("test-id-123")
 
     assert result["id"] == "test-id-123"
+    assert result["name"] == "Veggie Palace"
+    assert result["phone_number"] == "1234567890"
+    assert result["address"] == "123 Green Street"
+    assert result["hours"]["Monday"] == "9:00-17:00"
+    assert result["tags"] == ["vegan"]
+
 
 def test_fetch_restaurant_not_found(mocker):
     """Testing that fetch_restaurant raises HTTPException when ID does not exist"""

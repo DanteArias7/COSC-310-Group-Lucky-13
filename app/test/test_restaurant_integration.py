@@ -15,6 +15,19 @@ def test_get_all_restaurants_integration():
     data = response.json()
 
     assert isinstance(data, list)
+    assert len(data) > 0
+
+    restaurant = data[0]
+
+    assert "id" in restaurant
+    assert "name" in restaurant
+    assert "phone_number" in restaurant
+    assert "address" in restaurant
+    assert "hours" in restaurant
+    assert "tags" in restaurant
+
+    assert isinstance(restaurant["hours"], dict)
+    assert isinstance(restaurant["tags"], list)
 
 
 def test_get_single_restaurant_integration():
