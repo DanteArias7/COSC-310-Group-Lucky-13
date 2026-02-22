@@ -13,12 +13,12 @@ router = APIRouter(
 
 
 @router.get("/")
-def get_restaurants():
+def get_all_restaurants():
     """Return a list of all restaurants."""
     return fetch_all_restaurants()
 
 
 @router.get("/{restaurant_id}")
-def get_restaurant(restaurant_id: str):
+def get_restaurant_by_id(restaurant_id: str):
     """Return a specific restaurant by its ID."""
     return fetch_restaurant(restaurant_id)
