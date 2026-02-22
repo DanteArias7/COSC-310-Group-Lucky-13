@@ -1,5 +1,5 @@
 """User service layer for user business logic"""
-from typing import Dict, Protocol
+from typing import Any, Dict, List, Protocol
 import uuid
 from app.schemas.user import User, UserCreate
 
@@ -28,5 +28,9 @@ class UserServices():
 
 class IUserRepo(Protocol):
     """User Service Class"""
-    def save_user(self, user : Dict[str : any]) -> None:
+    def laod_all_users(self) -> List[Dict[str, Any]]:
         """save a user"""  
+    def save_user(self, user : Dict[str : any]) -> None:
+        """save a user""" 
+    def save_all_users(self, user : List[Dict[str : any]]) -> None:
+        """save a user""" 
