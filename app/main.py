@@ -1,26 +1,7 @@
-"""Main application entry point for the FastAPI backend."""
-
+"""Main application"""
 from fastapi import FastAPI
+from app.routers.user import user_router
 
-# Import routers
-from app.routers.restaurant import router as restaurant_router
+app = FastAPI()
 
-def create_app() -> FastAPI:
-    """
-    Create and configure the FastAPI application.
-
-    Returns:
-        FastAPI: Configured FastAPI application instance.
-    """
-    application = FastAPI(
-        title="COSC 310 Food Delivery Backend"
-    )
-
-    # Register routers
-    application.include_router(restaurant_router)
-
-    return application
-
-
-# App instance for tests
-app = create_app()
+app.include_router(user_router)
