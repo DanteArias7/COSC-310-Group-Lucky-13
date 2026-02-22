@@ -19,3 +19,12 @@ class UserCreate(BaseModel):
     address: str
     password: str
     role: str
+
+class UserUpdate(BaseModel):
+    """Schema for updating a user"""
+    name: str
+    email: str
+    phone_number: str
+    address: str
+    password: str
+    role: str
