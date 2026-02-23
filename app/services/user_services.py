@@ -37,7 +37,7 @@ class UserServices():
                 self.repo.save_all_users(users)
                 return users[i]
             
-        raise HTTPException(status_code=404, detail=f"User '{user_id} not found")
+        raise HTTPException(status_code=404, detail=f"User '{user_id}' not found")
 
 class IUserRepo(Protocol):
     """User Service Class"""
