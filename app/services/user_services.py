@@ -35,7 +35,7 @@ class UserServices():
             if user["id"] == user_id:
                 users[i] = {"id" : user_id} | payload.model_dump()
                 self.repo.save_all_users(users)
-                return users[i]
+                return User(**users[i])
             
         raise HTTPException(status_code=404, detail=f"User '{user_id}' not found")
 
