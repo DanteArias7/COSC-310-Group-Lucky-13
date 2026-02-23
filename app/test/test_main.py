@@ -105,7 +105,7 @@ def test_delete_user_success(tmp_path):
 
     with open(test_user_data_path, "r", encoding="utf-8") as f:
         users = json.load(f)
-    
+
     assert r.status_code == status.HTTP_204_NO_CONTENT
     assert users == []
 
@@ -129,6 +129,6 @@ def test_delete_user_unsuccessful(tmp_path):
 
     with open(test_user_data_path, "r", encoding="utf-8") as f:
         users = json.load(f)
-    
+
     assert r.status_code == 404
     assert users == initial_user
