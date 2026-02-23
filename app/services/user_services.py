@@ -1,7 +1,9 @@
 """User service layer for user business logic"""
 from typing import Any, Dict, List, Protocol
 import uuid
-from app.schemas.user import User, UserCreate
+
+from fastapi import HTTPException
+from app.schemas.user import User, UserCreate, UserUpdate
 
 # pylint: disable=too-few-public-methods
 class UserServices():
@@ -10,7 +12,7 @@ class UserServices():
         """Initialize instance with repo object"""
         self.repo = repo
 
-    def create_user(self, payload: UserCreate):
+    def create_user(self, payload: UserCreate) -> User:
         """Create a new user"""
         new_id = str(uuid.uuid7())
         new_user = User(id=new_id,
@@ -26,9 +28,20 @@ class UserServices():
         self.repo.save_user(user)
         return new_user
 
+    def update_user(self, user_id: str, payload: UserUpdate) -> User:
+        users = self.repo.load_all_users()
+
+        for i, user in enumerate(users):
+            if user["id"] == user_id:
+                users[i] = {"id" : user_id} | payload.model_dump()
+                self.repo.save_all_users(users)
+                return users[i]
+            
+        raise HTTPException(status_code=404, detail=f"User '{user_id} not found")
+
 class IUserRepo(Protocol):
     """User Service Class"""
-    def laod_all_users(self) -> List[Dict[str, Any]]:
+    def load_all_users(self) -> List[Dict[str, Any]]:
         """save a user"""  
     def save_user(self, user : Dict[str : any]) -> None:
         """save a user""" 
