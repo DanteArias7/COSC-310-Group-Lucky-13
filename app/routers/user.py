@@ -2,7 +2,7 @@
 from pathlib import Path
 
 from fastapi import APIRouter, Depends
-from app.schemas.user import User, UserCreate
+from app.schemas.user import User, UserCreate, UserUpdate
 from app.services.user_services import UserServices
 from app.repositories.user_repo import UserRepo
 
@@ -18,3 +18,9 @@ def add_user(payload: UserCreate, repo: UserRepo = Depends(create_user_repo)):
     """API endpoint to create a user"""
     user_service = UserServices(repo)
     return user_service.create_user(payload)
+
+@user_router.put("/{user_id}", response_model=User, status_code=200)
+def update_user(user_id, payload: UserUpdate, repo: UserRepo = Depends(create_user_repo)):
+    """API endpoint to update a user"""
+    user_service = UserServices(repo)
+    return user_service.update_user(user_id, payload)
