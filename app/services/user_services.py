@@ -5,7 +5,6 @@ import uuid
 from fastapi import HTTPException
 from app.schemas.user import User, UserCreate, UserUpdate
 
-# pylint: disable=too-few-public-methods
 class UserServices():
     """User Service Class"""
     def __init__(self, repo: IUserRepo):
@@ -37,6 +36,18 @@ class UserServices():
                 users[i] = {"id" : user_id} | payload.model_dump()
                 self.repo.save_all_users(users)
                 return User(**users[i])
+
+        raise HTTPException(status_code=404, detail=f"User '{user_id}' not found")
+
+    def delete_user(self, user_id: str) -> None:
+        """Deletes user from the data store"""
+        users = self.repo.load_all_users()
+
+        for user in users:
+            if user["id"] == user_id:
+                users.remove(user)
+                self.repo.save_all_users(users)
+                return
 
         raise HTTPException(status_code=404, detail=f"User '{user_id}' not found")
 
