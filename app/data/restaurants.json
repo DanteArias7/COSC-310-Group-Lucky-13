@@ -13,7 +13,16 @@
     },
     "phone_number": "1234567890",
     "address": "123 Green Street",
-    "tags": ["vegan", "brunch"]
+    "tags": ["vegan", "brunch"],
+     "menu": [
+      {
+        "id": "018f8c10-7b2a-7f21-9a3c-0a1b2c3d4e01",
+        "name": "Vegan Burger",
+        "description": "Plant-based patty with lettuce and tomato",
+        "price": 12.99,
+        "tags": ["vegan"]
+      }
+    ]
   },
   {
     "id": "00000000-0000-0000-0000-000000000002",
@@ -29,6 +38,15 @@
     },
     "phone_number": "9876543210",
     "address": "456 Burger Avenue",
-    "tags": ["fastfood"]
+    "tags": ["fastfood"],
+     "menu": [
+      {
+        "id": "018f8c10-8a4b-7f22-a12d-0b2c3d4e5f02",
+        "name": "Classic Burger",
+        "description": "Cheeseburger",
+        "price": 10.50,
+        "tags": ["burger"]
+      }
+    ]
   }
 ]

@@ -25,9 +25,11 @@ def test_get_all_restaurants_integration():
     assert "address" in restaurant
     assert "hours" in restaurant
     assert "tags" in restaurant
+    assert "menu" in restaurant
 
     assert isinstance(restaurant["hours"], dict)
     assert isinstance(restaurant["tags"], list)
+    assert isinstance(restaurant["menu"],list)
 
 
 def test_get_single_restaurant_integration():
@@ -43,6 +45,10 @@ def test_get_single_restaurant_integration():
     assert "hours" in data
     assert "tags" in data
     assert "address" in data
+    assert "menu" in data
+
+    assert isinstance(data["tags"], list)
+    assert isinstance(data["menu"], list)
 
 
 def test_get_nonexistent_restaurant_integration():
