@@ -2,6 +2,7 @@
 from pathlib import Path
 
 from fastapi import APIRouter, Depends
+from fastapi import status
 from app.schemas.user import User, UserCreate, UserUpdate
 from app.services.user_services import UserServices
 from app.repositories.user_repo import UserRepo
@@ -24,3 +25,9 @@ def update_user(user_id, payload: UserUpdate, repo: UserRepo = Depends(create_us
     """API endpoint to update a user"""
     user_service = UserServices(repo)
     return user_service.update_user(user_id, payload)
+
+@user_router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user(user_id, repo: UserRepo = Depends(create_user_repo)):
+    """API endpoint to delete a user"""
+    user_service = UserServices(repo)
+    return user_service.delete_user(user_id)
