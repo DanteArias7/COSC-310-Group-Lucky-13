@@ -18,6 +18,7 @@ def test_fetch_all_restaurants(mocker):
             "phone_number": "1234567890",
             "address": "123 Green Street",
             "tags": ["vegan"],
+            "menu": []
         }
     ]
 
@@ -40,6 +41,7 @@ def test_fetch_restaurant_success(mocker):
         "phone_number": "1234567890",
         "address": "123 Green Street",
         "tags": ["vegan"],
+        "menu": [] 
     }
 
     mocker.patch(
@@ -55,6 +57,7 @@ def test_fetch_restaurant_success(mocker):
     assert result["address"] == "123 Green Street"
     assert result["hours"]["Monday"] == "9:00-17:00"
     assert result["tags"] == ["vegan"]
+    assert result["menu"] == []
 
 
 def test_fetch_restaurant_not_found(mocker):
