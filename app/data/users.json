@@ -1,4 +1,5 @@
-{
+[
+  {
   "id": "019c7875-8f41-767d-ac6d-820361f3f1dd",
   "name": "Alex",
   "email": "alexsmith@gmail.com",
@@ -6,4 +7,5 @@
   "address": "123 Baron Rd, Kelowna, BC, A1B2C3",
   "password": "password",
   "role": "customer"
-}
+  }
+]
