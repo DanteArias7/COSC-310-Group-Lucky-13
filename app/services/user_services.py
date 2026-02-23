@@ -29,6 +29,7 @@ class UserServices():
         return new_user
 
     def update_user(self, user_id: str, payload: UserUpdate) -> User:
+        """Updates user information in the data store"""
         users = self.repo.load_all_users()
 
         for i, user in enumerate(users):
@@ -36,14 +37,14 @@ class UserServices():
                 users[i] = {"id" : user_id} | payload.model_dump()
                 self.repo.save_all_users(users)
                 return User(**users[i])
-            
+
         raise HTTPException(status_code=404, detail=f"User '{user_id}' not found")
 
 class IUserRepo(Protocol):
     """User Service Class"""
     def load_all_users(self) -> List[Dict[str, Any]]:
-        """save a user"""  
+        """Load all users"""  
     def save_user(self, user : Dict[str : any]) -> None:
         """save a user""" 
     def save_all_users(self, user : List[Dict[str : any]]) -> None:
-        """save a user""" 
+        """save all users""" 

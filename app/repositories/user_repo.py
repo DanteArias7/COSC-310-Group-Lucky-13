@@ -9,7 +9,7 @@ class UserRepo():
     """User Repository methods"""
     def __init__(self, data_path: Path):
         self.data_path = data_path
-    
+
     def load_all_users(self) -> List[Dict[str, Any]]:
         """Load all users from the json file"""
         if not Path(self.data_path).is_file():
@@ -17,11 +17,10 @@ class UserRepo():
                 empty_list = []
                 json.dump(empty_list, f, ensure_ascii=False, indent=2)
 
-        with open(self.data_path, "r") as f:
+        with open(self.data_path, "r", encoding="utf-8") as f:
             users = json.load(f)
         return users
-    
-    
+
     def save_user(self, user: Dict[str, Any]) -> None:
         """Save user to json file"""
         users = self.load_all_users()
@@ -32,6 +31,7 @@ class UserRepo():
             json.dump(users, f, ensure_ascii=False, indent=2)
 
     def save_all_users(self, users: List[Dict[str,Any]]) -> None:
+        """Save all users to json file"""
         temp_user_file = self.data_path.with_suffix(".tmp")
         with open(temp_user_file, "w", encoding="utf-8") as f:
             json.dump(users, f, ensure_ascii=False, indent=2)
