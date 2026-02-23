@@ -32,10 +32,11 @@ def test_update_user(mocker):
 
     mocked_load_all_users = [{"id" : "1", "name" : "Alex", "email" : "alexsmith@gmail.com",
                 "phone_number" : "123-456-7890", "address" : "123 Baron Rd, Kelowna, BC, A1B2C3",
-                "password" : "password",  "role" : "customer"},{"id" : "2", "name" : "Jeff", "email" : "Jeffsmith@gmail.com",
+                "password" : "password",  "role" : "customer"},
+                {"id" : "2", "name" : "Jeff", "email" : "Jeffsmith@gmail.com",
                 "phone_number" : "555-555-5555", "address" : "321 Ellis Rd, Kelowna, BC, A1B2C3",
                 "password" : "pass",  "role" : "customer"}]
-    
+
     mocked_repo.load_all_users.return_value = mocked_load_all_users
 
     payload = UserUpdate(name="Alex", email="alexsmith@gmail.com",

@@ -15,7 +15,7 @@ def test_create_user(tmp_path):
 
     def override_create_user_repo():
         return UserRepo(test_user_data_path)
-    
+
     app.dependency_overrides[create_user_repo] = override_create_user_repo
 
     payload = {"name" : "Alex", "email" : "alexsmith@gmail.com",
@@ -36,14 +36,14 @@ def test_update_user_success(tmp_path):
 
     def override_update_user_repo():
         return UserRepo(test_user_data_path)
-    
+
     app.dependency_overrides[create_user_repo] = override_update_user_repo
 
-    
+
     initial_user = [{"id" : "1", "name" : "Alex", "email" : "alexsmith@gmail.com",
                 "phone_number" : "123-456-7890", "address" : "123 Baron Rd, Kelowna, BC, A1B2C3",
                 "password" : "password",  "role" : "customer"}]
-    
+
     with open(test_user_data_path, "w", encoding="utf-8") as f:
         json.dump(initial_user, f, ensure_ascii=False)
 
@@ -64,13 +64,13 @@ def test_update_user_unsuccessfuk(tmp_path):
 
     def override_update_user_repo():
         return UserRepo(test_user_data_path)
-    
+
     app.dependency_overrides[create_user_repo] = override_update_user_repo
-    
+
     initial_user = [{"id" : "2", "name" : "Alex", "email" : "alexsmith@gmail.com",
                 "phone_number" : "123-456-7890", "address" : "123 Baron Rd, Kelowna, BC, A1B2C3",
                 "password" : "password",  "role" : "customer"}]
-    
+
     with open(test_user_data_path, "w", encoding="utf-8") as f:
         json.dump(initial_user, f, ensure_ascii=False)
 
