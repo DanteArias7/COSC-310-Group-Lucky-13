@@ -3,7 +3,9 @@
 
 from fastapi import HTTPException
 import pytest
-from app.services.restaurant_services import RestaurantServices
+
+from app.services.restaurant_services import fetch_all_restaurants
+from app.services.restaurant_services import fetch_restaurant
 
 
 def test_fetch_all_restaurants(mocker):
@@ -20,19 +22,19 @@ def test_fetch_all_restaurants(mocker):
         }
     ]
 
-    mocked_repo = mocker.Mock()
-    restaurant_service = RestaurantServices(mocked_repo)
+    mocker.patch(
+        "app.services.restaurant_services.get_all_restaurants",
+        return_value=fake_data,
+    )
 
-    mocked_repo.load_all_restaurants.return_value = fake_data
-
-    result = restaurant_service.fetch_all_restaurants()
+    result = fetch_all_restaurants()
 
     assert result == fake_data
 
 
 def test_fetch_restaurant_success(mocker):
     """Testing that fetch_restaurant returns the result when requested ID exists"""
-    fake_restaurant = [{
+    fake_restaurant = {
         "id": "test-id-123",
         "name": "Veggie Palace",
         "hours": {"Monday": "9:00-17:00"},
@@ -40,15 +42,14 @@ def test_fetch_restaurant_success(mocker):
         "address": "123 Green Street",
         "tags": ["vegan"],
         "menu": [] 
-    }]
+    }
 
-    mocked_repo = mocker.Mock()
-    restaurant_service = RestaurantServices(mocked_repo)
+    mocker.patch(
+        "app.services.restaurant_services.get_restaurant_by_id",
+        return_value=fake_restaurant,
+    )
 
-    mocked_repo.load_all_restaurants.return_value = fake_restaurant
-
-    result = restaurant_service.fetch_restaurant("test-id-123")
-    result = result.model_dump()
+    result = fetch_restaurant("test-id-123")
 
     assert result["id"] == "test-id-123"
     assert result["name"] == "Veggie Palace"
@@ -62,14 +63,13 @@ def test_fetch_restaurant_success(mocker):
 def test_fetch_restaurant_not_found(mocker):
     """Testing that fetch_restaurant raises HTTPException when ID does not exist"""
 
-    mocked_repo = mocker.Mock()
-    restaurant_service = RestaurantServices(mocked_repo)
-
-    mocked_repo.load_all_restaurants.return_value = []
-   
+    mocker.patch(
+        "app.services.restaurant_services.get_restaurant_by_id",
+        return_value=None,
+    )
 
     with pytest.raises(HTTPException) as exc_info:
-        restaurant_service.fetch_restaurant("non-existent-id")
+        fetch_restaurant("non-existent-id")
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Restaurant not found"

@@ -1,33 +1,25 @@
 """Service layer for restaurant business logic."""
 
-from typing import Any, Dict, List, Protocol
 from fastapi import HTTPException
-from app.schemas.restaurant import Restaurant
+from app.repositories.restaurant_repo import (
+    get_all_restaurants,
+    get_restaurant_by_id,
+)
 
-class RestaurantServices():
-    """Restaurant service methods"""
-    def __init__(self, repo: IRestaurantRepo):
-        """Initialize instance with repo object"""
-        self.repo = repo
 
-    def fetch_all_restaurants(self) -> List[Dict[str, Any]]:
-        """Return all restaurants."""
-        return self.repo.load_all_restaurants()
+def fetch_all_restaurants():
+    """Return all restaurants."""
+    return get_all_restaurants()
 
-    def fetch_restaurant(self, restaurant_id: str) -> Restaurant:
-        """Return a restaurant by ID or raise 404."""
-        restaurants = self.repo.load_all_restaurants()
 
-        for restaurant in restaurants:
-            if restaurant["id"] == restaurant_id:
-                return Restaurant(**restaurant)
+def fetch_restaurant(restaurant_id: str):
+    """Return a restaurant by ID or raise 404."""
+    restaurant = get_restaurant_by_id(restaurant_id)
 
+    if not restaurant:
         raise HTTPException(
-                status_code=404,
-                detail="Restaurant not found",
-            )
-#pylint: disable=too-few-public-methods
-class IRestaurantRepo(Protocol):
-    """User Service Class"""
-    def load_all_restaurants(self) -> List[Dict[str, Any]]:
-        """Load all users"""  
+            status_code=404,
+            detail="Restaurant not found",
+        )
+
+    return restaurant
