@@ -65,7 +65,7 @@ def test_fetch_restaurant_not_found(mocker):
     restaurant_service = RestaurantServices(mocked_repo)
 
     mocked_repo.load_all_restaurants.return_value = []
-   
+
 
     with pytest.raises(HTTPException) as exc_info:
         restaurant_service.fetch_restaurant("non-existent-id")
