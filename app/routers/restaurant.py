@@ -2,8 +2,7 @@
 
 from pathlib import Path
 from typing import List
-from fastapi import APIRouter, Depends 
-from app.schemas.menu import MenuItem
+from fastapi import APIRouter, Depends
 from app.schemas.restaurant import Restaurant
 from app.services.restaurant_services import RestaurantServices
 from app.repositories.restaurant_repo import RestaurantRepo
@@ -25,7 +24,7 @@ def get_all_restaurants(repo: RestaurantRepo = Depends(create_restaurant_repo)):
     return user_service.fetch_all_restaurants()
 
 @restaurant_router.get("/{restaurant_id}", response_model=Restaurant, status_code=200)
-def get_restaurant_by_id(restaurant_id: str, repo: RestaurantRepo = Depends(create_restaurant_repo)):
+def get_restaurant_by_id(restaurant_id: str, repo: RestaurantRepo=Depends(create_restaurant_repo)):
     """Return a specific restaurant by its ID."""
     user_service = RestaurantServices(repo)
     return user_service.fetch_restaurant(restaurant_id)

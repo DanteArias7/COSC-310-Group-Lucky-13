@@ -13,21 +13,20 @@ class RestaurantServices():
     def fetch_all_restaurants(self) -> List[Dict[str, Any]]:
         """Return all restaurants."""
         return self.repo.load_all_restaurants()
-        
+
     def fetch_restaurant(self, restaurant_id: str) -> Restaurant:
         """Return a restaurant by ID or raise 404."""
         restaurants = self.repo.load_all_restaurants()
-        
+
         for restaurant in restaurants:
             if restaurant["id"] == restaurant_id:
                 return Restaurant(**restaurant)
-            
+
         raise HTTPException(
                 status_code=404,
                 detail="Restaurant not found",
             )
-
-
+#pylint: disable=too-few-public-methods
 class IRestaurantRepo(Protocol):
     """User Service Class"""
     def load_all_restaurants(self) -> List[Dict[str, Any]]:

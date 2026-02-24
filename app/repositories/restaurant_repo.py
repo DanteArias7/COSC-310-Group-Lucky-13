@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List
 
+#pylint: disable=too-few-public-methods
 class RestaurantRepo():
     """Restaurant repository methods"""
     def __init__(self, data_path: Path):
