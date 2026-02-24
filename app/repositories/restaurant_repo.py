@@ -2,23 +2,17 @@
 
 import json
 from pathlib import Path
+from typing import Any, Dict, List
 
-FILE_PATH = Path("app/data/restaurants.json")
+class RestaurantRepo():
+    """Restaurant repository methods"""
+    def __init__(self, data_path: Path):
+        self.data_path = data_path
 
+    def load_all_restaurants(self) -> List[Dict[str, Any]]:
+        """Return all restaurants"""
+        if not self.data_path.exists():
+            return []
 
-def get_all_restaurants():
-    """Return all restaurants"""
-    if not FILE_PATH.exists():
-        return []
-
-    with open(FILE_PATH, "r", encoding ="utf-8") as f:
-        return json.load(f)
-
-
-def get_restaurant_by_id(restaurant_id: str):
-    """ Return restaurant by id """
-    restaurants = get_all_restaurants()
-    for restaurant in restaurants:
-        if str(restaurant["id"]) == str(restaurant_id):
-            return restaurant
-    return None
+        with open(self.data_path, "r", encoding ="utf-8") as f:
+            return json.load(f)
