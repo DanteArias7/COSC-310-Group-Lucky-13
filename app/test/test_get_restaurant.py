@@ -6,9 +6,10 @@ from app.schemas.menu import CreateMenuItem, MenuItem
 from app.services.restaurant_services import RestaurantServices
 
 test_restaurants = [{"id": "00000000-0000-0000-0000-0000000000001", "name": "Veggie Palace",
-        "hours": {"Monday": "9:00-17:00"}, "phone_number": "1234567890", "address": "123 Green Street",
-        "tags": ["vegan", "brunch"],
-        "menu": [{"id": "00000000-0000-0000-0000-0000000000001", 
+                "hours": {"Monday": "9:00-17:00"}, "phone_number": "1234567890",
+                "address": "123 Green Street",
+                "tags": ["vegan", "brunch"],
+                "menu": [{"id": "00000000-0000-0000-0000-0000000000001", 
                 "name": "Vegan Burger", "description": "Plant-based patty with lettuce and tomato",
                 "price": 12.99, "tags": ["vegan"]
                 }]
@@ -83,6 +84,7 @@ def test_fetch_restaurant_not_found(mocker):
     assert exc_info.value.detail == "Restaurant not found"
 
 def test_add_menu_item(mocker):
+    """Test that adding a menu item returns the proper menu item"""
     mocked_uuid = '00000000-0000-0000-0000-000000000002'
     uuid_mock = mocker.patch("app.services.restaurant_services.uuid.uuid7")
     uuid_mock.return_value = mocked_uuid
@@ -101,6 +103,3 @@ def test_add_menu_item(mocker):
     new_menu_item = restaurant_service.add_item_to_menu(test_restaurants[0]["id"], payload)
 
     assert new_menu_item == expected_menu_item
-
-
-
