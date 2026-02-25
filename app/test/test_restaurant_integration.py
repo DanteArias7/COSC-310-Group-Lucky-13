@@ -134,7 +134,7 @@ def test_adding_menu_item_nonexistent_restaurant(tmp_path):
 
     payload = {"name": "Vegan Burger",
                 "description": "Cheeseburger", "price": 10.50, "tags": ["burger"]}
-   
+
     r = client.post("/restaurants/00000000-0000-0000-0000-0000000000002/menu", json=payload)
 
     with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
