@@ -6,19 +6,18 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.repositories.restaurant_repo import RestaurantRepo
 from app.routers.restaurant import create_restaurant_repo
-from app.services.restaurant_services import RestaurantServices
 
 
 client = TestClient(app)
 test_restaurants = [{"id": "00000000-0000-0000-0000-0000000000001", "name": "Veggie Palace",
-        "hours": {"Monday": "9:00-17:00"}, "phone_number": "1234567890", "address": "123 Green Street",
-        "tags": ["vegan", "brunch"],
-        "menu": [{"id": "00000000-0000-0000-0000-0000000000001", 
+                "hours": {"Monday": "9:00-17:00"}, "phone_number": "1234567890",
+                "address": "123 Green Street",
+                "tags": ["vegan", "brunch"],
+                "menu": [{"id": "00000000-0000-0000-0000-0000000000001",
                 "name": "Vegan Burger", "description": "Plant-based patty with lettuce and tomato",
                 "price": 12.99, "tags": ["vegan"]
                 }]
         }]
-
 
 def test_get_all_restaurants_integration():
     """Test retrieving all restaurants via GET /restaurants/."""
@@ -79,13 +78,13 @@ def test_adding_menu_item(tmp_path):
         return RestaurantRepo(test_restaurant_data_path)
 
     app.dependency_overrides[create_restaurant_repo] = override_add_menu_item_repo
-    
+
     with open(test_restaurant_data_path, "w", encoding="utf-8") as f:
         json.dump(test_restaurants, f, ensure_ascii=False)
 
     payload = {"name": "Classic Burger",
                 "description": "Cheeseburger", "price": 10.50, "tags": ["burger"]}
-    
+
     r = client.post("/restaurants/00000000-0000-0000-0000-0000000000001/menu", json=payload)
 
     with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
@@ -112,13 +111,13 @@ def test_adding_menu_item_already_exists(tmp_path):
 
     payload = {"name": "Vegan Burger",
                 "description": "Cheeseburger", "price": 10.50, "tags": ["burger"]}
-    
+
     r = client.post("/restaurants/00000000-0000-0000-0000-0000000000001/menu", json=payload)
 
     with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
         restaurants = json.load(f)
 
-    assert r.status_code == 409    
+    assert r.status_code == 409
     assert restaurants == test_restaurants
 
 def test_adding_menu_item_nonexistent_restaurant(tmp_path):
@@ -129,17 +128,17 @@ def test_adding_menu_item_nonexistent_restaurant(tmp_path):
         return RestaurantRepo(test_restaurant_data_path)
 
     app.dependency_overrides[create_restaurant_repo] = override_add_menu_item_repo
-    
+
     with open(test_restaurant_data_path, "w", encoding="utf-8") as f:
         json.dump(test_restaurants, f, ensure_ascii=False)
 
     payload = {"name": "Vegan Burger",
                 "description": "Cheeseburger", "price": 10.50, "tags": ["burger"]}
-    
+   
     r = client.post("/restaurants/00000000-0000-0000-0000-0000000000002/menu", json=payload)
 
     with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
         restaurants = json.load(f)
 
-    assert r.status_code == 404    
+    assert r.status_code == 404
     assert restaurants == test_restaurants
