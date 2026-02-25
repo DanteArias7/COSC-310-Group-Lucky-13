@@ -7,7 +7,7 @@ from app.main import app
 from app.repositories.restaurant_repo import RestaurantRepo
 from app.routers.restaurant import create_restaurant_repo
 
-
+# pylint: disable=duplicate-code
 client = TestClient(app)
 test_restaurants = [{"id": "00000000-0000-0000-0000-0000000000001", "name": "Veggie Palace",
                 "hours": {"Monday": "9:00-17:00"}, "phone_number": "1234567890",
