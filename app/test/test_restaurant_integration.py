@@ -6,14 +6,14 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.repositories.restaurant_repo import RestaurantRepo
 from app.routers.restaurant import create_restaurant_repo
-from app.services.restaurant_services import RestaurantServices
 
 
 client = TestClient(app)
 test_restaurants = [{"id": "00000000-0000-0000-0000-0000000000001", "name": "Veggie Palace",
-        "hours": {"Monday": "9:00-17:00"}, "phone_number": "1234567890", "address": "123 Green Street",
+        "hours": {"Monday": "9:00-17:00"}, "phone_number": "1234567890",
+          "address": "123 Green Street",
         "tags": ["vegan", "brunch"],
-        "menu": [{"id": "00000000-0000-0000-0000-0000000000001", 
+        "menu": [{"id": "00000000-0000-0000-0000-0000000000001",
                 "name": "Vegan Burger", "description": "Plant-based patty with lettuce and tomato",
                 "price": 12.99, "tags": ["vegan"]
                 }]
@@ -79,13 +79,13 @@ def test_adding_menu_item(tmp_path):
         return RestaurantRepo(test_restaurant_data_path)
 
     app.dependency_overrides[create_restaurant_repo] = override_add_menu_item_repo
-    
+
     with open(test_restaurant_data_path, "w", encoding="utf-8") as f:
         json.dump(test_restaurants, f, ensure_ascii=False)
 
     payload = {"name": "Classic Burger",
                 "description": "Cheeseburger", "price": 10.50, "tags": ["burger"]}
-    
+
     r = client.post("/restaurants/00000000-0000-0000-0000-0000000000001/menu", json=payload)
 
     with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
@@ -112,13 +112,13 @@ def test_adding_menu_item_already_exists(tmp_path):
 
     payload = {"name": "Vegan Burger",
                 "description": "Cheeseburger", "price": 10.50, "tags": ["burger"]}
-    
+
     r = client.post("/restaurants/00000000-0000-0000-0000-0000000000001/menu", json=payload)
 
     with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
         restaurants = json.load(f)
 
-    assert r.status_code == 409    
+    assert r.status_code == 409
     assert restaurants == test_restaurants
 
 def test_adding_menu_item_nonexistent_restaurant(tmp_path):
@@ -129,17 +129,97 @@ def test_adding_menu_item_nonexistent_restaurant(tmp_path):
         return RestaurantRepo(test_restaurant_data_path)
 
     app.dependency_overrides[create_restaurant_repo] = override_add_menu_item_repo
-    
+
     with open(test_restaurant_data_path, "w", encoding="utf-8") as f:
         json.dump(test_restaurants, f, ensure_ascii=False)
 
     payload = {"name": "Vegan Burger",
                 "description": "Cheeseburger", "price": 10.50, "tags": ["burger"]}
-    
+
     r = client.post("/restaurants/00000000-0000-0000-0000-0000000000002/menu", json=payload)
 
     with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
         restaurants = json.load(f)
 
-    assert r.status_code == 404    
+    assert r.status_code == 404
+    assert restaurants == test_restaurants
+
+def test_updating_menu_item_successful(tmp_path):
+    """Testing successful addding of a menu item to a menu"""
+    test_restaurant_data_path = tmp_path / "restaurants.json"
+
+    def override_update_menu_item_repo():
+        return RestaurantRepo(test_restaurant_data_path)
+
+    app.dependency_overrides[create_restaurant_repo] = override_update_menu_item_repo
+
+    with open(test_restaurant_data_path, "w", encoding="utf-8") as f:
+        json.dump(test_restaurants, f, ensure_ascii=False)
+
+    payload = {"name": "Hot Dog", "description": "Beef hot dog on bun",
+                "price": 5.99, "tags": ["beef"]}
+
+    r = client.put("/restaurants/00000000-0000-0000-0000-0000000000001/menu/" \
+    "00000000-0000-0000-0000-0000000000001", json=payload)
+
+
+    with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
+        restaurants = json.load(f)
+
+    test_restaurants[0]["menu"][0]["name"] = "Hot Dog"
+    test_restaurants[0]["menu"][0]["description"] = "Beef hot dog on bun"
+    test_restaurants[0]["menu"][0]["price"] = 5.99
+    test_restaurants[0]["menu"][0]["tags"] = ["beef"]
+
+    assert r.status_code == 200
+    assert restaurants == test_restaurants
+
+def test_updating_nonexistent_menu_item(tmp_path):
+    """Testing unsuccessful addding of a menu item that does not exist"""
+    test_restaurant_data_path = tmp_path / "restaurants.json"
+
+    def override_update_menu_item_repo():
+        return RestaurantRepo(test_restaurant_data_path)
+
+    app.dependency_overrides[create_restaurant_repo] = override_update_menu_item_repo
+
+    with open(test_restaurant_data_path, "w", encoding="utf-8") as f:
+        json.dump(test_restaurants, f, ensure_ascii=False)
+
+    payload = {"name": "Hot Dog", "description": "Beef hot dog on bun",
+                "price": 5.99, "tags": ["beef"]}
+
+    r = client.put("/restaurants/00000000-0000-0000-0000-0000000000001/" \
+    "menu/00000000-0000-0000-0000-0000000000002", json=payload)
+
+
+    with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
+        restaurants = json.load(f)
+
+    assert r.status_code == 404
+    assert restaurants == test_restaurants
+
+def test_updating_menu_item_to_nonexistent_restaurant(tmp_path):
+    """Testing unsuccessful addding of a menu item that does not exist"""
+    test_restaurant_data_path = tmp_path / "restaurants.json"
+
+    def override_update_menu_item_repo():
+        return RestaurantRepo(test_restaurant_data_path)
+
+    app.dependency_overrides[create_restaurant_repo] = override_update_menu_item_repo
+
+    with open(test_restaurant_data_path, "w", encoding="utf-8") as f:
+        json.dump(test_restaurants, f, ensure_ascii=False)
+
+    payload = {"name": "Hot Dog", "description": "Beef hot dog on bun",
+                "price": 5.99, "tags": ["beef"]}
+
+    r = client.put("/restaurants/00000000-0000-0000-0000-0000000000001/," \
+    "menu/00000000-0000-0000-0000-0000000000002", json=payload)
+
+
+    with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
+        restaurants = json.load(f)
+
+    assert r.status_code == 404
     assert restaurants == test_restaurants

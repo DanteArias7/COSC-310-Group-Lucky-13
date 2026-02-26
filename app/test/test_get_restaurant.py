@@ -2,13 +2,15 @@
 
 from fastapi import HTTPException
 import pytest
-from app.schemas.menu import CreateMenuItem, MenuItem
+from app.schemas.menu import CreateMenuItem, MenuItem, UpdateMenuItem
 from app.services.restaurant_services import RestaurantServices
 
+#pylint: disable=duplicate-code
 test_restaurants = [{"id": "00000000-0000-0000-0000-0000000000001", "name": "Veggie Palace",
-        "hours": {"Monday": "9:00-17:00"}, "phone_number": "1234567890", "address": "123 Green Street",
+        "hours": {"Monday": "9:00-17:00"}, "phone_number": "1234567890",
+        "address": "123 Green Street",
         "tags": ["vegan", "brunch"],
-        "menu": [{"id": "00000000-0000-0000-0000-0000000000001", 
+        "menu": [{"id": "00000000-0000-0000-0000-0000000000001",
                 "name": "Vegan Burger", "description": "Plant-based patty with lettuce and tomato",
                 "price": 12.99, "tags": ["vegan"]
                 }]
@@ -47,7 +49,7 @@ def test_fetch_restaurant_success(mocker):
         "phone_number": "1234567890",
         "address": "123 Green Street",
         "tags": ["vegan"],
-        "menu": [] 
+        "menu": []
     }]
 
     mocked_repo = mocker.Mock()
@@ -83,6 +85,7 @@ def test_fetch_restaurant_not_found(mocker):
     assert exc_info.value.detail == "Restaurant not found"
 
 def test_add_menu_item(mocker):
+    """Test that add_menu_item returns the proper menuitem object"""
     mocked_uuid = '00000000-0000-0000-0000-000000000002'
     uuid_mock = mocker.patch("app.services.restaurant_services.uuid.uuid7")
     uuid_mock.return_value = mocked_uuid
@@ -102,5 +105,56 @@ def test_add_menu_item(mocker):
 
     assert new_menu_item == expected_menu_item
 
+def test_update_menu_item_success(mocker):
+    """Test that the update_menu_item returns the proper menu item object"""
+    mocked_repo = mocker.Mock()
+    restaurant_service = RestaurantServices(mocked_repo)
 
+    mocked_repo.load_all_restaurants.return_value = test_restaurants
 
+    payload = UpdateMenuItem(name="Classic Burger", description="Cheeseburger",
+                             price= 10.50, tags=["burger"])
+
+    expected_menu_item = MenuItem(id="00000000-0000-0000-0000-0000000000001",
+                                  name="Classic Burger", description="Cheeseburger",
+                                  price= 10.50, tags=["burger"])
+
+    updated_menu_item = restaurant_service.update_menu_item(
+                            test_restaurants[0]["id"],
+                            "00000000-0000-0000-0000-0000000000001", payload)
+
+    assert updated_menu_item == expected_menu_item
+
+def test_update_menu_item_nonexistent_menu_item(mocker):
+    """Test that update menu item method returns proper exception if menuitem does not exist"""
+    mocked_repo = mocker.Mock()
+    restaurant_service = RestaurantServices(mocked_repo)
+
+    mocked_repo.load_all_restaurants.return_value = test_restaurants
+
+    payload = UpdateMenuItem(name="Classic Burger", description="Cheeseburger",
+                             price= 10.50, tags=["burger"])
+
+    with pytest.raises(HTTPException) as exc_info:
+        restaurant_service.update_menu_item(test_restaurants[0]["id"],
+                                             "00000000-0000-0000-0000-0000000000002", payload)
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Menu Item 00000000-0000-0000-0000-0000000000002 Not Found"
+
+def test_update_menu_item_nonexistent_restaurant(mocker):
+    """Test that update menu item method returns proper exception if restaurant does not exist"""
+    mocked_repo = mocker.Mock()
+    restaurant_service = RestaurantServices(mocked_repo)
+
+    mocked_repo.load_all_restaurants.return_value = test_restaurants
+
+    payload = UpdateMenuItem(name="Classic Burger", description="Cheeseburger",
+                             price= 10.50, tags=["burger"])
+
+    with pytest.raises(HTTPException) as exc_info:
+        restaurant_service.update_menu_item("00000000-0000-0000-0000-0000000000002",
+                                             "00000000-0000-0000-0000-0000000000001", payload)
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Restaurant 00000000-0000-0000-0000-0000000000002 Not Found"
