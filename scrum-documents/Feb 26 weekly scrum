@@ -1,0 +1,17 @@
+Date: Feb 26, 2026
+Type of meeting: weekly scrum
+
+Attendees : Dante Arias , Gurkirn Kaur , Varun Garg
+
+Key discussion points: 
+1. Showed the project updates to TA
+2. Talked to TA about questions from Feb 19 and Feb 23 scrum
+  - TA suggested to create separate branches for sub-features for now
+  - TA suggested to assign min. 2 reviewers to the pull requests 
+
+Action Items : 
+- Assign two reviewers per PR
+- Make pull requests more descriptive with including which functions() were added and what tests support the changes 
+- Create separate branches for all the sub-issues/sub-features and don't delete any branch
+- Figure out how to implement the CSV restaurant handling 
+- Follow up with the TA/prof to confirm about branching and CSV file requirements
