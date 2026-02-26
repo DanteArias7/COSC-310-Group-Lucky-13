@@ -2,7 +2,7 @@
 
 from pathlib import Path
 from typing import List
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends
 from app.schemas.menu import CreateMenuItem, MenuItem, UpdateMenuItem
 from app.schemas.restaurant import Restaurant
 from app.services.restaurant_services import RestaurantServices
@@ -44,12 +44,3 @@ def update_menu_item_in_menu(restaurant_id: str, menu_item_id: str, payload: Upd
     """Update a menu item in a specifed restaurants menu"""
     restaurant_service = RestaurantServices(repo)
     return restaurant_service.update_menu_item(restaurant_id, menu_item_id, payload)
-
-
-@restaurant_router.delete("/{restaurant_id}/menu/{menu_item_id}",
-                          status_code=status.HTTP_204_NO_CONTENT)
-def delete_menu_item_in_menu(restaurant_id: str, menu_item_id: str,
-                          repo: RestaurantRepo=Depends(create_restaurant_repo)):
-    """Delete a menu item in a specifed restaurants menu"""
-    restaurant_service = RestaurantServices(repo)
-    return restaurant_service.delete_menu_item(restaurant_id, menu_item_id)
