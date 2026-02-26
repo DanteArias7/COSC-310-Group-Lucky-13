@@ -3,7 +3,7 @@
 from typing import Any, Dict, List, Protocol
 import uuid
 from fastapi import HTTPException
-from app.schemas.menu import MenuItem
+from app.schemas.menu import MenuItem, UpdateMenuItem
 from app.schemas.restaurant import Restaurant
 
 class RestaurantServices():
@@ -52,7 +52,32 @@ class RestaurantServices():
                 self.repo.save_all_restaurants(restaurants)
                 return new_menu_item
 
-        raise HTTPException(status_code=404, detail="Restaurant Not Found")
+        raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
+
+    def update_menu_item(self, restaurant_id: str,
+                         menu_item_id: str, payload: UpdateMenuItem) -> MenuItem:
+        """Add a menu item to a restaurants menu"""
+
+        restaurants = self.repo.load_all_restaurants()
+
+        updated_menu_item = UpdateMenuItem(
+                        name=payload.name.strip(),
+                        price=payload.price,
+                        description=payload.description.strip(),
+                        tags=payload.tags
+                     )
+
+        for i, restaurant in enumerate(restaurants):
+            if restaurant["id"] == restaurant_id:
+                for j, menu_item in enumerate(restaurant["menu"]):
+                    if menu_item["id"] == menu_item_id:
+                        restaurant["menu"][j]={"id" : menu_item_id} | updated_menu_item.model_dump()
+                        restaurants[i] = restaurant
+                        self.repo.save_all_restaurants(restaurants)
+                        return MenuItem(**restaurant["menu"][j])
+                raise HTTPException(status_code=404, detail=f"Menu Item {menu_item_id} Not Found")
+
+        raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
 
 #pylint: disable=too-few-public-methods
 class IRestaurantRepo(Protocol):
