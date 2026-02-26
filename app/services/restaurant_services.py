@@ -79,10 +79,26 @@ class RestaurantServices():
 
         raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
 
+    def delete_menu_item(self, restaurant_id: str, menu_item_id: str) -> None:
+        """Deletes user from the data store"""
+        restaurants = self.repo.load_all_restaurants()
+
+        for restaurant in restaurants:
+            if restaurant["id"] == restaurant_id:
+                for menu_item in restaurant["menu"]:
+                    if menu_item["id"] == menu_item_id:
+                        restaurant["menu"].remove(menu_item)
+                        self.repo.save_all_restaurants(restaurants)
+                        return
+
+                raise HTTPException(status_code=404, detail=f"Menu Item '{menu_item_id}' not found")
+
+        raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
+
 #pylint: disable=too-few-public-methods
 class IRestaurantRepo(Protocol):
-    """User Service Class"""
+    """Restaurant reposirtory interface"""
     def load_all_restaurants(self) -> List[Dict[str, Any]]:
-        """Load all restaurants"""  
+        """Load all restaurants"""
     def save_all_restaurants(self, restaurant: List[Dict[str, Any]]):
         """Save all resturants"""
