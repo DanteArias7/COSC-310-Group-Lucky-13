@@ -7,18 +7,17 @@ from app.main import app
 from app.repositories.restaurant_repo import RestaurantRepo
 from app.routers.restaurant import create_restaurant_repo
 
-
+# pylint: disable=duplicate-code
 client = TestClient(app)
 test_restaurants = [{"id": "00000000-0000-0000-0000-0000000000001", "name": "Veggie Palace",
-        "hours": {"Monday": "9:00-17:00"}, "phone_number": "1234567890",
-          "address": "123 Green Street",
-        "tags": ["vegan", "brunch"],
-        "menu": [{"id": "00000000-0000-0000-0000-0000000000001",
+                "hours": {"Monday": "9:00-17:00"}, "phone_number": "1234567890",
+                "address": "123 Green Street",
+                "tags": ["vegan", "brunch"],
+                "menu": [{"id": "00000000-0000-0000-0000-0000000000001",
                 "name": "Vegan Burger", "description": "Plant-based patty with lettuce and tomato",
                 "price": 12.99, "tags": ["vegan"]
                 }]
         }]
-
 
 def test_get_all_restaurants_integration():
     """Test retrieving all restaurants via GET /restaurants/."""
