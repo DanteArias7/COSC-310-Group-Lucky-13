@@ -10,11 +10,7 @@ test_restaurants = [{"id": "00000000-0000-0000-0000-0000000000001", "name": "Veg
                 "hours": {"Monday": "9:00-17:00"}, "phone_number": "1234567890",
                 "address": "123 Green Street",
                 "tags": ["vegan", "brunch"],
-<<<<<<< HEAD
                 "menu": [{"id": "00000000-0000-0000-0000-0000000000001",
-=======
-                "menu": [{"id": "00000000-0000-0000-0000-0000000000001", 
->>>>>>> 3f0e6312cb81f152394e5f617c6db02077cbc185
                 "name": "Vegan Burger", "description": "Plant-based patty with lettuce and tomato",
                 "price": 12.99, "tags": ["vegan"]
                 }]
@@ -108,7 +104,6 @@ def test_add_menu_item(mocker):
     new_menu_item = restaurant_service.add_item_to_menu(test_restaurants[0]["id"], payload)
 
     assert new_menu_item == expected_menu_item
-<<<<<<< HEAD
 
 def test_update_menu_item_success(mocker):
     """Test that the update_menu_item returns the proper menu item object"""
@@ -163,5 +158,3 @@ def test_update_menu_item_nonexistent_restaurant(mocker):
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Restaurant 00000000-0000-0000-0000-0000000000002 Not Found"
-=======
->>>>>>> 3f0e6312cb81f152394e5f617c6db02077cbc185

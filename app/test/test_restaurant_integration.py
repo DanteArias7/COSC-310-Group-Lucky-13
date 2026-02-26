@@ -141,7 +141,6 @@ def test_adding_menu_item_nonexistent_restaurant(tmp_path):
         restaurants = json.load(f)
 
     assert r.status_code == 404
-<<<<<<< HEAD
     assert restaurants == test_restaurants
 
 def test_updating_menu_item_successful(tmp_path):
@@ -222,6 +221,4 @@ def test_updating_menu_item_to_nonexistent_restaurant(tmp_path):
         restaurants = json.load(f)
 
     assert r.status_code == 404
-=======
->>>>>>> 3f0e6312cb81f152394e5f617c6db02077cbc185
     assert restaurants == test_restaurants
