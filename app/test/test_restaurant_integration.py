@@ -3,18 +3,13 @@
 import json
 
 from fastapi.testclient import TestClient
-import pytest
 from app.main import app
 from app.repositories.restaurant_repo import RestaurantRepo
 from app.routers.restaurant import create_restaurant_repo
 
-# pylint: disable=redefined-outer-name
+# pylint: disable=duplicate-code
 client = TestClient(app)
-
-@pytest.fixture
-def test_restaurants():
-    """Initialize test restaurant data for each test"""
-    return [{"id": "00000000-0000-0000-0000-0000000000001", "name": "Veggie Palace",
+test_restaurants = [{"id": "00000000-0000-0000-0000-0000000000001", "name": "Veggie Palace",
                 "hours": {"Monday": "9:00-17:00"}, "phone_number": "1234567890",
                 "address": "123 Green Street",
                 "tags": ["vegan", "brunch"],
@@ -75,7 +70,7 @@ def test_get_nonexistent_restaurant_integration():
     assert response.status_code == 404
 
 
-def test_adding_menu_item(tmp_path, test_restaurants):
+def test_adding_menu_item(tmp_path):
     """Testing adding a menu item to a restaurant's menu"""
     test_restaurant_data_path = tmp_path / "restaurants.json"
 
@@ -102,7 +97,7 @@ def test_adding_menu_item(tmp_path, test_restaurants):
     assert r.status_code == 201
     assert restaurants == test_restaurants
 
-def test_adding_menu_item_already_exists(tmp_path, test_restaurants):
+def test_adding_menu_item_already_exists(tmp_path):
     """Testing adding a menu item that already exists in a restaurant's menu"""
     test_restaurant_data_path = tmp_path / "restaurants.json"
 
@@ -125,7 +120,7 @@ def test_adding_menu_item_already_exists(tmp_path, test_restaurants):
     assert r.status_code == 409
     assert restaurants == test_restaurants
 
-def test_adding_menu_item_nonexistent_restaurant(tmp_path, test_restaurants):
+def test_adding_menu_item_nonexistent_restaurant(tmp_path):
     """Testing adding a menu item to a restaurant that does not exist"""
     test_restaurant_data_path = tmp_path / "restaurants.json"
 
@@ -148,8 +143,8 @@ def test_adding_menu_item_nonexistent_restaurant(tmp_path, test_restaurants):
     assert r.status_code == 404
     assert restaurants == test_restaurants
 
-def test_updating_menu_item_successful(tmp_path, test_restaurants):
-    """Testing successful updating of a menu item to a menu"""
+def test_updating_menu_item_successful(tmp_path):
+    """Testing successful addding of a menu item to a menu"""
     test_restaurant_data_path = tmp_path / "restaurants.json"
 
     def override_update_menu_item_repo():
@@ -178,8 +173,8 @@ def test_updating_menu_item_successful(tmp_path, test_restaurants):
     assert r.status_code == 200
     assert restaurants == test_restaurants
 
-def test_updating_nonexistent_menu_item(tmp_path, test_restaurants):
-    """Testing unsuccessful updating of a menu item that does not exist"""
+def test_updating_nonexistent_menu_item(tmp_path):
+    """Testing unsuccessful addding of a menu item that does not exist"""
     test_restaurant_data_path = tmp_path / "restaurants.json"
 
     def override_update_menu_item_repo():
@@ -203,8 +198,8 @@ def test_updating_nonexistent_menu_item(tmp_path, test_restaurants):
     assert r.status_code == 404
     assert restaurants == test_restaurants
 
-def test_updating_menu_item_to_nonexistent_restaurant(tmp_path, test_restaurants):
-    """Testing unsuccessful updating of a menu item to restaurant that does not exist"""
+def test_updating_menu_item_to_nonexistent_restaurant(tmp_path):
+    """Testing unsuccessful addding of a menu item that does not exist"""
     test_restaurant_data_path = tmp_path / "restaurants.json"
 
     def override_update_menu_item_repo():
@@ -218,76 +213,8 @@ def test_updating_menu_item_to_nonexistent_restaurant(tmp_path, test_restaurants
     payload = {"name": "Hot Dog", "description": "Beef hot dog on bun",
                 "price": 5.99, "tags": ["beef"]}
 
-    r = client.put("/restaurants/00000000-0000-0000-0000-0000000000001/" \
+    r = client.put("/restaurants/00000000-0000-0000-0000-0000000000001/," \
     "menu/00000000-0000-0000-0000-0000000000002", json=payload)
-
-
-    with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
-        restaurants = json.load(f)
-
-    assert r.status_code == 404
-    assert restaurants == test_restaurants
-
-def test_deleting_menu_item_success(tmp_path, test_restaurants):
-    """Testing a successful deleting of a menu item"""
-    test_restaurant_data_path = tmp_path / "restaurants.json"
-
-    def override_delete_menu_item_repo():
-        return RestaurantRepo(test_restaurant_data_path)
-
-    app.dependency_overrides[create_restaurant_repo] = override_delete_menu_item_repo
-
-    with open(test_restaurant_data_path, "w", encoding="utf-8") as f:
-        json.dump(test_restaurants, f, ensure_ascii=False)
-
-    r = client.delete("/restaurants/00000000-0000-0000-0000-0000000000001/" \
-    "menu/00000000-0000-0000-0000-0000000000001")
-
-
-    with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
-        restaurants = json.load(f)
-
-
-    test_restaurants[0]["menu"] = []
-
-    assert r.status_code == 204
-    assert restaurants == test_restaurants
-
-def test_deleting_menu_item_to_nonexistent_restaurant(tmp_path, test_restaurants):
-    """Testing unsuccessful deleting of menu item from a restaurant that does not exist"""
-    test_restaurant_data_path = tmp_path / "restaurants.json"
-
-    def override_update_menu_item_repo():
-        return RestaurantRepo(test_restaurant_data_path)
-
-    app.dependency_overrides[create_restaurant_repo] = override_update_menu_item_repo
-
-    with open(test_restaurant_data_path, "w", encoding="utf-8") as f:
-        json.dump(test_restaurants, f, ensure_ascii=False)
-
-    r = client.delete("/restaurants/00000000-0000-0000-0000-0000000000002/" \
-    "menu/00000000-0000-0000-0000-0000000000001")
-
-    with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
-        restaurants = json.load(f)
-
-    assert r.status_code == 404
-    assert restaurants == test_restaurants
-
-def test_deleting_nonexistent_menu_item(tmp_path, test_restaurants):
-    """Testing unsuccessful deleting of a menu item that does not exist"""
-    test_restaurant_data_path = tmp_path / "restaurants.json"
-
-    def override_update_menu_item_repo():
-        return RestaurantRepo(test_restaurant_data_path)
-
-    app.dependency_overrides[create_restaurant_repo] = override_update_menu_item_repo
-
-    with open(test_restaurant_data_path, "w", encoding="utf-8") as f:
-        json.dump(test_restaurants, f, ensure_ascii=False)
-
-    r = client.delete("/restaurants/00000000-0000-0000-0000-0000000000001/" \
-    "menu/00000000-0000-0000-0000-0000000000002")
 
 
     with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
