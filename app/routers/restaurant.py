@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import List
 from fastapi import APIRouter, Depends
-from app.schemas.menu import CreateMenuItem, MenuItem
+from app.schemas.menu import CreateMenuItem, MenuItem, UpdateMenuItem
 from app.schemas.restaurant import Restaurant
 from app.services.restaurant_services import RestaurantServices
 from app.repositories.restaurant_repo import RestaurantRepo
@@ -36,3 +36,11 @@ def add_menu_item_to_menu(restaurant_id: str, payload: CreateMenuItem,
     """Add a menu item to the specifed restaurants menu"""
     restaurant_service = RestaurantServices(repo)
     return restaurant_service.add_item_to_menu(restaurant_id, payload)
+
+@restaurant_router.put("/{restaurant_id}/menu/{menu_item_id}",
+                       response_model=MenuItem, status_code=200)
+def update_menu_item_in_menu(restaurant_id: str, menu_item_id: str, payload: UpdateMenuItem,
+                          repo: RestaurantRepo=Depends(create_restaurant_repo)):
+    """Update a menu item in a specifed restaurants menu"""
+    restaurant_service = RestaurantServices(repo)
+    return restaurant_service.update_menu_item(restaurant_id, menu_item_id, payload)
