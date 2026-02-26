@@ -10,3 +10,10 @@ class MenuItem(BaseModel):
     price: float
     description: str
     tags: List[str] = []
+
+class CreateMenuItem(BaseModel):
+    """Menu entity."""
+    name: str
+    price: float
+    description: str
+    tags: List[str] = []
