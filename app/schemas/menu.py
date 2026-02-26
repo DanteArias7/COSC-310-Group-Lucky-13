@@ -17,3 +17,10 @@ class CreateMenuItem(BaseModel):
     price: float
     description: str
     tags: List[str] = []
+
+class UpdateMenuItem(BaseModel):
+    """Menu entity."""
+    name: str
+    price: float
+    description: str
+    tags: List[str] = []
