@@ -184,7 +184,9 @@ def test_delete_last_menuitem(mocker):
     mocked_repo.load_all_restaurants.return_value = single_menu_restaurant
 
     with pytest.raises(HTTPException) as exc_info:
-        restaurant_service.delete_menu_item("00000000-0000-0000-0000-0000000000009","00000000-0000-0000-0000-0000000000099")
+        restaurant_service.delete_menu_item(
+            "00000000-0000-0000-0000-0000000000009",
+            "00000000-0000-0000-0000-0000000000099")
 
     assert exc_info.value.status_code == 400
     assert exc_info.value.detail == "Restaurant must have at least one menu item."
