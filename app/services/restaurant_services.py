@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Protocol
 import uuid
 from fastapi import HTTPException
 from app.schemas.menu import MenuItem, UpdateMenuItem
-from app.schemas.restaurant import Restaurant
+from app.schemas.restaurant import Restaurant, UpdateRestaurant
 
 class RestaurantServices():
     """Restaurant service methods"""
@@ -28,6 +28,30 @@ class RestaurantServices():
                 status_code=404,
                 detail="Restaurant not found",
             )
+
+    def update_restaurant(self, restaurant_id: str, payload: UpdateRestaurant) -> MenuItem:
+        """Add a menu item to a restaurants menu"""
+
+        restaurants = self.repo.load_all_restaurants()
+
+        updated_restaurant = UpdateRestaurant(
+                        name=payload.name.strip(),
+                        hours=payload.hours,
+                        phone_number=payload.phone_number.strip(),
+                        address=payload.address.strip(),
+                        tags=payload.tags
+                     )
+
+        for i, restaurant in enumerate(restaurants):
+            if restaurant["id"] == restaurant_id:
+                restaurant = {"id" : restaurant_id} | updated_restaurant.model_dump()
+                restaurant = restaurant | {"menu" : restaurants[i]["menu"]}
+                restaurants[i] = restaurant
+                self.repo.save_all_restaurants(restaurants)
+                return Restaurant(**restaurant)
+
+            raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
+
 
     def add_item_to_menu(self, restaurant_id: str, payload: MenuItem) -> MenuItem:
         """Add a menu item to a restaurants menu"""

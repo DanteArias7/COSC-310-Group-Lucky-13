@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import List
 from fastapi import APIRouter, Depends, status
 from app.schemas.menu import CreateMenuItem, MenuItem, UpdateMenuItem
-from app.schemas.restaurant import Restaurant
+from app.schemas.restaurant import Restaurant, UpdateRestaurant
 from app.services.restaurant_services import RestaurantServices
 from app.repositories.restaurant_repo import RestaurantRepo
 
@@ -29,6 +29,14 @@ def get_restaurant_by_id(restaurant_id: str, repo: RestaurantRepo=Depends(create
     """Return a specific restaurant by its ID."""
     restaurant_service = RestaurantServices(repo)
     return restaurant_service.fetch_restaurant(restaurant_id)
+
+@restaurant_router.put("/{restaurant_id}",
+                       response_model=Restaurant, status_code=200)
+def update_restaurant(restaurant_id: str, payload: UpdateRestaurant,
+                          repo: RestaurantRepo=Depends(create_restaurant_repo)):
+    """Update a menu item in a specifed restaurants menu"""
+    restaurant_service = RestaurantServices(repo)
+    return restaurant_service.update_restaurant(restaurant_id, payload)
 
 @restaurant_router.post("/{restaurant_id}/menu", response_model=MenuItem, status_code=201)
 def add_menu_item_to_menu(restaurant_id: str, payload: CreateMenuItem,
