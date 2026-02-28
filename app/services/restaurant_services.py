@@ -30,7 +30,7 @@ class RestaurantServices():
             )
 
     def update_restaurant(self, restaurant_id: str, payload: UpdateRestaurant) -> MenuItem:
-        """Add a menu item to a restaurants menu"""
+        """Update information for a restaurant listing"""
 
         restaurants = self.repo.load_all_restaurants()
 
@@ -80,7 +80,7 @@ class RestaurantServices():
 
     def update_menu_item(self, restaurant_id: str,
                          menu_item_id: str, payload: UpdateMenuItem) -> MenuItem:
-        """Add a menu item to a restaurants menu"""
+        """Updates a menu item in a restaurants menu"""
 
         restaurants = self.repo.load_all_restaurants()
 
@@ -104,7 +104,7 @@ class RestaurantServices():
         raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
 
     def delete_menu_item(self, restaurant_id: str, menu_item_id: str) -> None:
-        """Deletes user from the data store"""
+        """Deletes a menu item from the data store"""
         restaurants = self.repo.load_all_restaurants()
 
         for restaurant in restaurants:
