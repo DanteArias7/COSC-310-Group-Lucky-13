@@ -46,6 +46,7 @@ class RestaurantServices():
             if restaurant["id"] == restaurant_id:
                 restaurant = {"id" : restaurant_id} | updated_restaurant.model_dump()
                 restaurant = restaurant | {"menu" : restaurants[i]["menu"]}
+                self.validate_menu_existence(restaurant)
                 restaurants[i] = restaurant
                 self.repo.save_all_restaurants(restaurants)
                 return Restaurant(**restaurant)
