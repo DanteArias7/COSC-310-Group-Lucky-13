@@ -135,6 +135,20 @@ def test_update_nonexistent_restaurant(mocker):
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Restaurant 00000000-0000-0000-0000-0000000000002 Not Found"
 
+def test_delete_nonexistent_restaurant(mocker):
+    """Test that delete_restaurant raises an exception if the restaurant id is not found"""
+    mocked_repo = mocker.Mock()
+    restaurant_service = RestaurantServices(mocked_repo)
+
+    mocked_repo.load_all_restaurants.return_value = test_restaurants
+
+    with pytest.raises(HTTPException) as exc_info:
+        restaurant_service.delete_restaurant(
+            "00000000-0000-0000-0000-0000000000009")
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Restaurant 00000000-0000-0000-0000-0000000000009 Not Found"
+
 def test_add_menu_item(mocker):
     """Test that adding a menu item returns the proper menu item"""
     mocked_uuid = '00000000-0000-0000-0000-000000000002'
