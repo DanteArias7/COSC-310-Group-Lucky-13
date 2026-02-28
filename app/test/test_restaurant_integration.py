@@ -237,6 +237,15 @@ def test_deleting_menu_item_success(tmp_path, test_restaurants):
 
     app.dependency_overrides[create_restaurant_repo] = override_delete_menu_item_repo
 
+   # Appending a second menu item so deletion is allowed as empty menus are not allowed
+    test_restaurants[0]["menu"].append({
+        "id": "00000000-0000-0000-0000-0000000000002",
+        "name": "Fries",
+        "description": "Yam Fries",
+        "price": 5.99,
+        "tags": ["fries"]
+    })
+
     with open(test_restaurant_data_path, "w", encoding="utf-8") as f:
         json.dump(test_restaurants, f, ensure_ascii=False)
 
@@ -247,11 +256,9 @@ def test_deleting_menu_item_success(tmp_path, test_restaurants):
     with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
         restaurants = json.load(f)
 
-
-    test_restaurants[0]["menu"] = []
-
     assert r.status_code == 204
-    assert restaurants == test_restaurants
+    assert len(restaurants[0]["menu"]) == 1
+    assert restaurants[0]["menu"][0]["id"] == "00000000-0000-0000-0000-0000000000002"
 
 def test_deleting_menu_item_to_nonexistent_restaurant(tmp_path, test_restaurants):
     """Testing unsuccessful deleting of menu item from a restaurant that does not exist"""
@@ -293,4 +300,28 @@ def test_deleting_nonexistent_menu_item(tmp_path, test_restaurants):
         restaurants = json.load(f)
 
     assert r.status_code == 404
+    assert restaurants == test_restaurants
+
+def test_deleting_last_menu_item_fails(tmp_path, test_restaurants):
+    """Testing unsuccessful deletion of the last remaining menu item"""
+
+    test_restaurant_data_path = tmp_path / "restaurants.json"
+
+    def override_delete_menu_item_repo():
+        return RestaurantRepo(test_restaurant_data_path)
+
+    app.dependency_overrides[create_restaurant_repo] = override_delete_menu_item_repo
+
+    with open(test_restaurant_data_path, "w", encoding="utf-8") as f:
+        json.dump(test_restaurants, f, ensure_ascii=False)
+
+    r = client.delete(
+        "/restaurants/00000000-0000-0000-0000-0000000000001/"
+        "menu/00000000-0000-0000-0000-0000000000001"
+    )
+
+    with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
+        restaurants = json.load(f)
+
+    assert r.status_code == 400
     assert restaurants == test_restaurants
