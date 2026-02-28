@@ -29,4 +29,7 @@ jobs:
     - name: Testing code with pytest
       run: |
         if [ -d app/test ]; then python -m pytest; fi
+    - name: Testing coverage with pytest-cov
+      run: |
+        python -m pytest --cov
       
