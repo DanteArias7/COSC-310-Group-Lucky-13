@@ -79,6 +79,12 @@ class RestaurantServices():
 
         raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
 
+    def validate_menu_existence(self, restaurant: Dict[str, Any]) -> None:
+        """Ensure restaurant always has at least one menu item."""
+        if not restaurant.get("menu") or len(restaurant["menu"]) == 0:
+            raise HTTPException(status_code= 400,
+                                detail = "Restaurant must have at least one menu item.")
+
     def delete_menu_item(self, restaurant_id: str, menu_item_id: str) -> None:
         """Deletes user from the data store"""
         restaurants = self.repo.load_all_restaurants()
@@ -88,9 +94,9 @@ class RestaurantServices():
                 for menu_item in restaurant["menu"]:
                     if menu_item["id"] == menu_item_id:
                         restaurant["menu"].remove(menu_item)
+                        self.validate_menu_existence(restaurant)
                         self.repo.save_all_restaurants(restaurants)
                         return
-
                 raise HTTPException(status_code=404, detail=f"Menu Item '{menu_item_id}' not found")
 
         raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
