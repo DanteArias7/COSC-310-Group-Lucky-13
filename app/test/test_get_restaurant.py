@@ -241,3 +241,35 @@ def test_delete_last_menuitem(mocker):
 
     assert exc_info.value.status_code == 400
     assert exc_info.value.detail == "Restaurant must have at least one menu item."
+
+def test_update_restaurant_fails_without_menu(mocker):
+    """Test that updating a restaurant fails if it has no menu"""
+
+    mocked_repo = mocker.Mock()
+    restaurant_service = RestaurantServices(mocked_repo)
+
+    restaurants = [{
+        "id": "00000000-0000-0000-0000-0000000000007",
+        "name": "Test",
+        "hours": {"Monday": "9:00-17:00"},
+        "phone_number": "123",
+        "address": "Street",
+        "tags": [],
+        "menu": []
+    }]
+
+    mocked_repo.load_all_restaurants.return_value = restaurants
+
+    payload = UpdateRestaurant(
+        name="Updated",
+        hours={"Monday": "10:00-18:00"},
+        phone_number="999",
+        address="New Street",
+        tags=[]
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        restaurant_service.update_restaurant("00000000-0000-0000-0000-0000000000007", payload)
+
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.detail == "Restaurant must have at least one menu item."
