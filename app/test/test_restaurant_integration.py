@@ -382,3 +382,45 @@ def test_deleting_last_menu_item_fails(tmp_path, test_restaurants):
 
     assert r.status_code == 400
     assert restaurants == test_restaurants
+
+def test_updating_restaurant_fails_without_menu(tmp_path):
+    """Testing unsuccessful updating of a restaurant with empty menu"""
+
+    test_restaurant_data_path = tmp_path / "restaurants.json"
+
+    def override_update_restaurant_repo():
+        return RestaurantRepo(test_restaurant_data_path)
+
+    app.dependency_overrides[create_restaurant_repo] = override_update_restaurant_repo
+
+    restaurants = [{
+        "id": "00000000-0000-0000-0000-0000000000007",
+        "name": "Test",
+        "hours": {"Monday": "9:00-17:00"},
+        "phone_number": "123",
+        "address": "Street",
+        "tags": [],
+        "menu": []
+    }]
+
+    with open(test_restaurant_data_path, "w", encoding="utf-8") as f:
+        json.dump(restaurants, f, ensure_ascii=False)
+
+    payload = {
+        "name": "Updated",
+        "hours": {"Monday": "10:00-18:00"},
+        "phone_number": "999",
+        "address": "New Street",
+        "tags": []
+    }
+
+    r = client.put(
+        "/restaurants/00000000-0000-0000-0000-0000000000007",
+        json=payload
+    )
+
+    with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
+        updated_restaurants = json.load(f)
+
+    assert r.status_code == 400
+    assert updated_restaurants == restaurants
