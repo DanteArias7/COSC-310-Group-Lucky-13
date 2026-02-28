@@ -158,3 +158,35 @@ def test_update_menu_item_nonexistent_restaurant(mocker):
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Restaurant 00000000-0000-0000-0000-0000000000002 Not Found"
+
+def test_delete_last_menuitem(mocker):
+    """Test that delete_menu_item does not delete the last menu item of the restaurant"""
+    mocked_repo = mocker.Mock()
+    restaurant_service = RestaurantServices(mocked_repo)
+
+    single_menu_restaurant = [{
+        "id": "00000000-0000-0000-0000-0000000000009",
+        "name": "Test",
+        "hours": {"Monday":"9:00-17:00"},
+        "phone_number": "123",
+        "address": "Hamburger street",
+        "tags": ["Fast food"],
+        "menu": [{
+            "id": "00000000-0000-0000-0000-0000000000099",
+            "name": "Item",
+            "description":"Hamburgers",
+            "price": 8.99,
+            "tags": ["Hamburger"]
+        }]
+
+    }]
+
+    mocked_repo.load_all_restaurants.return_value = single_menu_restaurant
+
+    with pytest.raises(HTTPException) as exc_info:
+        restaurant_service.delete_menu_item(
+            "00000000-0000-0000-0000-0000000000009",
+            "00000000-0000-0000-0000-0000000000099")
+
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.detail == "Restaurant must have at least one menu item."
