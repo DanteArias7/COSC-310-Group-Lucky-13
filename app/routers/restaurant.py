@@ -34,9 +34,17 @@ def get_restaurant_by_id(restaurant_id: int, repo: RestaurantRepo=Depends(create
                        response_model=Restaurant, status_code=200)
 def update_restaurant(restaurant_id: int, payload: UpdateRestaurant,
                           repo: RestaurantRepo=Depends(create_restaurant_repo)):
-    """Update a menu item in a specifed restaurants menu"""
+    """Update a restaurant's information'"""
     restaurant_service = RestaurantServices(repo)
     return restaurant_service.update_restaurant(restaurant_id, payload)
+
+@restaurant_router.delete("/{restaurant_id}",
+                       status_code=status.HTTP_204_NO_CONTENT)
+def delete_restaurant(restaurant_id: int,
+                          repo: RestaurantRepo=Depends(create_restaurant_repo)):
+    """Delete a restaurant listing from the system"""
+    restaurant_service = RestaurantServices(repo)
+    return restaurant_service.delete_restaurant(restaurant_id)
 
 @restaurant_router.post("/{restaurant_id}/menu", response_model=MenuItem, status_code=201)
 def add_menu_item_to_menu(restaurant_id: int, payload: CreateMenuItem,
