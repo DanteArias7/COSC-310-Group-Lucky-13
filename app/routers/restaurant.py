@@ -25,21 +25,21 @@ def get_all_restaurants(repo: RestaurantRepo = Depends(create_restaurant_repo)):
     return restaurant_service.fetch_all_restaurants()
 
 @restaurant_router.get("/{restaurant_id}", response_model=Restaurant, status_code=200)
-def get_restaurant_by_id(restaurant_id: str, repo: RestaurantRepo=Depends(create_restaurant_repo)):
+def get_restaurant_by_id(restaurant_id: int, repo: RestaurantRepo=Depends(create_restaurant_repo)):
     """Return a specific restaurant by its ID."""
     restaurant_service = RestaurantServices(repo)
     return restaurant_service.fetch_restaurant(restaurant_id)
 
 @restaurant_router.put("/{restaurant_id}",
                        response_model=Restaurant, status_code=200)
-def update_restaurant(restaurant_id: str, payload: UpdateRestaurant,
+def update_restaurant(restaurant_id: int, payload: UpdateRestaurant,
                           repo: RestaurantRepo=Depends(create_restaurant_repo)):
     """Update a menu item in a specifed restaurants menu"""
     restaurant_service = RestaurantServices(repo)
     return restaurant_service.update_restaurant(restaurant_id, payload)
 
 @restaurant_router.post("/{restaurant_id}/menu", response_model=MenuItem, status_code=201)
-def add_menu_item_to_menu(restaurant_id: str, payload: CreateMenuItem,
+def add_menu_item_to_menu(restaurant_id: int, payload: CreateMenuItem,
                           repo: RestaurantRepo=Depends(create_restaurant_repo)):
     """Add a menu item to the specifed restaurants menu"""
     restaurant_service = RestaurantServices(repo)
@@ -47,7 +47,7 @@ def add_menu_item_to_menu(restaurant_id: str, payload: CreateMenuItem,
 
 @restaurant_router.put("/{restaurant_id}/menu/{menu_item_id}",
                        response_model=MenuItem, status_code=200)
-def update_menu_item_in_menu(restaurant_id: str, menu_item_id: str, payload: UpdateMenuItem,
+def update_menu_item_in_menu(restaurant_id: int, menu_item_id: str, payload: UpdateMenuItem,
                           repo: RestaurantRepo=Depends(create_restaurant_repo)):
     """Update a menu item in a specifed restaurants menu"""
     restaurant_service = RestaurantServices(repo)
@@ -55,7 +55,7 @@ def update_menu_item_in_menu(restaurant_id: str, menu_item_id: str, payload: Upd
 
 @restaurant_router.delete("/{restaurant_id}/menu/{menu_item_id}",
                           status_code=status.HTTP_204_NO_CONTENT)
-def delete_menu_item_in_menu(restaurant_id: str, menu_item_id: str,
+def delete_menu_item_in_menu(restaurant_id: int, menu_item_id: str,
                           repo: RestaurantRepo=Depends(create_restaurant_repo)):
     """Delete a menu item in a specifed restaurants menu"""
     restaurant_service = RestaurantServices(repo)
