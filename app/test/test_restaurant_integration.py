@@ -133,7 +133,7 @@ def test_updating_nonexistent_restaurant(tmp_path, test_restaurants):
     assert restaurants == test_restaurants
 
 def test_delete_restaurant_successful(tmp_path, test_restaurants):
-    """Testing successful updating of a restaurants information"""
+    """Testing successful deletion of a restaurants information"""
     test_restaurant_data_path = tmp_path / "restaurants.json"
 
     def override_update_restaurant_repo():
@@ -154,7 +154,7 @@ def test_delete_restaurant_successful(tmp_path, test_restaurants):
     assert restaurants == []
 
 def test_delete_nonexistent_restaurant(tmp_path, test_restaurants):
-    """Testing successful updating of a restaurants information"""
+    """Testing unsuccessful deletion of a restaurants information"""
     test_restaurant_data_path = tmp_path / "restaurants.json"
 
     def override_update_restaurant_repo():
