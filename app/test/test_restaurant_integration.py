@@ -14,7 +14,7 @@ client = TestClient(app)
 @pytest.fixture
 def test_restaurants():
     """Initialize test restaurant data for each test"""
-    return [{"id": "00000000-0000-0000-0000-0000000000001", "name": "Veggie Palace",
+    return [{"id": 101, "name": "Veggie Palace",
                 "hours": {"Monday": "9:00-17:00"}, "phone_number": "1234567890",
                 "address": "123 Green Street",
                 "tags": ["vegan", "brunch"],
@@ -24,8 +24,18 @@ def test_restaurants():
                 }]
         }]
 
-def test_get_all_restaurants_integration():
+def test_get_all_restaurants_integration(tmp_path, test_restaurants):
     """Test retrieving all restaurants via GET /restaurants/."""
+    test_restaurant_data_path = tmp_path / "restaurants.json"
+
+    def override_update_restaurant_repo():
+        return RestaurantRepo(test_restaurant_data_path)
+
+    app.dependency_overrides[create_restaurant_repo] = override_update_restaurant_repo
+
+    with open(test_restaurant_data_path, "w", encoding="utf-8") as f:
+        json.dump(test_restaurants, f, ensure_ascii=False)
+
     response = client.get("/restaurants/")
 
     assert response.status_code == 200
@@ -49,14 +59,25 @@ def test_get_all_restaurants_integration():
     assert isinstance(restaurant["menu"],list)
 
 
-def test_get_single_restaurant_integration():
+def test_get_single_restaurant_integration(tmp_path, test_restaurants):
     """Test retrieving a single restaurant via GET /restaurants/{id}."""
-    response = client.get("/restaurants/00000000-0000-0000-0000-0000000000001")
+    test_restaurant_data_path = tmp_path / "restaurants.json"
+
+    def override_update_restaurant_repo():
+        return RestaurantRepo(test_restaurant_data_path)
+
+    app.dependency_overrides[create_restaurant_repo] = override_update_restaurant_repo
+
+    with open(test_restaurant_data_path, "w", encoding="utf-8") as f:
+        json.dump(test_restaurants, f, ensure_ascii=False)
+
+    request = "/restaurants/" + str(test_restaurants[0]["id"])
+    response = client.get(request)
 
     assert response.status_code == 200
     data = response.json()
 
-    assert data["id"] == "00000000-0000-0000-0000-0000000000001"
+    assert data["id"] == 101
     assert "name" in data
     assert "phone_number" in data
     assert "hours" in data
@@ -68,9 +89,18 @@ def test_get_single_restaurant_integration():
     assert isinstance(data["menu"], list)
 
 
-def test_get_nonexistent_restaurant_integration():
+def test_get_nonexistent_restaurant_integration(tmp_path, test_restaurants):
     """Test retrieving a restaurant that does not exist."""
-    response = client.get("/restaurants/non-existent-id")
+    test_restaurant_data_path = tmp_path / "restaurants.json"
+
+    def override_update_restaurant_repo():
+        return RestaurantRepo(test_restaurant_data_path)
+
+    app.dependency_overrides[create_restaurant_repo] = override_update_restaurant_repo
+
+    with open(test_restaurant_data_path, "w", encoding="utf-8") as f:
+        json.dump(test_restaurants, f, ensure_ascii=False)
+    response = client.get("/restaurants/103")
 
     assert response.status_code == 404
 
@@ -91,7 +121,8 @@ def test_updating_restaurant_successful(tmp_path, test_restaurants):
                 "address": "321 Red Street",
                 "tags": ["brunch"]}
 
-    r = client.put("/restaurants/00000000-0000-0000-0000-0000000000001", json=payload)
+    request = "/restaurants/" + str(test_restaurants[0]["id"])
+    r = client.put(request, json=payload)
 
 
     with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
@@ -123,7 +154,7 @@ def test_updating_nonexistent_restaurant(tmp_path, test_restaurants):
                 "address": "321 Red Street",
                 "tags": ["brunch"]}
 
-    r = client.put("/restaurants/00000000-0000-0000-0000-0000000000002", json=payload)
+    r = client.put("/restaurants/999", json=payload)
 
 
     with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
@@ -144,7 +175,8 @@ def test_delete_restaurant_successful(tmp_path, test_restaurants):
     with open(test_restaurant_data_path, "w", encoding="utf-8") as f:
         json.dump(test_restaurants, f, ensure_ascii=False)
 
-    r = client.delete("/restaurants/00000000-0000-0000-0000-0000000000001")
+    request = "/restaurants/" + str(test_restaurants[0]["id"])
+    r = client.delete(request)
 
 
     with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
@@ -165,7 +197,7 @@ def test_delete_nonexistent_restaurant(tmp_path, test_restaurants):
     with open(test_restaurant_data_path, "w", encoding="utf-8") as f:
         json.dump(test_restaurants, f, ensure_ascii=False)
 
-    r = client.delete("/restaurants/00000000-0000-0000-0000-0000000000009")
+    r = client.delete("/restaurants/999")
 
     with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
         restaurants = json.load(f)
@@ -188,7 +220,8 @@ def test_adding_menu_item(tmp_path, test_restaurants):
     payload = {"name": "Classic Burger",
                 "description": "Cheeseburger", "price": 10.50, "tags": ["burger"]}
 
-    r = client.post("/restaurants/00000000-0000-0000-0000-0000000000001/menu", json=payload)
+    request = "/restaurants/" + str(test_restaurants[0]["id"]) + "/menu"
+    r = client.post(request, json=payload)
 
     with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
         restaurants = json.load(f)
@@ -215,7 +248,8 @@ def test_adding_menu_item_already_exists(tmp_path, test_restaurants):
     payload = {"name": "Vegan Burger",
                 "description": "Cheeseburger", "price": 10.50, "tags": ["burger"]}
 
-    r = client.post("/restaurants/00000000-0000-0000-0000-0000000000001/menu", json=payload)
+    request = "/restaurants/" + str(test_restaurants[0]["id"]) + "/menu"
+    r = client.post(request, json=payload)
 
     with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
         restaurants = json.load(f)
@@ -238,7 +272,7 @@ def test_adding_menu_item_nonexistent_restaurant(tmp_path, test_restaurants):
     payload = {"name": "Vegan Burger",
                 "description": "Cheeseburger", "price": 10.50, "tags": ["burger"]}
 
-    r = client.post("/restaurants/00000000-0000-0000-0000-0000000000002/menu", json=payload)
+    r = client.post("/restaurants/999/menu", json=payload)
 
     with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
         restaurants = json.load(f)
@@ -261,8 +295,9 @@ def test_updating_menu_item_successful(tmp_path, test_restaurants):
     payload = {"name": "Hot Dog", "description": "Beef hot dog on bun",
                 "price": 5.99, "tags": ["beef"]}
 
-    r = client.put("/restaurants/00000000-0000-0000-0000-0000000000001/menu/" \
-    "00000000-0000-0000-0000-0000000000001", json=payload)
+    request = "/restaurants/" + str(test_restaurants[0]["id"])
+    request = request + "/menu/" + test_restaurants[0]["menu"][0]["id"]
+    r = client.put(request, json=payload)
 
 
     with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
@@ -291,8 +326,9 @@ def test_updating_nonexistent_menu_item(tmp_path, test_restaurants):
     payload = {"name": "Hot Dog", "description": "Beef hot dog on bun",
                 "price": 5.99, "tags": ["beef"]}
 
-    r = client.put("/restaurants/00000000-0000-0000-0000-0000000000001/" \
-    "menu/00000000-0000-0000-0000-0000000000002", json=payload)
+    request = "/restaurants/" + str(test_restaurants[0]["id"])
+    request = request + "/menu/99999999-9999-9999-9999-999999999999"
+    r = client.put(request, json=payload)
 
 
     with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
@@ -316,8 +352,9 @@ def test_updating_menu_item_to_nonexistent_restaurant(tmp_path, test_restaurants
     payload = {"name": "Hot Dog", "description": "Beef hot dog on bun",
                 "price": 5.99, "tags": ["beef"]}
 
-    r = client.put("/restaurants/00000000-0000-0000-0000-0000000000001/," \
-    "menu/00000000-0000-0000-0000-0000000000002", json=payload)
+
+    request = "/restaurants/999/menu/99999999-9999-9999-9999-999999999999"
+    r = client.put(request, json=payload)
 
 
     with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
@@ -347,9 +384,9 @@ def test_deleting_menu_item_success(tmp_path, test_restaurants):
     with open(test_restaurant_data_path, "w", encoding="utf-8") as f:
         json.dump(test_restaurants, f, ensure_ascii=False)
 
-    r = client.delete("/restaurants/00000000-0000-0000-0000-0000000000001/" \
-    "menu/00000000-0000-0000-0000-0000000000001")
-
+    request = "/restaurants/" + str(test_restaurants[0]["id"])
+    request = request + "/menu/" + test_restaurants[0]["menu"][0]["id"]
+    r = client.delete(request)
 
     with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
         restaurants = json.load(f)
@@ -370,8 +407,8 @@ def test_deleting_menu_item_to_nonexistent_restaurant(tmp_path, test_restaurants
     with open(test_restaurant_data_path, "w", encoding="utf-8") as f:
         json.dump(test_restaurants, f, ensure_ascii=False)
 
-    r = client.delete("/restaurants/00000000-0000-0000-0000-0000000000002/" \
-    "menu/00000000-0000-0000-0000-0000000000001")
+    request = "/restaurants/999/menu/" + test_restaurants[0]["menu"][0]["id"]
+    r = client.delete(request)
 
     with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
         restaurants = json.load(f)
@@ -391,8 +428,9 @@ def test_deleting_nonexistent_menu_item(tmp_path, test_restaurants):
     with open(test_restaurant_data_path, "w", encoding="utf-8") as f:
         json.dump(test_restaurants, f, ensure_ascii=False)
 
-    r = client.delete("/restaurants/00000000-0000-0000-0000-0000000000001/" \
-    "menu/00000000-0000-0000-0000-0000000000002")
+    request = "/restaurants/" + str(test_restaurants[0]["id"])
+    request = request + "/menu/99999999-9999-9999-9999-999999999999"
+    r = client.delete(request)
 
     with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
         restaurants = json.load(f)
@@ -413,10 +451,9 @@ def test_deleting_last_menu_item_fails(tmp_path, test_restaurants):
     with open(test_restaurant_data_path, "w", encoding="utf-8") as f:
         json.dump(test_restaurants, f, ensure_ascii=False)
 
-    r = client.delete(
-        "/restaurants/00000000-0000-0000-0000-0000000000001/"
-        "menu/00000000-0000-0000-0000-0000000000001"
-    )
+    request = "/restaurants/" + str(test_restaurants[0]["id"])
+    request = request + "/menu/" + test_restaurants[0]["menu"][0]["id"]
+    r = client.delete(request)
 
     with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
         restaurants = json.load(f)
