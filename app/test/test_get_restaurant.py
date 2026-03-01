@@ -7,7 +7,7 @@ from app.schemas.restaurant import Restaurant, UpdateRestaurant
 from app.services.restaurant_services import RestaurantServices
 
 #pylint: disable=duplicate-code
-test_restaurants = [{"id": "00000000-0000-0000-0000-0000000000001", "name": "Veggie Palace",
+test_restaurants = [{"id": 101, "name": "Veggie Palace",
                 "hours": {"Monday": "9:00-17:00"}, "phone_number": "1234567890",
                 "address": "123 Green Street",
                 "tags": ["vegan", "brunch"],
@@ -21,7 +21,7 @@ def test_fetch_all_restaurants(mocker):
     """Testing that fetch_all_restaurants returns a list of restaurants"""
     fake_data = [
         {
-            "id": "test-id-123",
+            "id": 101,
             "name": "Veggie Palace",
             "hours": {"Monday": "9:00-17:00"},
             "phone_number": "1234567890",
@@ -44,7 +44,7 @@ def test_fetch_all_restaurants(mocker):
 def test_fetch_restaurant_success(mocker):
     """Testing that fetch_restaurant returns the result when requested ID exists"""
     fake_restaurant = [{
-        "id": "test-id-123",
+        "id": 101,
         "name": "Veggie Palace",
         "hours": {"Monday": "9:00-17:00"},
         "phone_number": "1234567890",
@@ -58,10 +58,10 @@ def test_fetch_restaurant_success(mocker):
 
     mocked_repo.load_all_restaurants.return_value = fake_restaurant
 
-    result = restaurant_service.fetch_restaurant("test-id-123")
+    result = restaurant_service.fetch_restaurant(101)
     result = result.model_dump()
 
-    assert result["id"] == "test-id-123"
+    assert result["id"] == 101
     assert result["name"] == "Veggie Palace"
     assert result["phone_number"] == "1234567890"
     assert result["address"] == "123 Green Street"
@@ -98,7 +98,7 @@ def test_update_restaurant_success(mocker):
                             address="321  Street",
                             tags=["brunch"])
 
-    expected_restaurant =  Restaurant(id="00000000-0000-0000-0000-0000000000001",
+    expected_restaurant =  Restaurant(id=101,
                                     name = "Meat Palace",
                                     hours= {"Monday": "9:00-2:00"},
                                     phone_number="9876543210",
@@ -129,11 +129,11 @@ def test_update_nonexistent_restaurant(mocker):
                             tags=["brunch"])
 
     with pytest.raises(HTTPException) as exc_info:
-        restaurant_service.update_restaurant("00000000-0000-0000-0000-0000000000002",
+        restaurant_service.update_restaurant(102,
                                              payload)
 
     assert exc_info.value.status_code == 404
-    assert exc_info.value.detail == "Restaurant 00000000-0000-0000-0000-0000000000002 Not Found"
+    assert exc_info.value.detail == "Restaurant 102 Not Found"
 
 def test_add_menu_item(mocker):
     """Test that adding a menu item returns the proper menu item"""
