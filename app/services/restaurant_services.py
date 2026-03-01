@@ -29,8 +29,8 @@ class RestaurantServices():
                 detail="Restaurant not found",
             )
 
-    def update_restaurant(self, restaurant_id: int, payload: UpdateRestaurant) -> MenuItem:
-        """Add a menu item to a restaurants menu"""
+    def update_restaurant(self, restaurant_id: int, payload: UpdateRestaurant) -> Restaurant:
+        """Updates a restaurant's information"""
 
         restaurants = self.repo.load_all_restaurants()
 
@@ -52,6 +52,17 @@ class RestaurantServices():
 
         raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
 
+    def delete_restaurant(self, restaurant_id: int) -> None:
+        """Deletes restaurant from the data store"""
+        restaurants = self.repo.load_all_restaurants()
+
+        for restaurant in restaurants:
+            if restaurant["id"] == restaurant_id:
+                restaurants.remove(restaurant)
+                self.repo.save_all_restaurants(restaurants)
+                return
+
+            raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
 
     def add_item_to_menu(self, restaurant_id: int, payload: MenuItem) -> MenuItem:
         """Add a menu item to a restaurants menu"""
@@ -80,7 +91,7 @@ class RestaurantServices():
 
     def update_menu_item(self, restaurant_id: int,
                          menu_item_id: str, payload: UpdateMenuItem) -> MenuItem:
-        """Add a menu item to a restaurants menu"""
+        """Update a menu item in a restaurant's menu"""
 
         restaurants = self.repo.load_all_restaurants()
 
@@ -110,7 +121,7 @@ class RestaurantServices():
                                 detail = "Restaurant must have at least one menu item.")
 
     def delete_menu_item(self, restaurant_id: int, menu_item_id: str) -> None:
-        """Deletes user from the data store"""
+        """Deletes menu item from a restaurant's menu"""
         restaurants = self.repo.load_all_restaurants()
 
         for restaurant in restaurants:
