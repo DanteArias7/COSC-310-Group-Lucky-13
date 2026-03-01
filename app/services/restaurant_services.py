@@ -16,7 +16,7 @@ class RestaurantServices():
         """Return all restaurants."""
         return self.repo.load_all_restaurants()
 
-    def fetch_restaurant(self, restaurant_id: str) -> Restaurant:
+    def fetch_restaurant(self, restaurant_id: int) -> Restaurant:
         """Return a restaurant by ID or raise 404."""
         restaurants = self.repo.load_all_restaurants()
 
@@ -29,7 +29,7 @@ class RestaurantServices():
                 detail="Restaurant not found",
             )
 
-    def update_restaurant(self, restaurant_id: str, payload: UpdateRestaurant) -> MenuItem:
+    def update_restaurant(self, restaurant_id: int, payload: UpdateRestaurant) -> MenuItem:
         """Add a menu item to a restaurants menu"""
 
         restaurants = self.repo.load_all_restaurants()
@@ -50,10 +50,10 @@ class RestaurantServices():
                 self.repo.save_all_restaurants(restaurants)
                 return Restaurant(**restaurant)
 
-            raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
+        raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
 
 
-    def add_item_to_menu(self, restaurant_id: str, payload: MenuItem) -> MenuItem:
+    def add_item_to_menu(self, restaurant_id: int, payload: MenuItem) -> MenuItem:
         """Add a menu item to a restaurants menu"""
 
         restaurants = self.repo.load_all_restaurants()
@@ -78,7 +78,7 @@ class RestaurantServices():
 
         raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
 
-    def update_menu_item(self, restaurant_id: str,
+    def update_menu_item(self, restaurant_id: int,
                          menu_item_id: str, payload: UpdateMenuItem) -> MenuItem:
         """Add a menu item to a restaurants menu"""
 
@@ -109,7 +109,7 @@ class RestaurantServices():
             raise HTTPException(status_code= 400,
                                 detail = "Restaurant must have at least one menu item.")
 
-    def delete_menu_item(self, restaurant_id: str, menu_item_id: str) -> None:
+    def delete_menu_item(self, restaurant_id: int, menu_item_id: str) -> None:
         """Deletes user from the data store"""
         restaurants = self.repo.load_all_restaurants()
 
