@@ -2,7 +2,7 @@ name: Pylint
 
 on: 
   push:
-    branches: ["features/**"]
+    branches: ["features/**", "refactor/**"]
   pull_request:
     branches: ["main"]
     
