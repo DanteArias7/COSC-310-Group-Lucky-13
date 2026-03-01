@@ -163,6 +163,48 @@ def test_updating_nonexistent_restaurant(tmp_path, test_restaurants):
     assert r.status_code == 404
     assert restaurants == test_restaurants
 
+def test_delete_restaurant_successful(tmp_path, test_restaurants):
+    """Testing successful deletion of a restaurants information"""
+    test_restaurant_data_path = tmp_path / "restaurants.json"
+
+    def override_update_restaurant_repo():
+        return RestaurantRepo(test_restaurant_data_path)
+
+    app.dependency_overrides[create_restaurant_repo] = override_update_restaurant_repo
+
+    with open(test_restaurant_data_path, "w", encoding="utf-8") as f:
+        json.dump(test_restaurants, f, ensure_ascii=False)
+
+    request = "/restaurants/" + str(test_restaurants[0]["id"])
+    r = client.delete(request)
+
+
+    with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
+        restaurants = json.load(f)
+
+    assert r.status_code == 204
+    assert restaurants == []
+
+def test_delete_nonexistent_restaurant(tmp_path, test_restaurants):
+    """Testing unsuccessful deletion of a restaurants information"""
+    test_restaurant_data_path = tmp_path / "restaurants.json"
+
+    def override_update_restaurant_repo():
+        return RestaurantRepo(test_restaurant_data_path)
+
+    app.dependency_overrides[create_restaurant_repo] = override_update_restaurant_repo
+
+    with open(test_restaurant_data_path, "w", encoding="utf-8") as f:
+        json.dump(test_restaurants, f, ensure_ascii=False)
+
+    r = client.delete("/restaurants/999")
+
+    with open(test_restaurant_data_path, "r", encoding="utf-8") as f:
+        restaurants = json.load(f)
+
+    assert r.status_code == 404
+    assert restaurants == test_restaurants
+
 def test_adding_menu_item(tmp_path, test_restaurants):
     """Testing adding a menu item to a restaurant's menu"""
     test_restaurant_data_path = tmp_path / "restaurants.json"
