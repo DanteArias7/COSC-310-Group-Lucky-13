@@ -1,7 +1,7 @@
 """Service layer for restaurant business logic."""
 
 from typing import Any, Dict, List, Protocol
-import uuid
+import random
 from fastapi import HTTPException
 from app.schemas.menu import MenuItem, UpdateMenuItem
 from app.schemas.restaurant import Restaurant, RestaurantCreate, UpdateRestaurant
@@ -16,7 +16,7 @@ class RestaurantServices():
         """
         Create new restaurant profile
         Rules:
-        - menu is always initialized as an empty list (restaurant should be created before 
+        - menu is always initialized as an empty list (restaurant should be created before
             MenuItems are added)
 
         Args:
@@ -24,15 +24,15 @@ class RestaurantServices():
             hours: dictionary of [day: hours] the restaurant is open for every day of the week
             phone_number: phone number for the restaurant
             address: where the restaurant is located
-            tags: types of cuisine(s), dietary restrictions (vegan, gluten free, etc) 
-                accommodated, type of food (brunch, cafe, etc) 
+            tags: types of cuisine(s), dietary restrictions (vegan, gluten free, etc)
+                accommodated, type of food (brunch, cafe, etc)
             menu: list of MenuItems offered by the restaurant, initalized as empty list
 
         Returns:
             new Restaurant object
         """
         restaurant = Restaurant(
-            id=str(uuid.uuid4()),
+            id=random.randint(1, 1_000_000),
             name=payload.name,
             hours=payload.hours,
             phone_number=payload.phone_number,
