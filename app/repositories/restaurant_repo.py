@@ -26,3 +26,4 @@ class RestaurantRepo():
         with open(temp_restaurant_file, "w", encoding="utf-8") as f:
             json.dump(restaurants, f, ensure_ascii=False, indent=2)
         os.replace(temp_restaurant_file, self.data_path)
+        

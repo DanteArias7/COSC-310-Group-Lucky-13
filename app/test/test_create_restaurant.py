@@ -2,8 +2,6 @@
 
 import json
 from fastapi.testclient import TestClient
-from fastapi import HTTPException
-import pytest
 from app.main import app
 from app.schemas.restaurant import RestaurantCreate
 from app.repositories.restaurant_repo import RestaurantRepo

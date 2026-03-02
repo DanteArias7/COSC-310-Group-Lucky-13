@@ -16,14 +16,16 @@ class RestaurantServices():
         """
         Create new restaurant profile
         Rules:
-        - menu is always initialized as an empty list (restaurant should be created before MenuItems are added)
+        - menu is always initialized as an empty list (restaurant should be created before 
+            MenuItems are added)
 
         Args:
             name: name of the restaurant
             hours: dictionary of [day: hours] the restaurant is open for every day of the week
             phone_number: phone number for the restaurant
             address: where the restaurant is located
-            tags: types of cuisine(s), dietary restrictions (vegan, gluten free, etc) accommodated, type of food (brunch, cafe, etc) 
+            tags: types of cuisine(s), dietary restrictions (vegan, gluten free, etc) 
+                accommodated, type of food (brunch, cafe, etc) 
             menu: list of MenuItems offered by the restaurant, initalized as empty list
 
         Returns:
