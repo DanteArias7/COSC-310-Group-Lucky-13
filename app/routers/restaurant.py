@@ -5,7 +5,7 @@ from typing import List
 from fastapi import APIRouter, Depends, status
 from app.repositories.cart_repo import CartRepo
 from app.schemas.menu import CreateMenuItem, MenuItem, UpdateMenuItem
-from app.schemas.restaurant import Restaurant, UpdateRestaurant
+from app.schemas.restaurant import Restaurant, UpdateRestaurant, RestaurantCreate
 from app.services.cart_services import CartServices
 from app.services.restaurant_services import RestaurantServices
 from app.repositories.restaurant_repo import RestaurantRepo
@@ -24,6 +24,13 @@ def create_restaurant_repo():
 def create_cart_repo():
     """"Initialize repo object with data path to restaurant json file"""
     return CartRepo(CART_DATA_PATH)
+
+@restaurant_router.post("", response_model=Restaurant, status_code=201)
+def create_restaurant(payload: RestaurantCreate,
+                      repo: RestaurantRepo = Depends(create_restaurant_repo)):
+    """Create a new restaurant profile."""
+    restaurant_service = RestaurantServices(repo)
+    return restaurant_service.create_new_restaurant(payload)
 
 @restaurant_router.get("", response_model=List[Restaurant], status_code=200)
 def get_all_restaurants(repo: RestaurantRepo = Depends(create_restaurant_repo)):
