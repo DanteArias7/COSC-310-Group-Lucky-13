@@ -13,3 +13,12 @@ class Restaurant(BaseModel):
     address: str
     tags: List[str] = []
     menu: List[MenuItem] = []
+
+class RestaurantCreate(BaseModel):
+    """schema to create new restaurant"""
+    name: str
+    hours: dict[str, str]
+    phone_number: str
+    address: str
+    tags: List[str] = []
+    menu: List[MenuItem] = []
