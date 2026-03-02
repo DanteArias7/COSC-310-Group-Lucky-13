@@ -1,3 +1,4 @@
+# pylint: disable=C0304
 """Unit tests for Login authentication (LoginServices)."""
 
 import pytest

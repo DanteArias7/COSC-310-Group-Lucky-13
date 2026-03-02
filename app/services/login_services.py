@@ -1,3 +1,5 @@
+# pylint: disable=C0304
+# pylint: disable=too-few-public-methods
 """Service layer for Login authentication business logic.
 
 Allows users to log in using an email or phone number combined with a password.
@@ -57,3 +59,4 @@ class LoginServices:
             role=user["role"],
             message=f"Login successful. Welcome, {user['name']}!",
         )
+    

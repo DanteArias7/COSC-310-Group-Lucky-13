@@ -1,3 +1,4 @@
+# pylint: disable=C0304
 """Pydantic schemas for authentication models"""
 
 from pydantic import BaseModel

@@ -1,3 +1,4 @@
+# pylint: disable=C0304
 """Login API endpoint.
 
 POST /auth/login  — authenticate with email or phone number plus password.

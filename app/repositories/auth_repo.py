@@ -1,3 +1,5 @@
+# pylint: disable=too-few-public-methods
+# pylint: disable=C0304
 """Repository layer for authentication - looks up users for login."""
 
 from typing import Any, Dict, List, Optional, Protocol
