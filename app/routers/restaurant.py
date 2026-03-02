@@ -3,12 +3,15 @@
 from pathlib import Path
 from typing import List
 from fastapi import APIRouter, Depends, status
+from app.repositories.cart_repo import CartRepo
 from app.schemas.menu import CreateMenuItem, MenuItem, UpdateMenuItem
 from app.schemas.restaurant import Restaurant, UpdateRestaurant
+from app.services.cart_services import CartServices
 from app.services.restaurant_services import RestaurantServices
 from app.repositories.restaurant_repo import RestaurantRepo
 
 RESTAURANT_DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "restaurants.json"
+CART_DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "carts.json"
 restaurant_router = APIRouter(
     prefix="/restaurants",
     tags=["restaurant"],
@@ -17,6 +20,10 @@ restaurant_router = APIRouter(
 def create_restaurant_repo():
     """"Initialize repo object with data path to restaurant json file"""
     return RestaurantRepo(RESTAURANT_DATA_PATH)
+
+def create_cart_repo():
+    """"Initialize repo object with data path to restaurant json file"""
+    return CartRepo(CART_DATA_PATH)
 
 @restaurant_router.get("", response_model=List[Restaurant], status_code=200)
 def get_all_restaurants(repo: RestaurantRepo = Depends(create_restaurant_repo)):
@@ -68,3 +75,11 @@ def delete_menu_item_in_menu(restaurant_id: int, menu_item_id: str,
     """Delete a menu item in a specifed restaurants menu"""
     restaurant_service = RestaurantServices(repo)
     return restaurant_service.delete_menu_item(restaurant_id, menu_item_id)
+
+@restaurant_router.delete("/{restaurant_id}/cart/{cart_id}/" \
+                        "{menu_item_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_menu_item_from_cart(cart_id: str, menu_item_id: str,
+                          repo: CartRepo=Depends(create_cart_repo)):
+    """Delate a menu item from a users cart"""
+    cart_service = CartServices(repo)
+    return cart_service.remove_item_from_cart(cart_id, menu_item_id)
