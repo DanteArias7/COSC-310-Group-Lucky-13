@@ -13,8 +13,8 @@ client = TestClient(app)
 def test_create_new_restaurant(mocker):
     """Scenario: check that creating a valid restaurant returns a valid restaurant"""
     mocked_id = 99
-    uuid_mock = mocker.patch("app.services.restaurant_services.uuid.uuid4")
-    uuid_mock.return_value = mocked_id
+    id_mock = mocker.patch("app.services.restaurant_services.random.randint")
+    id_mock.return_value = mocked_id
 
     mocked_repo = mocker.Mock()
     mocked_repo.load_all_restaurants.return_value = []
