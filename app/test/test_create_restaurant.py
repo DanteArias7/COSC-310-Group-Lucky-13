@@ -12,9 +12,9 @@ client = TestClient(app)
 
 def test_create_new_restaurant(mocker):
     """Scenario: check that creating a valid restaurant returns a valid restaurant"""
-    mocked_uuid = "00000000-0000-0000-0000-000000000099"
+    mocked_id = 99
     uuid_mock = mocker.patch("app.services.restaurant_services.uuid.uuid4")
-    uuid_mock.return_value = mocked_uuid
+    uuid_mock.return_value = mocked_id
 
     mocked_repo = mocker.Mock()
     mocked_repo.load_all_restaurants.return_value = []
@@ -32,7 +32,7 @@ def test_create_new_restaurant(mocker):
 
     result = restaurant_service.create_new_restaurant(payload)
 
-    assert result.id == mocked_uuid
+    assert result.id == mocked_id
     assert result.name == "Taco Town"
     assert result.hours == {"Monday": "10:00-20:00"}
     assert result.phone_number == "5555555555"
