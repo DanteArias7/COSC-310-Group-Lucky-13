@@ -5,8 +5,9 @@ import json
 from fastapi.testclient import TestClient
 import pytest
 from app.main import app
+from app.repositories.cart_repo import CartRepo
 from app.repositories.restaurant_repo import RestaurantRepo
-from app.routers.restaurant import create_restaurant_repo
+from app.routers.restaurant import create_cart_repo, create_restaurant_repo
 
 # pylint: disable=redefined-outer-name
 client = TestClient(app)
@@ -23,6 +24,20 @@ def test_restaurants():
                 "price": 12.99, "tags": ["vegan"]
                 }]
         }]
+
+@pytest.fixture
+def test_carts():
+    """Initialize test cart data for each test"""
+    return [{"id" : "00000000-0000-0000-0000-000000000001",
+            "user_id" : "00000000-0000-0000-0000-000000000001",
+            "restaurant_id" : 101,
+            "menu_items" :  [{"id": "018f8c10-7b2a-7f21-9a3c-0a1b2c3d4e01",
+                            "name": "Vegan Burger",
+                            "description": "Plant-based patty with lettuce and tomato",
+                            "price": 12.99,
+                            "tags": ["vegan"]}],
+      "total" : 7.88
+  }]
 
 def test_get_all_restaurants_integration(tmp_path, test_restaurants):
     """Test retrieving all restaurants via GET /restaurants/."""
@@ -460,3 +475,77 @@ def test_deleting_last_menu_item_fails(tmp_path, test_restaurants):
 
     assert r.status_code == 400
     assert restaurants == test_restaurants
+
+def test_deleting_menu_item_from_cart_success(tmp_path, test_carts):
+    """Testing a successful deleting of a menu item from a users cart"""
+    test_cart_data_path = tmp_path / "carts.json"
+
+    def override_delete_menu_item_from_cart_repo():
+        return CartRepo(test_cart_data_path)
+
+    app.dependency_overrides[create_cart_repo] = override_delete_menu_item_from_cart_repo
+
+
+    with open(test_cart_data_path, "w", encoding="utf-8") as f:
+        json.dump(test_carts, f, ensure_ascii=False)
+
+    request = "/restaurants/" + str(test_carts[0]["restaurant_id"])
+    request = request + "/cart/" + test_carts[0]["id"]
+    request = request + "/" + test_carts[0]["menu_items"][0]["id"]
+    r = client.delete(request)
+
+    with open(test_cart_data_path, "r", encoding="utf-8") as f:
+        carts = json.load(f)
+
+    test_carts[0]["menu_items"] = []
+
+    assert r.status_code == 204
+    assert test_carts == carts
+
+def test_deleting_menu_item_from_nonexistent_cart(tmp_path, test_carts):
+    """Testing a successful deleting of a menu item from a users cart"""
+    test_cart_data_path = tmp_path / "carts.json"
+
+    def override_delete_menu_item_from_cart_repo():
+        return CartRepo(test_cart_data_path)
+
+    app.dependency_overrides[create_cart_repo] = override_delete_menu_item_from_cart_repo
+
+
+    with open(test_cart_data_path, "w", encoding="utf-8") as f:
+        json.dump(test_carts, f, ensure_ascii=False)
+
+    request = "/restaurants/" + str(test_carts[0]["restaurant_id"])
+    request = request + "/cart/fake-id"
+    request = request + "/018f8c10-7b2a-7f21-9a3c-0a1b2c3d4e01"
+    r = client.delete(request)
+
+    with open(test_cart_data_path, "r", encoding="utf-8") as f:
+        carts = json.load(f)
+
+    assert r.status_code == 404
+    assert test_carts == carts
+
+def test_deleting_nonexistent_menu_item_from_cart(tmp_path, test_carts):
+    """Testing a successful deleting of a menu item from a users cart"""
+    test_cart_data_path = tmp_path / "carts.json"
+
+    def override_delete_menu_item_from_cart_repo():
+        return CartRepo(test_cart_data_path)
+
+    app.dependency_overrides[create_cart_repo] = override_delete_menu_item_from_cart_repo
+
+
+    with open(test_cart_data_path, "w", encoding="utf-8") as f:
+        json.dump(test_carts, f, ensure_ascii=False)
+
+    request = "/restaurants/" + str(test_carts[0]["restaurant_id"])
+    request = request + "/cart/" + test_carts[0]["id"]
+    request = request + "/fake-id"
+    r = client.delete(request)
+
+    with open(test_cart_data_path, "r", encoding="utf-8") as f:
+        carts = json.load(f)
+
+    assert r.status_code == 404
+    assert test_carts == carts
