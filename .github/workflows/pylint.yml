@@ -2,7 +2,7 @@ name: Pylint
 
 on: 
   push:
-    branches: ["features/**"]
+    branches: ["features/**", "refactor/**"]
   pull_request:
     branches: ["main"]
     
@@ -29,4 +29,7 @@ jobs:
     - name: Testing code with pytest
       run: |
         if [ -d app/test ]; then python -m pytest; fi
+    - name: Testing coverage with pytest-cov
+      run: |
+        python -m pytest --cov
       

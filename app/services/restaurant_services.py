@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Protocol
 import uuid
 from fastapi import HTTPException
 from app.schemas.menu import MenuItem, UpdateMenuItem
-from app.schemas.restaurant import Restaurant
+from app.schemas.restaurant import Restaurant, UpdateRestaurant
 
 class RestaurantServices():
     """Restaurant service methods"""
@@ -16,7 +16,7 @@ class RestaurantServices():
         """Return all restaurants."""
         return self.repo.load_all_restaurants()
 
-    def fetch_restaurant(self, restaurant_id: str) -> Restaurant:
+    def fetch_restaurant(self, restaurant_id: int) -> Restaurant:
         """Return a restaurant by ID or raise 404."""
         restaurants = self.repo.load_all_restaurants()
 
@@ -29,7 +29,42 @@ class RestaurantServices():
                 detail="Restaurant not found",
             )
 
-    def add_item_to_menu(self, restaurant_id: str, payload: MenuItem) -> MenuItem:
+    def update_restaurant(self, restaurant_id: int, payload: UpdateRestaurant) -> Restaurant:
+        """Updates a restaurant's information"""
+
+        restaurants = self.repo.load_all_restaurants()
+
+        updated_restaurant = UpdateRestaurant(
+                        name=payload.name.strip(),
+                        hours=payload.hours,
+                        phone_number=payload.phone_number.strip(),
+                        address=payload.address.strip(),
+                        tags=payload.tags
+                     )
+
+        for i, restaurant in enumerate(restaurants):
+            if restaurant["id"] == restaurant_id:
+                restaurant = {"id" : restaurant_id} | updated_restaurant.model_dump()
+                restaurant = restaurant | {"menu" : restaurants[i]["menu"]}
+                restaurants[i] = restaurant
+                self.repo.save_all_restaurants(restaurants)
+                return Restaurant(**restaurant)
+
+        raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
+
+    def delete_restaurant(self, restaurant_id: int) -> None:
+        """Deletes restaurant from the data store"""
+        restaurants = self.repo.load_all_restaurants()
+
+        for restaurant in restaurants:
+            if restaurant["id"] == restaurant_id:
+                restaurants.remove(restaurant)
+                self.repo.save_all_restaurants(restaurants)
+                return
+
+            raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
+
+    def add_item_to_menu(self, restaurant_id: int, payload: MenuItem) -> MenuItem:
         """Add a menu item to a restaurants menu"""
 
         restaurants = self.repo.load_all_restaurants()
@@ -54,9 +89,9 @@ class RestaurantServices():
 
         raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
 
-    def update_menu_item(self, restaurant_id: str,
+    def update_menu_item(self, restaurant_id: int,
                          menu_item_id: str, payload: UpdateMenuItem) -> MenuItem:
-        """Add a menu item to a restaurants menu"""
+        """Update a menu item in a restaurant's menu"""
 
         restaurants = self.repo.load_all_restaurants()
 
@@ -79,8 +114,14 @@ class RestaurantServices():
 
         raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
 
-    def delete_menu_item(self, restaurant_id: str, menu_item_id: str) -> None:
-        """Deletes user from the data store"""
+    def validate_menu_existence(self, restaurant: Dict[str, Any]) -> None:
+        """Ensure restaurant always has at least one menu item."""
+        if not restaurant.get("menu") or len(restaurant["menu"]) == 0:
+            raise HTTPException(status_code= 400,
+                                detail = "Restaurant must have at least one menu item.")
+
+    def delete_menu_item(self, restaurant_id: int, menu_item_id: str) -> None:
+        """Deletes menu item from a restaurant's menu"""
         restaurants = self.repo.load_all_restaurants()
 
         for restaurant in restaurants:
@@ -88,9 +129,9 @@ class RestaurantServices():
                 for menu_item in restaurant["menu"]:
                     if menu_item["id"] == menu_item_id:
                         restaurant["menu"].remove(menu_item)
+                        self.validate_menu_existence(restaurant)
                         self.repo.save_all_restaurants(restaurants)
                         return
-
                 raise HTTPException(status_code=404, detail=f"Menu Item '{menu_item_id}' not found")
 
         raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
