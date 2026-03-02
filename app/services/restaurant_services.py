@@ -1,7 +1,8 @@
 """Service layer for restaurant business logic."""
 
 from typing import Any, Dict, List, Protocol
-import random, uuid
+import random
+import uuid
 from fastapi import HTTPException
 from app.schemas.menu import MenuItem, UpdateMenuItem
 from app.schemas.restaurant import Restaurant, RestaurantCreate, UpdateRestaurant
