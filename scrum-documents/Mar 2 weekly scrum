@@ -1,0 +1,19 @@
+Date: Mar 2nd
+Type of meeting: weekly scrum
+
+Attendees: Dante Arias, Gurkirn Kaur, Varun Garg, Zheng Xue
+
+Key discussion points:
+1. Setting up Sprint 3 and assigning issues
+2. Going through food_delivery.csv file to see what to keep, delete, and add
+3. Adding new orders or getting orders would be from csv file ?
+    keep order_id, restaurant_id, food_item, order_date, order_value, customer_id, location
+4. When we create a new order we would essentially create a new order in the csv file
+5. Assigning delivery time and distance, or updating status??
+
+Action Items:
+- Adding authorization to API endpoint so that it can actually start authorizing
+- Ask if we need to put food_delivery.csv data into all other storage files
+- Prof's office hours on Wednesday - ask about data file and consistency
+    can you pull up entry from csv and assign id randomly
+- In our csv file if we have a user/userid, is it a problem if we don't have that customer in our customer base
