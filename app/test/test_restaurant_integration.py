@@ -10,6 +10,7 @@ from app.repositories.restaurant_repo import RestaurantRepo
 from app.routers.restaurant import create_cart_repo, create_restaurant_repo
 
 # pylint: disable=redefined-outer-name
+# pylint: disable=duplicate-code
 client = TestClient(app)
 
 @pytest.fixture
