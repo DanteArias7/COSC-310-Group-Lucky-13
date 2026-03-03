@@ -25,7 +25,7 @@ test_carts = [{"id" : "00000000-0000-0000-0000-000000000001",
                             "description": "Plant-based patty with lettuce and tomato",
                             "price": 12.99,
                             "tags": ["vegan"]}],
-                "total" : 7.88
+                "total" : 12.99
                 }]
 
 def test_fetch_all_restaurants(mocker):
@@ -294,3 +294,87 @@ def test_delete_nonexistent_menu_item_from_cart(mocker):
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Menu Item fake-id Not Found"
+
+def test_add_menu_item_to_cart_success(mocker):
+    """Test that add_item_to_cart successfully adds an item"""
+    mocked_repo = mocker.Mock()
+    cart_services = CartServices(mocked_repo)
+
+    mocked_repo.load_all_carts.return_value = test_carts
+
+    payload = MenuItem(
+        id="new-id",
+        name="Fries",
+        description="Crispy fries",
+        price=5.0
+    )
+
+    result = cart_services.add_item_to_cart(
+        "00000000-0000-0000-0000-000000000001",
+        payload
+    )
+
+    assert result.id == "00000000-0000-0000-0000-000000000001"
+    assert result.user_id == "00000000-0000-0000-0000-000000000001"
+    assert result.restaurant_id == 101
+    assert any(item.id == "new-id" for item in result.menu_items)
+    assert result.total == sum(item.price for item in result.menu_items)
+
+    mocked_repo.save_all_carts.assert_called_once()
+
+def test_add_menu_item_cart_not_found(mocker):
+    """Test that add_item_to_cart raises 404 when cart does not exist"""
+
+    mocked_repo = mocker.Mock()
+    cart_services = CartServices(mocked_repo)
+
+    mocked_repo.load_all_carts.return_value = []
+
+    payload = MenuItem(
+        id="new-id",
+        name="Fries",
+        description="Crispy fries",
+        price=5.0
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        cart_services.add_item_to_cart("non-existent-id", payload)
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Cart non-existent-id Not Found"
+
+def test_add_menu_item_recalculates_total(mocker):
+    """Test that total updates correctly when adding to existing cart"""
+
+    test_cart = [{
+        "id": "00000000-0000-0000-0000-000000000005",
+        "user_id": "00000000-0000-0000-0000-000000000099",
+        "restaurant_id": 102,
+        "menu_items": [
+            {
+                "id": "00000000-0000-0000-0000-000000000999",
+                "name": "Burger",
+                "description": "Beef",
+                "price": 10.0
+            }
+        ],
+        "total": 10.0
+    }]
+
+    mocked_repo = mocker.Mock()
+    cart_services = CartServices(mocked_repo)
+
+    mocked_repo.load_all_carts.return_value = test_cart
+
+    payload = MenuItem(
+        id="00000000-0000-0000-0000-000000009999",
+        name="Fries",
+        description="Crispy",
+        price=5.0
+    )
+
+    result = cart_services.add_item_to_cart("00000000-0000-0000-0000-000000000005", payload)
+
+    assert result.total == 15.0
+    assert len(result.menu_items) == 2
+    mocked_repo.save_all_carts.assert_called_once()
