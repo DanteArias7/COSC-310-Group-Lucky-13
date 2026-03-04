@@ -139,7 +139,11 @@ def delete_menu_item_from_cart(cart_id: str, menu_item_id: str,
 @restaurant_router.post("/{restaurant_id}/cart/{cart_id}",
                         status_code=status.HTTP_201_CREATED)
 def add_menu_item_to_cart(cart_id: str,payload: MenuItem,
-                          repo: CartRepo = Depends(create_cart_repo)):
+                          repo: CartRepo = Depends(create_cart_repo),
+                          user_repo: UserRepo = Depends(create_user_repo),
+                          user_id: str = Header(..., alias="user-id")):
     """Add a menu item to a user's cart"""
     cart_service = CartServices(repo)
+    authorization_service = AuthorizationServices(user_repo)
+    authorization_service.authorize(user_id, "manage_own_cart")
     return cart_service.add_item_to_cart(cart_id, payload)
