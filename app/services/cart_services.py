@@ -1,8 +1,9 @@
-"""Service layer for restaurant business logic."""
+"""Service layer for cart business logic."""
 
 from typing import Any, Dict, List, Protocol
 from fastapi import HTTPException
 from app.schemas.cart import Cart
+from app.schemas.menu import MenuItem
 
 #pylint: disable=too-few-public-methods
 class CartServices():
@@ -12,7 +13,7 @@ class CartServices():
         self.repo = repo
 
     def remove_item_from_cart(self, cart_id: str, menu_item_id: str) -> Cart:
-        """Add a menu item to a users cart"""
+        """Remove a menu item from a user's cart"""
         carts = self.repo.load_all_carts()
 
         for i, cart in enumerate(carts):
@@ -25,6 +26,18 @@ class CartServices():
                         return
                 raise HTTPException(status_code=404, detail=f"Menu Item {menu_item_id} Not Found")
 
+        raise HTTPException(status_code=404, detail=f"Cart {cart_id} Not Found")
+
+    def add_item_to_cart(self, cart_id: str, payload: MenuItem) -> Cart:
+        """Add a menu item to a user's cart"""
+        carts = self.repo.load_all_carts()
+
+        for i, cart in enumerate(carts):
+            if cart["id"] == cart_id:
+                cart["menu_items"].append(payload.model_dump())
+                carts[i] = cart
+                self.repo.save_all_carts(carts)
+                return Cart(**cart)
         raise HTTPException(status_code=404, detail=f"Cart {cart_id} Not Found")
 
 class ICartRepo(Protocol):

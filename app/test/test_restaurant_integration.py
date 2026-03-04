@@ -36,7 +36,7 @@ def test_carts():
                             "description": "Plant-based patty with lettuce and tomato",
                             "price": 12.99,
                             "tags": ["vegan"]}],
-      "total" : 7.88
+      "total" : 12.99
   }]
 
 @pytest.fixture
@@ -120,6 +120,17 @@ def cart_test_client(temp_user_path, temp_cart_path):
     yield TestClient(app)
 
     app.dependency_overrides.clear()
+
+@pytest.fixture
+def menu_item_payload():
+    """Sample menu item payload for cart tests"""
+    return {
+        "id": "new-item",
+        "name": "Fries",
+        "description": "Crispy",
+        "price": 5.00,
+        "tags": ["fries"]
+    }
 
 #get_all_restaurants Integration Tests
 
@@ -513,3 +524,38 @@ def test_deleting_nonexistent_menu_item_from_cart(test_carts, test_users,
 
     assert r.status_code == 404
     assert test_carts == carts
+
+def test_add_menu_item_to_cart_integration(test_carts, test_users,
+                                           cart_test_client, temp_cart_path ,
+                                           menu_item_payload):
+    """Testing successful addition of item to a user's cart"""
+
+    request = "/restaurants/" + str(test_carts[0]["restaurant_id"])
+    request = request + "/cart/" + test_carts[0]["id"]
+
+    r = cart_test_client.post(request, json=menu_item_payload,
+                              headers= {"user-id" : test_users[0]["id"]})
+
+    with open(temp_cart_path, "r", encoding="utf-8") as f:
+        carts = json.load(f)
+
+    assert r.status_code == 201
+    assert len(carts[0]["menu_items"]) == 2
+    assert carts[0]["menu_items"][1]["id"] == menu_item_payload["id"]
+
+def test_add_menu_item_to_nonexistent_cart_integration(test_carts, test_users,
+                                                       cart_test_client, temp_cart_path,
+                                                       menu_item_payload):
+    """Test adding item to non-existent cart"""
+
+    request = "/restaurants/" + str(test_carts[0]["restaurant_id"])
+    request = request + "/cart/fake-id"
+
+    r = cart_test_client.post(request, json=menu_item_payload,
+                              headers= {"user-id" : test_users[0]["id"]})
+
+    with open(temp_cart_path, "r", encoding="utf-8") as f:
+        carts = json.load(f)
+
+    assert r.status_code == 404
+    assert carts == test_carts
