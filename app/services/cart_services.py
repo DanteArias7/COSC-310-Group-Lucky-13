@@ -35,7 +35,6 @@ class CartServices():
         for i, cart in enumerate(carts):
             if cart["id"] == cart_id:
                 cart["menu_items"].append(payload.model_dump())
-                cart["total"] = sum(item["price"] for item in cart["menu_items"])
                 carts[i] = cart
                 self.repo.save_all_carts(carts)
                 return Cart(**cart)
