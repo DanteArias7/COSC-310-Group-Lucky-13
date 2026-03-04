@@ -186,7 +186,15 @@ def test_create_restaurant_integration(restaurant_test_client, temp_restaurant_p
         "phone_number": "5555555555",
         "address": "123 Taco Lane",
         "tags": ["mexican"],
-        "menu": []
+        "menu": [
+            {
+                "id": "00000000-0000-0000-0000-000000000011",
+                "name": "Taco",
+                "description": "Beef taco",
+                "price": 5.0,
+                "tags": ["mexican"]
+            }
+        ]
     }
 
     r = restaurant_test_client.post("/restaurants",
@@ -200,6 +208,23 @@ def test_create_restaurant_integration(restaurant_test_client, temp_restaurant_p
         restaurants = json.load(f)
 
     assert data == restaurants[1]
+
+def test_create_restaurant_without_menu_integration(restaurant_test_client, test_users):
+    """Restaurant cannot be created without menu items"""
+
+    payload = {
+        "name": "Taco Town",
+        "hours": {"Monday": "10:00-20:00"},
+        "phone_number": "5555555555",
+        "address": "123 Taco Lane",
+        "tags": ["mexican"],
+        "menu": []
+    }
+
+    r = restaurant_test_client.post("/restaurants",
+                                    headers={"user-id": test_users[1]["id"]}, json=payload)
+
+    assert r.status_code == 422
 
 #update_restaurant Integration Tests
 
