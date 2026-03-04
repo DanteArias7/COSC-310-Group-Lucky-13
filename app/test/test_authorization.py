@@ -10,7 +10,7 @@ from app.services.authorization_services import AuthorizationServices, ROLE_PERM
 # ---------------------------------------------------------------------------
 # Sample user data
 # ---------------------------------------------------------------------------
-
+#pylint: disable=duplicate-code
 SAMPLE_USERS = [
     {
         "id": "user-1",
