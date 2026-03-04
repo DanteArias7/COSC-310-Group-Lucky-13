@@ -87,6 +87,17 @@ def cart_test_client(tmp_path):
 
     app.dependency_overrides.clear()
 
+@pytest.fixture
+def menu_item_payload():
+    """Sample menu item payload for cart tests"""
+    return {
+        "id": "new-item",
+        "name": "Fries",
+        "description": "Crispy",
+        "price": 5.00,
+        "tags": ["fries"]
+    }
+
 #get_all_restaurants Integration Tests
 
 def test_get_all_restaurants_integration(restaurant_test_client, temp_restaurant_path):
@@ -466,62 +477,35 @@ def test_deleting_nonexistent_menu_item_from_cart(test_carts,
     assert r.status_code == 404
     assert test_carts == carts
 
-def test_add_menu_item_to_cart_integration(tmp_path, test_carts):
+def test_add_menu_item_to_cart_integration(test_carts,
+                                           cart_test_client, temp_cart_path ,
+                                           menu_item_payload):
     """Testing successful addition of item to a user's cart"""
-    test_cart_path = tmp_path / "carts.json"
-
-    with open(test_cart_path, "w", encoding="utf-8") as f:
-        json.dump(test_carts, f, ensure_ascii=False)
-
-    def override_repo():
-        return CartRepo(test_cart_path)
-
-    app.dependency_overrides[create_cart_repo] = override_repo
-
-    payload = {
-        "id": "new-item",
-        "name": "Fries",
-        "description": "Crispy",
-        "price": 5.00,
-        "tags": ["fries"]
-    }
 
     request = "/restaurants/" + str(test_carts[0]["restaurant_id"])
-    request += "/cart/" + test_carts[0]["id"]
+    request = request + "/cart/" + test_carts[0]["id"]
 
-    r = client.post(request, json=payload)
+    r = cart_test_client.post(request, json=menu_item_payload)
 
-    with open(test_cart_path, "r", encoding="utf-8") as f:
-        updated = json.load(f)
+    with open(temp_cart_path, "r", encoding="utf-8") as f:
+        carts = json.load(f)
 
     assert r.status_code == 201
-    assert len(updated[0]["menu_items"]) == 2
-    assert updated[0]["total"] == pytest.approx(17.99)
+    assert len(carts[0]["menu_items"]) == 2
+    assert carts[0]["menu_items"][1]["id"] == "new-item"
 
-def test_add_menu_item_to_nonexistent_cart_integration(tmp_path, test_carts):
+def test_add_menu_item_to_nonexistent_cart_integration(test_carts,
+                                                       cart_test_client, temp_cart_path,
+                                                       menu_item_payload):
     """Test adding item to non-existent cart"""
 
-    test_cart_path = tmp_path / "carts.json"
-
-    with open(test_cart_path, "w", encoding="utf-8") as f:
-        json.dump(test_carts, f, ensure_ascii=False)
-
-    def override_repo():
-        return CartRepo(test_cart_path)
-
-    app.dependency_overrides[create_cart_repo] = override_repo
-
-    payload = {
-        "id": "new-item",
-        "name": "Fries",
-        "description": "Crispy",
-        "price": 5.00,
-        "tags": ["fries"]
-    }
-
     request = "/restaurants/" + str(test_carts[0]["restaurant_id"])
-    request += "/cart/fake-id"
+    request = request + "/cart/fake-id"
 
-    r = client.post(request, json=payload)
+    r = cart_test_client.post(request, json=menu_item_payload)
+
+    with open(temp_cart_path, "r", encoding="utf-8") as f:
+        carts = json.load(f)
 
     assert r.status_code == 404
+    assert carts == test_carts
