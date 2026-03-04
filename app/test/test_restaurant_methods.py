@@ -66,16 +66,13 @@ def test_fetch_restaurant_not_found(mocked_repo, restaurant_service):
     assert exc_info.value.detail == "Restaurant not found"
 
 #create_restaurant  Unit Tests
-def test_create_new_restaurant(mocker):
+def test_create_new_restaurant(mocker, mocked_repo, restaurant_service):
     """Scenario: check that creating a valid restaurant returns a valid restaurant"""
     mocked_id = 99
     id_mock = mocker.patch("app.services.restaurant_services.random.randint")
     id_mock.return_value = mocked_id
 
-    mocked_repo = mocker.Mock()
     mocked_repo.load_all_restaurants.return_value = []
-
-    restaurant_service = RestaurantServices(mocked_repo)
 
     payload = RestaurantCreate(
         name="Taco Town",
@@ -83,7 +80,15 @@ def test_create_new_restaurant(mocker):
         phone_number="5555555555",
         address="123 Taco Lane",
         tags=["mexican"],
-        menu=[]
+        menu=[
+            MenuItem(
+                id="00000000-0000-0000-0000-000000000011",
+                name="Taco",
+                description="Beef taco",
+                price=5.0,
+                tags=["mexican","beef"]
+            )
+        ]
     )
 
     result = restaurant_service.create_new_restaurant(payload)
@@ -94,8 +99,8 @@ def test_create_new_restaurant(mocker):
     assert result.phone_number == "5555555555"
     assert result.address == "123 Taco Lane"
     assert result.tags == ["mexican"]
+    assert result.menu[0].name == "Taco"
     mocked_repo.save_all_restaurants.assert_called_once()
-
 
 #update_restaurant Unit Tests
 
