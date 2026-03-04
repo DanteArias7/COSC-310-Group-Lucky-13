@@ -1,9 +1,10 @@
 """User API endpoints"""
 from pathlib import Path
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Header
 from fastapi import status
 from app.schemas.user import User, UserCreate, UserUpdate
+from app.services.authorization_services import AuthorizationServices
 from app.services.user_services import UserServices
 from app.repositories.user_repo import UserRepo
 
@@ -21,13 +22,19 @@ def add_user(payload: UserCreate, repo: UserRepo = Depends(create_user_repo)):
     return user_service.create_user(payload)
 
 @user_router.put("/{user_id}", response_model=User, status_code=200)
-def update_user(user_id, payload: UserUpdate, repo: UserRepo = Depends(create_user_repo)):
+def update_user(user_id, payload: UserUpdate, repo: UserRepo = Depends(create_user_repo),
+                current_user_id: str = Header(...,alias="user-id")):
     """API endpoint to update a user"""
     user_service = UserServices(repo)
+    authorization_service = AuthorizationServices(repo)
+    authorization_service.authorize(current_user_id, "manage_own_account")
     return user_service.update_user(user_id, payload)
 
 @user_router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_user(user_id, repo: UserRepo = Depends(create_user_repo)):
+def delete_user(user_id, repo: UserRepo = Depends(create_user_repo),
+                current_user_id: str = Header(...,alias="user-id")):
     """API endpoint to delete a user"""
     user_service = UserServices(repo)
+    authorization_service = AuthorizationServices(repo)
+    authorization_service.authorize(current_user_id, "manage_own_account")
     return user_service.delete_user(user_id)
