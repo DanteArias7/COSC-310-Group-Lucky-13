@@ -525,7 +525,7 @@ def test_deleting_nonexistent_menu_item_from_cart(test_carts, test_users,
     assert r.status_code == 404
     assert test_carts == carts
 
-def test_add_menu_item_to_cart_integration(test_carts,
+def test_add_menu_item_to_cart_integration(test_carts, test_users,
                                            cart_test_client, temp_cart_path ,
                                            menu_item_payload):
     """Testing successful addition of item to a user's cart"""
@@ -533,16 +533,17 @@ def test_add_menu_item_to_cart_integration(test_carts,
     request = "/restaurants/" + str(test_carts[0]["restaurant_id"])
     request = request + "/cart/" + test_carts[0]["id"]
 
-    r = cart_test_client.post(request, json=menu_item_payload)
+    r = cart_test_client.post(request, json=menu_item_payload,
+                              headers= {"user-id" : test_users[0]["id"]})
 
     with open(temp_cart_path, "r", encoding="utf-8") as f:
         carts = json.load(f)
 
     assert r.status_code == 201
     assert len(carts[0]["menu_items"]) == 2
-    assert carts[0]["menu_items"][1]["id"] == "new-item"
+    assert carts[0]["menu_items"][1]["id"] == menu_item_payload["id"]
 
-def test_add_menu_item_to_nonexistent_cart_integration(test_carts,
+def test_add_menu_item_to_nonexistent_cart_integration(test_carts, test_users,
                                                        cart_test_client, temp_cart_path,
                                                        menu_item_payload):
     """Test adding item to non-existent cart"""
@@ -550,7 +551,8 @@ def test_add_menu_item_to_nonexistent_cart_integration(test_carts,
     request = "/restaurants/" + str(test_carts[0]["restaurant_id"])
     request = request + "/cart/fake-id"
 
-    r = cart_test_client.post(request, json=menu_item_payload)
+    r = cart_test_client.post(request, json=menu_item_payload,
+                              headers= {"user-id" : test_users[0]["id"]})
 
     with open(temp_cart_path, "r", encoding="utf-8") as f:
         carts = json.load(f)
