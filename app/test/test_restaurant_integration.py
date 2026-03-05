@@ -515,7 +515,7 @@ def test_deleting_menu_item_from_cart_success(test_carts, test_users,
     with open(temp_cart_path, "r", encoding="utf-8") as f:
         carts = json.load(f)
 
-    test_carts[0]["menu_items"] = []
+    test_carts[0]["cart_items"] = []
 
     assert r.status_code == 204
     assert test_carts == carts
