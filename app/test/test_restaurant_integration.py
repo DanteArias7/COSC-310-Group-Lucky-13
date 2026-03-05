@@ -512,7 +512,7 @@ def test_deleting_menu_item_from_cart_success(test_carts, test_users,
     request = "/restaurants/" + str(test_carts[0]["restaurant_id"])
     request = request + "/cart/" + test_carts[0]["id"]
     request = request + "/" + test_carts[0]["cart_items"][0]["item"]["id"]
-    r = client.delete(request)
+    r = cart_test_client.delete(request)
 
     with open(temp_cart_path, "r", encoding="utf-8") as f:
         carts = json.load(f)
