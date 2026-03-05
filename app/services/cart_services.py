@@ -1,4 +1,4 @@
-"""Service layer for restaurant business logic."""
+"""Service layer for cart business logic."""
 
 from typing import Any, Dict, List, Protocol
 from fastapi import HTTPException
@@ -13,7 +13,7 @@ class CartServices():
         self.repo = repo
 
     def remove_item_from_cart(self, cart_id: str, menu_item_id: str) -> Cart:
-        """Add a menu item to a users cart"""
+        """Remove a menu item from a user's cart"""
         carts = self.repo.load_all_carts()
 
         for i, cart in enumerate(carts):

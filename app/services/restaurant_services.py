@@ -39,7 +39,7 @@ class RestaurantServices():
             phone_number=payload.phone_number,
             address=payload.address,
             tags=payload.tags,
-            menu=[],
+            menu= payload.menu,
         )
         restaurants = self.repo.load_all_restaurants()
         restaurants.append(restaurant.model_dump())

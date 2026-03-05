@@ -1,7 +1,7 @@
 """Pydantic schemas for restaurant data models."""
 
 from typing import List
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from app.schemas.menu import MenuItem
 
 class Restaurant(BaseModel):
@@ -21,7 +21,7 @@ class RestaurantCreate(BaseModel):
     phone_number: str
     address: str
     tags: List[str] = []
-    menu: List[MenuItem] = []
+    menu: List[MenuItem] = Field(...,min_length = 1)
 
 class UpdateRestaurant(BaseModel):
     """Update restaurant entity."""

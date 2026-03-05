@@ -18,6 +18,7 @@ ROLE_PERMISSIONS: dict = {
         "make_payment",
         "track_order",
         "manage_own_account",
+        "manage_own_cart"
     ],
     "restaurant_owner": [
         "browse_restaurants",
@@ -111,4 +112,3 @@ class AuthorizationServices:
                 detail=f"Unknown role '{role}'.",
             )
         return ROLE_PERMISSIONS[role]
-    
