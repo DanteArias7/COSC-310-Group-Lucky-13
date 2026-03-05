@@ -28,22 +28,27 @@ class CartServices():
 
         raise HTTPException(status_code=404, detail=f"Cart {cart_id} Not Found")
 
-    def add_item_to_cart(self, cart_id: str, restaurant_id: int,payload: MenuItem) -> Cart:
+    def add_item_to_cart(self, cart_id: str, payload: MenuItem) -> Cart:
         """Add a menu item to a user's cart"""
         carts = self.repo.load_all_carts()
 
         for i, cart in enumerate(carts):
             if cart["id"] == cart_id:
-                # Ensure all items in cart are from the same restaurant
-                if cart["restaurant_id"] != restaurant_id:
-                    raise HTTPException(status_code = 400,
-                                        detail = "Cannot add items from different " \
-                                        "restaurants to the same cart.")
+                # Ensure all items in cart are from the same restaurant:
+                restaurant_id = cart["restaurant_id"]
+                self.validate_cart_from_same_restaurant(cart, restaurant_id)
                 cart["menu_items"].append(payload.model_dump())
                 carts[i] = cart
                 self.repo.save_all_carts(carts)
                 return Cart(**cart)
         raise HTTPException(status_code=404, detail=f"Cart {cart_id} Not Found")
+
+    def validate_cart_from_same_restaurant(self, cart: Dict[str, Any], restaurant_id: int) -> None:
+        """Ensure all items in cart are from the same restaurant"""
+        if cart["restaurant_id"] != restaurant_id:
+            raise HTTPException(status_code = 400,
+                                detail = "Cannot add items from different " \
+                                "restaurants to the same cart.")
 
 class ICartRepo(Protocol):
     """User Service Class"""
