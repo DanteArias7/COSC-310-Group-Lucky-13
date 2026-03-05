@@ -51,7 +51,7 @@ def test_update_user_success(tmp_path):
                 "phone_number" : "555-555-5555", "address" : "321 Ellis Rd, Kelowna, BC, A1B2C3",
                 "password" : "pass",  "role" : "customer"}
 
-    r = client.put("/users/1", json=payload)
+    r = client.put("/users/1", headers={"user-id" : "1"}, json=payload)
     data = r.json()
     payload = {"id" : "1"} | payload
 
@@ -78,7 +78,7 @@ def test_update_user_unsuccessful(tmp_path):
                 "phone_number" : "555-555-5555", "address" : "321 Ellis Rd, Kelowna, BC, A1B2C3",
                 "password" : "pass",  "role" : "customer"}
 
-    r = client.put("/users/1", json=payload)
+    r = client.put("/users/1", headers={"user-id" : "1"}, json=payload)
     data = r.json()
     payload = {"id" : "1"} | payload
 
@@ -101,7 +101,7 @@ def test_delete_user_success(tmp_path):
     with open(test_user_data_path, "w", encoding="utf-8") as f:
         json.dump(initial_user, f, ensure_ascii=False)
 
-    r = client.delete("/users/1")
+    r = client.delete("/users/1", headers={"user-id" : "1"})
 
     with open(test_user_data_path, "r", encoding="utf-8") as f:
         users = json.load(f)
@@ -125,7 +125,7 @@ def test_delete_user_unsuccessful(tmp_path):
     with open(test_user_data_path, "w", encoding="utf-8") as f:
         json.dump(initial_user, f, ensure_ascii=False)
 
-    r = client.delete("/users/2")
+    r = client.delete("/users/2", headers={"user-id" : "2"})
 
     with open(test_user_data_path, "r", encoding="utf-8") as f:
         users = json.load(f)
