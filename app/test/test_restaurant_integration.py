@@ -503,6 +503,33 @@ def test_deleting_last_menu_item_fails(test_restaurants,test_users,
     assert r.status_code == 400
     assert restaurants == test_restaurants
 
+
+#add_user_cart_for_a_restaurant Integration tests
+
+def test_add_user_cart_for_a_restaurant_success(test_carts, test_users,
+                                           cart_test_client, temp_cart_path ,
+                                           menu_item_payload):
+    """Testing successful addition of item to a user's cart"""
+
+    request = "/restaurants/" + str(test_carts[0]["restaurant_id"])
+    request = request + "/cart"
+
+    r = cart_test_client.post(request, json=menu_item_payload,
+                              headers= {"user-id" : test_users[0]["id"]})
+
+    with open(temp_cart_path, "r", encoding="utf-8") as f:
+        carts = json.load(f)
+
+    test_carts[0]["cart_items"] = []
+    test_carts[0]["tax"] = 0.00
+    test_carts[0]["subtotal"] = 0.00
+    test_carts[0]["total"] = 0.00
+
+    test_carts[0]["id"] = carts[-1]["id"]
+
+    assert r.status_code == 201
+    assert carts[-1] == test_carts[0]
+
 #delete_menu_item_from_cart Tests
 
 def test_deleting_menu_item_from_cart_success(test_carts, test_users,
