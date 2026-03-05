@@ -567,8 +567,8 @@ def test_add_menu_item_to_cart_integration(test_carts, test_users,
         carts = json.load(f)
 
     assert r.status_code == 201
-    assert len(carts[0]["menu_items"]) == 2
-    assert carts[0]["menu_items"][1]["id"] == menu_item_payload["id"]
+    assert len(carts[0]["cart_items"]) == 2
+    assert carts[0]["cart_items"][1]["item"]["id"] == menu_item_payload["id"]
 
 def test_add_menu_item_to_nonexistent_cart_integration(test_carts, test_users,
                                                        cart_test_client, temp_cart_path,
