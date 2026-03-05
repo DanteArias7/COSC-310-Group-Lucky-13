@@ -505,7 +505,7 @@ def test_deleting_last_menu_item_fails(test_restaurants,test_users,
 
 #delete_menu_item_from_cart Tests
 
-def test_deleting_menu_item_from_cart_success(test_carts, test_users,
+def test_deleting_menu_item_from_cart_success(test_carts, 
                                               cart_test_client, temp_cart_path):
     """Testing a successful deleting of a menu item from a users cart"""
 
