@@ -31,13 +31,15 @@ def test_carts():
     return [{"id" : "00000000-0000-0000-0000-000000000001",
             "user_id" : "00000000-0000-0000-0000-000000000001",
             "restaurant_id" : 101,
-            "menu_items" :  [{"id": "018f8c10-7b2a-7f21-9a3c-0a1b2c3d4e01",
+            "cart_items" :  [{"item": {"id": "018f8c10-7b2a-7f21-9a3c-0a1b2c3d4e01",
                             "name": "Vegan Burger",
                             "description": "Plant-based patty with lettuce and tomato",
                             "price": 12.99,
-                            "tags": ["vegan"]}],
-      "total" : 12.99
-  }]
+                            "tags": ["vegan"]},
+                            "quantity": 1}],
+                "subtotal" : 12.99,
+                "tax" : 1.30,
+                "total" : 14.29}]
 
 @pytest.fixture
 def test_users():
@@ -509,8 +511,8 @@ def test_deleting_menu_item_from_cart_success(test_carts, test_users,
 
     request = "/restaurants/" + str(test_carts[0]["restaurant_id"])
     request = request + "/cart/" + test_carts[0]["id"]
-    request = request + "/" + test_carts[0]["menu_items"][0]["id"]
-    r = cart_test_client.delete(request, headers= {"user-id" : test_users[0]["id"]})
+    request = request + "/" + test_carts[0]["cart_items"][0]["item"]["id"]
+    r = cart_test_client.delete(request, headers={"user-id": test_users[0]["id"]})
 
     with open(temp_cart_path, "r", encoding="utf-8") as f:
         carts = json.load(f)
@@ -565,8 +567,8 @@ def test_add_menu_item_to_cart_integration(test_carts, test_users,
         carts = json.load(f)
 
     assert r.status_code == 201
-    assert len(carts[0]["menu_items"]) == 2
-    assert carts[0]["menu_items"][1]["id"] == menu_item_payload["id"]
+    assert len(carts[0]["cart_items"]) == 2
+    assert carts[0]["cart_items"][1]["item"]["id"] == menu_item_payload["id"]
 
 def test_add_menu_item_to_nonexistent_cart_integration(test_carts, test_users,
                                                        cart_test_client, temp_cart_path,
