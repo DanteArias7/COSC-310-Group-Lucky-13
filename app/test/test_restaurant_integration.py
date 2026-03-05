@@ -32,13 +32,15 @@ def test_carts():
     return [{"id" : "00000000-0000-0000-0000-000000000001",
             "user_id" : "00000000-0000-0000-0000-000000000001",
             "restaurant_id" : 101,
-            "menu_items" :  [{"id": "018f8c10-7b2a-7f21-9a3c-0a1b2c3d4e01",
+            "cart_items" :  [{"item": {"id": "018f8c10-7b2a-7f21-9a3c-0a1b2c3d4e01",
                             "name": "Vegan Burger",
                             "description": "Plant-based patty with lettuce and tomato",
                             "price": 12.99,
-                            "tags": ["vegan"]}],
-      "total" : 7.88
-  }]
+                            "tags": ["vegan"]},
+                            "quantity": 1}],
+                "subtotal" : 12.99,
+                "tax" : 1.30,
+                "total" : 14.29}]
 
 def test_get_all_restaurants_integration(tmp_path, test_restaurants):
     """Test retrieving all restaurants via GET /restaurants/."""
@@ -492,13 +494,13 @@ def test_deleting_menu_item_from_cart_success(tmp_path, test_carts):
 
     request = "/restaurants/" + str(test_carts[0]["restaurant_id"])
     request = request + "/cart/" + test_carts[0]["id"]
-    request = request + "/" + test_carts[0]["menu_items"][0]["id"]
+    request = request + "/" + test_carts[0]["cart_items"][0]["item"]["id"]
     r = client.delete(request)
 
     with open(test_cart_data_path, "r", encoding="utf-8") as f:
         carts = json.load(f)
 
-    test_carts[0]["menu_items"] = []
+    test_carts[0]["cart_items"] = []
 
     assert r.status_code == 204
     assert test_carts == carts
