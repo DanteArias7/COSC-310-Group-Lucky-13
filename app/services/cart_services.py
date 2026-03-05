@@ -2,7 +2,8 @@
 
 from typing import Any, Dict, List, Protocol
 from fastapi import HTTPException
-from app.schemas.cart import Cart
+from app.schemas.cart import Cart, CartItem # pylint: disable=unused-import
+from app.schemas.menu import MenuItem
 
 #pylint: disable=too-few-public-methods
 class CartServices():
@@ -17,14 +18,31 @@ class CartServices():
 
         for i, cart in enumerate(carts):
             if cart["id"] == cart_id:
-                for menu_item in cart["menu_items"]:
-                    if menu_item["id"] == menu_item_id:
-                        cart["menu_items"].remove(menu_item)
+                for cart_item in cart["cart_items"]:
+                    if cart_item["item"]["id"] == menu_item_id:
+                        cart["cart_items"].remove(cart_item)
                         carts[i] = cart
                         self.repo.save_all_carts(carts)
-                        return
+                        return Cart(**cart)
                 raise HTTPException(status_code=404, detail=f"Menu Item {menu_item_id} Not Found")
 
+        raise HTTPException(status_code=404, detail=f"Cart {cart_id} Not Found")
+
+    def add_item_to_cart(self, cart_id: str, payload: MenuItem) -> Cart:
+        """Add a menu item to a user's cart"""
+        carts = self.repo.load_all_carts()
+
+        for i, cart in enumerate(carts):
+            if cart["id"] == cart_id:
+                for cart_item in cart["cart_items"]:
+                    if cart_item["item"]["id"] == payload.id:
+                        cart_item["quantity"] += 1
+                        break
+                else:
+                    cart["cart_items"].append({"item": payload.model_dump(), "quantity": 1})
+                carts[i] = cart
+                self.repo.save_all_carts(carts)
+                return Cart(**cart)
         raise HTTPException(status_code=404, detail=f"Cart {cart_id} Not Found")
 
 class ICartRepo(Protocol):
