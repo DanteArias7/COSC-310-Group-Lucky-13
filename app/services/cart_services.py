@@ -1,6 +1,7 @@
 """Service layer for cart business logic."""
 
 from typing import Any, Dict, List, Protocol
+import uuid
 from fastapi import HTTPException
 from app.schemas.cart import Cart, CartItem # pylint: disable=unused-import
 from app.schemas.menu import MenuItem
@@ -11,6 +12,27 @@ class CartServices():
     def __init__(self, repo: ICartRepo):
         """Initialize instance with repo object"""
         self.repo = repo
+
+    def start_cart(self, user_id: str, restaurant_id: int) -> Cart:
+        """Starts a cart associated with a specific user and restauranat
+        Args:
+        user_id: The id of the user creating the cart
+        restaurant_id: The id of the restaurant the cart belongs to
+        Returns:
+        A Cart object containing the user and restaurant id with no items and a total price of 0.00.
+        """
+        carts = self.repo.load_all_carts()
+
+        new_id = str(uuid.uuid7())
+
+        new_cart = Cart(id=new_id,
+                        user_id=user_id,
+                        restaurant_id=restaurant_id)
+
+        carts.append(new_cart.model_dump())
+        self.repo.save_all_carts(carts)
+
+        return new_cart
 
     def remove_item_from_cart(self, cart_id: str, menu_item_id: str) -> Cart:
         """Remove a menu item from a user's cart"""
