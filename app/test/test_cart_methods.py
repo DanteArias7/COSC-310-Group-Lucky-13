@@ -86,7 +86,7 @@ def test_add_menu_item_to_nonexistent_cart(test_carts, mocked_repo,
     mocked_repo.load_all_carts.return_value = test_carts
 
     with pytest.raises(HTTPException) as exc_info:
-        mocked_cart_service.add_item_to_cart("fake-id", test_carts[0]["restaurant_id"],
+        mocked_cart_service.add_item_to_cart("fake-id",
                                               menu_item_payload)
 
     assert exc_info.value.status_code == 404
@@ -100,7 +100,6 @@ def test_add_menu_item_to_cart(test_carts, mocked_repo,
 
     result = mocked_cart_service.add_item_to_cart(
          "00000000-0000-0000-0000-000000000001",
-         test_carts[0]["restaurant_id"],
          menu_item_payload
          )
     assert len(result.menu_items) == 2
@@ -108,34 +107,21 @@ def test_add_menu_item_to_cart(test_carts, mocked_repo,
     mocked_repo.save_all_carts.assert_called_once()
 
 # Test that adding an item from a different restaurant raises an exception
-def test_add_menu_item_from_different_restaurant(test_carts, mocked_repo,
-                                                 mocked_cart_service , menu_item_payload_second):
-    """Test that add_item_to_cart raises exception if menu item is from different restaurant"""
+def test_validate_cart_from_different_restaurant(test_carts, mocked_cart_service):
+    """Test that validate_cart_from_same_restaurant raises exception when restaurant ids differ"""
 
-    mocked_repo.load_all_carts.return_value = test_carts
+    cart = test_carts[0]
 
     with pytest.raises(HTTPException) as exc_info:
-        mocked_cart_service.add_item_to_cart(
-            "00000000-0000-0000-0000-000000000001",
-            102,
-            menu_item_payload_second
-        )
+        mocked_cart_service.validate_cart_from_same_restaurant(cart, 102)
 
     assert exc_info.value.status_code == 400
     assert exc_info.value.detail == "Cannot add items from different restaurants to the same cart."
 
 # Test that adding multiple items from same restaurant raises no exception
-def test_add_multiple_menu_item_from_same_restaurant(test_carts, mocked_repo,
-                                                     mocked_cart_service, menu_item_payload_second):
-    """Test that add_item_to_cart successfully adds multiple items from the same restaurant"""
+def test_validate_cart_same_restaurant(test_carts, mocked_cart_service):
+    """Test that validation passes when restaurant ids match"""
 
-    mocked_repo.load_all_carts.return_value = test_carts
+    cart = test_carts[0]
 
-    result = mocked_cart_service.add_item_to_cart(
-         "00000000-0000-0000-0000-000000000001",
-         101,
-         menu_item_payload_second
-         )
-    assert len(result.menu_items) == 2
-    assert result.menu_items[1].id == menu_item_payload_second.id
-    mocked_repo.save_all_carts.assert_called_once()
+    mocked_cart_service.validate_cart_from_same_restaurant(cart, 101)
