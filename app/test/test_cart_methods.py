@@ -73,7 +73,11 @@ def test_delete_nonexistent_cart_item_from_cart(test_carts, mocked_repo, mocked_
 
 def test_add_cart_item_to_nonexistent_cart(test_carts, mocked_repo, mocked_cart_service,
                                            cart_item_payload):
-    """Test that add_item_to_cart raises exception if cart not found"""
+    """
+    Spec: User should not be able to add items to a cart that does not exist.
+    Input: cart_id that is not present in repository.
+    Expected behavior: System raises HTTPException with status 404.
+    """
 
     mocked_repo.load_all_carts.return_value = test_carts
 
@@ -84,8 +88,11 @@ def test_add_cart_item_to_nonexistent_cart(test_carts, mocked_repo, mocked_cart_
     assert exc_info.value.detail == "Cart fake-id Not Found"
 
 def test_add_cart_item_to_cart(test_carts, mocked_repo, mocked_cart_service, cart_item_payload):
-    """Test that add_item_to_cart successfully adds an item"""
-
+    """
+    Spec: If the cart exists, the item should be added to the cart.
+    Input: valid cart_id and menu item payload.
+    Expected behavior: item is appended to cart_items list.
+    """
     mocked_repo.load_all_carts.return_value = test_carts
 
     result = mocked_cart_service.add_item_to_cart(
@@ -98,8 +105,11 @@ def test_add_cart_item_to_cart(test_carts, mocked_repo, mocked_cart_service, car
 
 # Test that adding an item from a different restaurant raises an exception
 def test_validate_cart_from_different_restaurant(test_carts, mocked_cart_service):
-    """Test that validate_cart_from_same_restaurant raises exception when restaurant ids differ"""
-
+    """
+    Spec: Cart must only contain items from one restaurant.
+    Input: cart.restaurant_id = 101, new item restaurant_id = 102.
+    Expected behavior: system rejects the operation with HTTP 400.
+    """
     cart = test_carts[0]
 
     with pytest.raises(HTTPException) as exc_info:
@@ -110,8 +120,11 @@ def test_validate_cart_from_different_restaurant(test_carts, mocked_cart_service
 
 # Test that adding multiple items from same restaurant raises no exception
 def test_validate_cart_same_restaurant(test_carts, mocked_cart_service):
-    """Test that validation passes when restaurant ids match"""
-
+    """
+    Spec: Items from the same restaurant are allowed in the cart.
+    Input: cart.restaurant_id = 101, new item restaurant_id = 101.
+    Expected behavior: validation passes with no exception.
+    """
     cart = test_carts[0]
 
     mocked_cart_service.validate_cart_from_same_restaurant(cart, 101)
