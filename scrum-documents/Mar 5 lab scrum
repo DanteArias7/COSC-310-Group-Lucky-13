@@ -1,0 +1,16 @@
+Date: March 5
+Type of meeting: lab scrum
+
+Attendees: Dante Arias, Varun Garg, Gurkirn Kaur, Zheng Xue
+
+Key discussion points:
+1. Continue working on Features 4, 6, and 7.
+2. Getting code and project reviewed by the TA
+
+TA Notes:
+- can put csv into all the storage files and have on github as a reference
+- will also be creating your own csv files as well
+- for M4 u can use google maps API and centralize distance
+
+Action Items:
+- need code for what happens if the restaurant closes; think about all worst case scenarios
