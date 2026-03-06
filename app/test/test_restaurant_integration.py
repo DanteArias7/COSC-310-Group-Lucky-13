@@ -555,7 +555,11 @@ def test_deleting_nonexistent_menu_item_from_cart(test_carts, test_users,
 def test_add_menu_item_to_cart_integration(test_carts, test_users,
                                            cart_test_client, temp_cart_path ,
                                            menu_item_payload):
-    """Testing successful addition of item to a user's cart"""
+    """
+    Spec: If a valid cart exists, a user should be able to add a menu item to it.
+    Input: valid restaurant_id, valid cart_id, and menu item payload.
+    Expected behavior: API returns 201 and the item is added to the cart.
+    """
 
     request = "/restaurants/" + str(test_carts[0]["restaurant_id"])
     request = request + "/cart/" + test_carts[0]["id"]
@@ -573,7 +577,11 @@ def test_add_menu_item_to_cart_integration(test_carts, test_users,
 def test_add_menu_item_to_nonexistent_cart_integration(test_carts, test_users,
                                                        cart_test_client, temp_cart_path,
                                                        menu_item_payload):
-    """Test adding item to non-existent cart"""
+    """
+    Spec: System should not allow adding items to a cart that does not exist.
+    Input: valid restaurant_id but invalid cart_id ("fake-id").
+    Expected behavior: API returns 404 and cart data remains unchanged.
+    """
 
     request = "/restaurants/" + str(test_carts[0]["restaurant_id"])
     request = request + "/cart/fake-id"
