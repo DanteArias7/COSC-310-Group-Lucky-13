@@ -7,6 +7,7 @@ from app.schemas.menu import MenuItem
 class Restaurant(BaseModel):
     """Restaurant entity."""
     id: int
+    user_id: str
     name: str
     hours: dict[str, str]
     phone_number: str
