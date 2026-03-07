@@ -124,6 +124,25 @@ def delete_menu_item_in_menu(restaurant_id: int, menu_item_id: str,
     authorization_service.authorize(user_id, "manage_own_menu")
     return restaurant_service.delete_menu_item(restaurant_id, menu_item_id)
 
+@restaurant_router.post("/{restaurant_id}/cart", status_code=201)
+def add_user_cart_for_a_resataurant(restaurant_id: int,
+                        cart_repo: CartRepo=Depends(create_cart_repo),
+                        user_repo: UserRepo = Depends(create_user_repo),
+                        user_id: str  = Header(...,alias="user-id")):
+    """API endpoint for a user to start a cart associated with a specific restauranat
+        Args:
+        user_id: The id of the user creating the cart,
+        restaurant_id: The id of the restaurant the cart belongs,
+        cart_repo: Cart Repo object to allow cart service object to access cart data store,
+        user_repo: User Repo object to allow authorization service object to access user data store,
+        Returns:
+        A Cart object containing the user and restaurant id with no items and a total price of 0.00.
+        """
+    cart_service = CartServices(cart_repo)
+    authorization_service = AuthorizationServices(user_repo)
+    authorization_service.authorize(user_id, "manage_own_cart")
+    return cart_service.start_cart(user_id, restaurant_id, )
+
 @restaurant_router.delete("/{restaurant_id}/cart/{cart_id}/" \
                         "{menu_item_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_menu_item_from_cart(cart_id: str, menu_item_id: str,
