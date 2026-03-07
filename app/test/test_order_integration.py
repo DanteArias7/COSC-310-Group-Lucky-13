@@ -1,4 +1,5 @@
 """Integration tests for order endpoints."""
+from datetime import date
 import json
 from fastapi.testclient import TestClient
 import pandas
@@ -7,6 +8,7 @@ from app.main import app
 from app.repositories.order_repo import OrderRepo
 from app.repositories.user_repo import UserRepo
 from app.routers.order import create_order_repo, create_user_repo
+
 
 #pylint: disable=duplicate-code
 #pylint: disable=redefined-outer-name
@@ -123,7 +125,7 @@ def test_add_order_success(temp_order_path,
                       "restaurant_id": 101,
                       "customer_id": "00000000-0000-0000-0000-000000000001",
                       "food_items": "2x Vegan Burger, 1x Bacon Burger",
-                      "order_date": "03-06-2026",
+                      "order_date": date.today().strftime("%m-%d-%Y"),
                       "order_value": 24.35}
 
     assert r.status_code == 201
