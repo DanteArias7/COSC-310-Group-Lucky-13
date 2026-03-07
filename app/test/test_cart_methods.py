@@ -43,6 +43,23 @@ def cart_item_payload():
         tags=["fries"]
     )
 
+def test_start_cart(mocker, mocked_repo, mocked_cart_service, test_carts):
+    """Test that the start cart method returns the proper cart object"""
+    mocked_repo.load_all_carts.return_value = test_carts
+
+    mocked_uuid = '00000000-0000-0000-0000-000000000001'
+    uuid_mock = mocker.patch("app.services.restaurant_services.uuid.uuid7")
+    uuid_mock.return_value = mocked_uuid
+
+    new_cart = mocked_cart_service.start_cart(user_id="00000000-0000-0000-0000-000000000001",
+                                   restaurant_id=101)
+
+    test_carts[0]["cart_items"] = []
+    test_carts[0]["tax"] = 0.00
+    test_carts[0]["subtotal"] = 0.00
+    test_carts[0]["total"] = 0.00
+
+    assert new_cart.model_dump() == test_carts[0]
 #delete_cart_item_from_cart Tests
 
 def test_delete_cart_item_from_nonexistent_cart(test_carts, mocked_repo, mocked_cart_service):
