@@ -203,3 +203,36 @@ def test_role_permissions_map_has_all_roles():
     for role in ("customer", "restaurant_owner", "delivery_driver", "admin"):
         assert role in ROLE_PERMISSIONS
         assert len(ROLE_PERMISSIONS[role]) > 0
+
+
+# ---------------------------------------------------------------------------
+# authorize_access Unit Tests
+# ---------------------------------------------------------------------------
+
+def test_authorize_access_succes(mocker):
+    """Scenario: User attempts to edit resource they own
+        Input: Matching user and resource owner id's
+        Expected: Function returns nothing """
+
+    service = _make_service(mocker)
+
+    user_id = "00000000-0000-0000-0000-00000000001"
+    resource_owner_id = "00000000-0000-0000-0000-00000000001"
+
+    assert service.authorize_access(user_id, resource_owner_id) is None
+
+def test_authorize_access_wrong_ownership(mocker):
+    """Scenario: User attempts to edit resource they do not own,
+        Input: Mismatching user and resource owner id's
+        Expected: Function returns 403 error """
+
+    service = _make_service(mocker)
+
+    user_id = "00000000-0000-0000-0000-00000000001"
+    resource_owner_id = "00000000-0000-0000-0000-00000000002"
+
+    with pytest.raises(HTTPException) as exc_info:
+        service.authorize_access(user_id, resource_owner_id)
+
+    assert exc_info.value.status_code == 403
+    assert exc_info.value.detail ==  "Access denied. Resource does not belong to user."
