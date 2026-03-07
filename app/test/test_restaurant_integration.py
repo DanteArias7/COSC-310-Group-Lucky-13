@@ -15,7 +15,9 @@ from app.routers.restaurant import create_cart_repo, create_restaurant_repo, cre
 @pytest.fixture
 def test_restaurants():
     """Initialize test restaurant data for each test"""
-    return [{"id": 101, "name": "Veggie Palace",
+    return [{"id": 101,
+             "user_id" : "00000000-0000-0000-0000-000000000001",
+               "name": "Veggie Palace",
                 "hours": {"Monday": "9:00-17:00"}, "phone_number": "1234567890",
                 "address": "123 Green Street",
                 "tags": ["vegan", "brunch"],
@@ -194,6 +196,7 @@ def test_create_restaurant_integration(restaurant_test_client, temp_restaurant_p
     """Test creating a restaurant via POST /restaurants"""
 
     payload = {
+        "user_id" : "00000000-0000-0000-0000-000000000001",
         "name": "Taco Town",
         "hours": {"Monday": "10:00-20:00"},
         "phone_number": "5555555555",
