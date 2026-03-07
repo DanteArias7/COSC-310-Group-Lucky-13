@@ -17,6 +17,7 @@ mypy==1.19.1
 mypy_extensions==1.1.0
 mysql-connector-python==9.6.0
 packaging==26.0
+pandas==3.0.1
 pathspec==1.0.4
 platformdirs==4.9.2
 pluggy==1.6.0
@@ -36,5 +37,6 @@ typing-inspection==0.4.2
 typing_extensions==4.15.0
 urllib3==2.6.3
 httpx==0.28.1
+
 
 
