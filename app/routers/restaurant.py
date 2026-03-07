@@ -42,7 +42,7 @@ def create_restaurant(payload: RestaurantCreate,
     restaurant_service = RestaurantServices(restaurant_repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "manage_own_restaurant")
-    return restaurant_service.create_new_restaurant(payload)
+    return restaurant_service.create_new_restaurant(user_id, payload)
 
 @restaurant_router.get("", response_model=List[Restaurant], status_code=200)
 def get_all_restaurants(restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
