@@ -51,11 +51,34 @@ class CartServices():
         raise HTTPException(status_code=404, detail=f"Cart {cart_id} Not Found")
 
     def add_item_to_cart(self, cart_id: str, payload: MenuItem) -> Cart:
-        """Add a menu item to a user's cart"""
+        """
+        Adds a menu item to a user's cart.
+
+        Rules:
+        - The cart must exist.
+        - A cart can only contain items from one restaurant.
+        - If the item already exists in the cart, its quantity should increase by 1.
+        - If the item does not exist in the cart, it should be added with quantity = 1.
+        - After modification, the cart must be saved to persistent storage.
+
+        Args:
+        cart_id: The unique identifier of the cart to which the item will be added.
+        payload: The MenuItem object representing the item being added.
+
+        Returns:
+        Cart: The updated cart object after the item is added or updated.
+
+        Raises:
+        HTTPException:
+        status_code = 404 if the cart with the given cart_id does not exist.
+        """
         carts = self.repo.load_all_carts()
 
         for i, cart in enumerate(carts):
             if cart["id"] == cart_id:
+                # Ensure all items in cart are from the same restaurant:
+                restaurant_id = cart["restaurant_id"]
+                self.validate_cart_from_same_restaurant(cart, restaurant_id)
                 for cart_item in cart["cart_items"]:
                     if cart_item["item"]["id"] == payload.id:
                         cart_item["quantity"] += 1
@@ -66,6 +89,32 @@ class CartServices():
                 self.repo.save_all_carts(carts)
                 return Cart(**cart)
         raise HTTPException(status_code=404, detail=f"Cart {cart_id} Not Found")
+
+    def validate_cart_from_same_restaurant(self, cart: Dict[str, Any], restaurant_id: int) -> None:
+        """
+        Validates that all items in a cart belong to the same restaurant.
+
+        Rules:
+        - A cart can only contain menu items from one restaurant.
+        - If a new item belongs to a different restaurant than the cart's
+          existing restaurant_id, the operation must be rejected.
+
+        Args:
+        cart: The cart object containing existing cart information.
+        restaurant_id: The restaurant ID associated with the menu item being added to the cart.
+
+        Raises:
+        HTTPException: status_code = 400 if the restaurant_id does not
+        match the cart's restaurant_id.
+
+        Returns:
+        None. Validation passes silently if restaurant IDs match.
+        """
+
+        if cart["restaurant_id"] != restaurant_id:
+            raise HTTPException(status_code = 400,
+                                detail = "Cannot add items from different " \
+                                "restaurants to the same cart.")
 
 class ICartRepo(Protocol):
     """User Service Class"""
