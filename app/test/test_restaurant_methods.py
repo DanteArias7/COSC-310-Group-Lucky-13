@@ -10,7 +10,9 @@ from app.services.restaurant_services import RestaurantServices
 @pytest.fixture
 def test_restaurants():
     """Test restaurant data"""
-    return [{"id": 101, "name": "Veggie Palace",
+    return [{"id": 101,
+              "user_id": "00000000-0000-0000-0000-000000000001",
+             "name": "Veggie Palace",
                 "hours": {"Monday": "9:00-17:00"}, "phone_number": "1234567890",
                 "address": "123 Green Street",
                 "tags": ["vegan", "brunch"],
@@ -86,8 +88,11 @@ def test_create_new_restaurant(mocker, mocked_repo, restaurant_service):
 
     mocked_repo.load_all_restaurants.return_value = []
 
+    user_id= "00000000-0000-0000-0000-000000000001"
+
     payload = RestaurantCreate(
         name="Taco Town",
+        user_id=user_id,
         hours={"Monday": "10:00-20:00"},
         phone_number="5555555555",
         address="123 Taco Lane",
@@ -103,9 +108,10 @@ def test_create_new_restaurant(mocker, mocked_repo, restaurant_service):
         ]
     )
 
-    result = restaurant_service.create_new_restaurant(payload)
+    result = restaurant_service.create_new_restaurant(user_id, payload)
 
     assert result.id == mocked_id
+    assert result.user_id == "00000000-0000-0000-0000-000000000001"
     assert result.name == "Taco Town"
     assert result.hours == {"Monday": "10:00-20:00"}
     assert result.phone_number == "5555555555"
@@ -128,6 +134,7 @@ def test_update_restaurant_success(test_restaurants, mocked_repo, restaurant_ser
                             tags=["brunch"])
 
     expected_restaurant =  Restaurant(id=101,
+                                    user_id= "00000000-0000-0000-0000-000000000001",
                                     name = "Meat Palace",
                                     hours= {"Monday": "9:00-2:00"},
                                     phone_number="9876543210",
