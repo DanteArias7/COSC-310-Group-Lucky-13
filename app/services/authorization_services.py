@@ -94,6 +94,27 @@ class AuthorizationServices:
 
         return True
 
+    def authorize_access(self, current_user_id: str, resource_owner_id: str) -> None:
+        """Check whether a user owns the resource they are attempting to access.
+
+        Args:
+            current_user_id: The ID of the user making the request.
+            resource_owner_id:  The ID of the owner of the resource that
+            is being requested to be accessed/edited/deleted.
+
+        Returns:
+            Nothing if the user owns the resource.
+
+        Raises:
+            HTTPException 403 if the user does not own the resource.
+        """
+        if current_user_id != resource_owner_id:
+            raise HTTPException(status_code=403,
+                                detail=(
+                                    "Access denied. Resource does"
+                                    " not belong to user."
+                                ))
+
     def get_role_permissions(self, role: str) -> list:
         """Return the list of permitted actions for a given role.
 
