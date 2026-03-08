@@ -44,7 +44,8 @@ def test_orders():
                       "customer_id": "00000000-0000-0000-0000-000000000001",
                       "food_items": "2x Vegan Burger, 1x Bacon Burger",
                       "order_date": "03-06-2025",
-                      "order_value": 24.35}
+                      "order_value": 24.35,
+                      "status": "Pending"}
 
 @pytest.fixture
 def test_users():
@@ -126,7 +127,8 @@ def test_add_order_success(temp_order_path,
                       "customer_id": "00000000-0000-0000-0000-000000000001",
                       "food_items": "2x Vegan Burger, 1x Bacon Burger",
                       "order_date": date.today().strftime("%m-%d-%Y"),
-                      "order_value": 24.35}
+                      "order_value": 24.35,
+                      "status": "Pending"}
 
     assert r.status_code == 201
     assert new_order == expected_order

@@ -9,3 +9,4 @@ class Order(BaseModel):
     food_items: str
     order_date: str
     order_value: float
+    status: str = "Pending"
