@@ -72,6 +72,7 @@ def test_place_order_success(mocker, mocked_repo, order_service, test_carts):
                       "customer_id": "00000000-0000-0000-0000-000000000001",
                       "food_items": "2x Vegan Burger, 1x Bacon Burger",
                       "order_date": mocked_date,
-                      "order_value": 24.35}
+                      "order_value": 24.35,
+                      "status": "Pending"}
 
     assert order.model_dump() == expected_order
