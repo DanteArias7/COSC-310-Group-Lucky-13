@@ -28,6 +28,7 @@ def update_user(user_id, payload: UserUpdate, repo: UserRepo = Depends(create_us
     user_service = UserServices(repo)
     authorization_service = AuthorizationServices(repo)
     authorization_service.authorize(current_user_id, "manage_own_account")
+    authorization_service.authorize_access(current_user_id, user_id)
     return user_service.update_user(user_id, payload)
 
 @user_router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -37,4 +38,5 @@ def delete_user(user_id, repo: UserRepo = Depends(create_user_repo),
     user_service = UserServices(repo)
     authorization_service = AuthorizationServices(repo)
     authorization_service.authorize(current_user_id, "manage_own_account")
+    authorization_service.authorize_access(current_user_id, user_id)
     return user_service.delete_user(user_id)
