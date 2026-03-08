@@ -13,7 +13,7 @@ class RestaurantServices():
         """Initialize instance with repo object"""
         self.repo = repo
 
-    def create_new_restaurant(self, payload: RestaurantCreate) -> Restaurant:
+    def create_new_restaurant(self, user_id: str, payload: RestaurantCreate) -> Restaurant:
         """
         Create new restaurant profile
         Rules:
@@ -34,6 +34,7 @@ class RestaurantServices():
         """
         restaurant = Restaurant(
             id=random.randint(1, 1_000_000),
+            user_id=user_id,
             name=payload.name,
             hours=payload.hours,
             phone_number=payload.phone_number,
@@ -78,7 +79,8 @@ class RestaurantServices():
 
         for i, restaurant in enumerate(restaurants):
             if restaurant["id"] == restaurant_id:
-                restaurant = {"id" : restaurant_id} | updated_restaurant.model_dump()
+                ids = {"id" : restaurant_id} | {"user_id" : restaurant["user_id"]}
+                restaurant = ids | updated_restaurant.model_dump()
                 restaurant = restaurant | {"menu" : restaurants[i]["menu"]}
                 restaurants[i] = restaurant
                 self.repo.save_all_restaurants(restaurants)
