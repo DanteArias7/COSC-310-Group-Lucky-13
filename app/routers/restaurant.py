@@ -75,6 +75,8 @@ def update_restaurant(restaurant_id: int, payload: UpdateRestaurant,
     restaurant_service = RestaurantServices(restaurant_repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "manage_own_restaurant")
+    authorization_service.authorize_access(user_id,
+                            restaurant_service.fetch_restaurant(restaurant_id).user_id)
     return restaurant_service.update_restaurant(restaurant_id, payload)
 
 @restaurant_router.delete("/{restaurant_id}",
@@ -87,6 +89,8 @@ def delete_restaurant(restaurant_id: int,
     restaurant_service = RestaurantServices(restaurant_repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "manage_own_restaurant")
+    authorization_service.authorize_access(user_id,
+                            restaurant_service.fetch_restaurant(restaurant_id).user_id)
     return restaurant_service.delete_restaurant(restaurant_id)
 
 @restaurant_router.post("/{restaurant_id}/menu", response_model=MenuItem, status_code=201)
@@ -98,6 +102,8 @@ def add_menu_item_to_menu(restaurant_id: int, payload: CreateMenuItem,
     restaurant_service = RestaurantServices(restaurant_repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "manage_own_menu")
+    authorization_service.authorize_access(user_id,
+                                restaurant_service.fetch_restaurant(restaurant_id).user_id)
     return restaurant_service.add_item_to_menu(restaurant_id, payload)
 
 @restaurant_router.put("/{restaurant_id}/menu/{menu_item_id}",
@@ -110,6 +116,8 @@ def update_menu_item_in_menu(restaurant_id: int, menu_item_id: str, payload: Upd
     restaurant_service = RestaurantServices(restaurant_repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "manage_own_menu")
+    authorization_service.authorize_access(user_id,
+                                restaurant_service.fetch_restaurant(restaurant_id).user_id)
     return restaurant_service.update_menu_item(restaurant_id, menu_item_id, payload)
 
 @restaurant_router.delete("/{restaurant_id}/menu/{menu_item_id}",
@@ -122,6 +130,8 @@ def delete_menu_item_in_menu(restaurant_id: int, menu_item_id: str,
     restaurant_service = RestaurantServices(restaurant_repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "manage_own_menu")
+    authorization_service.authorize_access(user_id,
+                                    restaurant_service.fetch_restaurant(restaurant_id).user_id)
     return restaurant_service.delete_menu_item(restaurant_id, menu_item_id)
 
 @restaurant_router.post("/{restaurant_id}/cart", status_code=201)
@@ -153,6 +163,7 @@ def delete_menu_item_from_cart(cart_id: str, menu_item_id: str,
     cart_service = CartServices(restaurant_repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "manage_own_cart")
+    authorization_service.authorize_access(user_id, cart_service.fetch_cart(cart_id).user_id)
     return cart_service.remove_item_from_cart(cart_id, menu_item_id)
 
 @restaurant_router.post("/{restaurant_id}/cart/{cart_id}",
@@ -166,4 +177,5 @@ def add_menu_item_to_cart(cart_id: str,
     cart_service = CartServices(repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "manage_own_cart")
+    authorization_service.authorize_access(user_id, cart_service.fetch_cart(cart_id).user_id)
     return cart_service.add_item_to_cart(cart_id, payload)

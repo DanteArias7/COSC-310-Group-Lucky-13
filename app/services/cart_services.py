@@ -13,6 +13,26 @@ class CartServices():
         """Initialize instance with repo object"""
         self.repo = repo
 
+    def fetch_cart(self, cart_id: str) -> Cart:
+        """Gets a specific cart using its ID
+        Args:
+        cart_id: The id of the user creating the cart
+
+        Returns:
+        A cart object with the matching ID.
+
+        Raises:
+        A 404 exception if cart ID does not exist.
+        """
+        carts = self.repo.load_all_carts()
+
+        for cart in carts:
+            if cart["id"]  == cart_id:
+                return Cart(**cart)
+
+        raise HTTPException(status_code=404,
+                            detail="User Not Found.")
+
     def start_cart(self, user_id: str, restaurant_id: int) -> Cart:
         """Starts a cart associated with a specific user and restauranat
         Args:

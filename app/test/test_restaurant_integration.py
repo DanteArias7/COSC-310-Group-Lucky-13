@@ -16,7 +16,7 @@ from app.routers.restaurant import create_cart_repo, create_restaurant_repo, cre
 def test_restaurants():
     """Initialize test restaurant data for each test"""
     return [{"id": 101,
-             "user_id" : "00000000-0000-0000-0000-000000000001",
+             "user_id" : "00000000-0000-0000-0000-000000000002",
                "name": "Veggie Palace",
                 "hours": {"Monday": "9:00-17:00"}, "phone_number": "1234567890",
                 "address": "123 Green Street",
