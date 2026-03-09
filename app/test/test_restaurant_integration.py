@@ -40,8 +40,9 @@ def test_carts():
                             "tags": ["vegan"]},
                             "quantity": 1}],
                 "subtotal" : 12.99,
+                "delivery_fee" : 0.35,
                 "tax" : 1.30,
-                "total" : 14.29}]
+                "total": 14.64}]
 
 @pytest.fixture
 def test_users():
@@ -533,11 +534,14 @@ def test_add_user_cart_for_a_restaurant_success(test_carts, test_users,
     assert r.status_code == 201
     assert carts[-1] == test_carts[0]
 
-#delete_menu_item_from_cart Tests
+#delete_cart_item_from_cart Tests
 
-def test_deleting_menu_item_from_cart_success(test_carts, test_users,
-                                              cart_test_client, temp_cart_path):
-    """Testing a successful deleting of a menu item from a users cart"""
+def test_deleting_cart_item_from_cart_success(test_carts, test_users,
+                                              cart_test_client, temp_cart_path,
+                                              mocker):
+    """Testing a successful deleting of a CartItem from a users cart"""
+    distance_mock = mocker.patch("app.routers.restaurant.random.uniform")
+    distance_mock.return_value = 1.0
 
     request = "/restaurants/" + str(test_carts[0]["restaurant_id"])
     request = request + "/cart/" + test_carts[0]["id"]
@@ -552,9 +556,9 @@ def test_deleting_menu_item_from_cart_success(test_carts, test_users,
     assert r.status_code == 204
     assert test_carts == carts
 
-def test_deleting_menu_item_from_nonexistent_cart(test_carts, test_users,
+def test_deleting_cart_item_from_nonexistent_cart(test_carts, test_users,
                                                   cart_test_client, temp_cart_path):
-    """Testing a successful deleting of a menu item from a users cart"""
+    """Testing a successful deleting of a CartItem from a users cart"""
 
     request = "/restaurants/" + str(test_carts[0]["restaurant_id"])
     request = request + "/cart/fake-id"
@@ -567,9 +571,9 @@ def test_deleting_menu_item_from_nonexistent_cart(test_carts, test_users,
     assert r.status_code == 404
     assert test_carts == carts
 
-def test_deleting_nonexistent_menu_item_from_cart(test_carts, test_users,
+def test_deleting_nonexistent_cart_item_from_cart(test_carts, test_users,
                                                   cart_test_client, temp_cart_path):
-    """Testing a successful deleting of a menu item from a users cart"""
+    """Testing a successful deleting of a CartItem from a users cart"""
 
     request = "/restaurants/" + str(test_carts[0]["restaurant_id"])
     request = request + "/cart/" + test_carts[0]["id"]
@@ -582,14 +586,18 @@ def test_deleting_nonexistent_menu_item_from_cart(test_carts, test_users,
     assert r.status_code == 404
     assert test_carts == carts
 
-def test_add_menu_item_to_cart_integration(test_carts, test_users,
+#add_cart_item_to_cart Tests
+
+def test_add_cart_item_to_cart_success(test_carts, test_users,
                                            cart_test_client, temp_cart_path ,
-                                           menu_item_payload):
+                                           menu_item_payload, mocker):
     """
     Spec: If a valid cart exists, a user should be able to add a menu item to it.
     Input: valid restaurant_id, valid cart_id, and menu item payload.
     Expected behavior: API returns 201 and the item is added to the cart.
     """
+    distance_mock = mocker.patch("app.routers.restaurant.random.uniform")
+    distance_mock.return_value = 1.0
 
     request = "/restaurants/" + str(test_carts[0]["restaurant_id"])
     request = request + "/cart/" + test_carts[0]["id"]
@@ -600,11 +608,16 @@ def test_add_menu_item_to_cart_integration(test_carts, test_users,
     with open(temp_cart_path, "r", encoding="utf-8") as f:
         carts = json.load(f)
 
+    data = r.json()
     assert r.status_code == 201
     assert len(carts[0]["cart_items"]) == 2
     assert carts[0]["cart_items"][1]["item"]["id"] == menu_item_payload["id"]
+    assert data["subtotal"]     == 17.99
+    assert data["delivery_fee"] == 0.35
+    assert data["tax"]          == 1.80
+    assert data["total"]        == 20.14
 
-def test_add_menu_item_to_nonexistent_cart_integration(test_carts, test_users,
+def test_add_cart_item_to_nonexistent_cart_integration(test_carts, test_users,
                                                        cart_test_client, temp_cart_path,
                                                        menu_item_payload):
     """

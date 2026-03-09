@@ -31,8 +31,9 @@ test_carts = [{"id" : "00000000-0000-0000-0000-000000000001",
                             "tags": ["vegan"]},
                             "quantity": 1}],
                 "subtotal" : 12.99,
+                "delivery_fee" : 0.35,
                 "tax" : 1.30,
-                "total" : 14.29}]
+                "total": 14.64}]
 
 @pytest.fixture
 def mocked_repo(mocker):
