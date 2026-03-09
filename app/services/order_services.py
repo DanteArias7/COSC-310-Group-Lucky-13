@@ -91,16 +91,11 @@ class OrderServices():
 
         for i, order in enumerate(orders):
             if order["id"] == order_id:
-                # validation check to ensure order is in pending status before simulating payment
-                if order["status"] != "Pending":
-                    raise HTTPException(status_code=400,
-                                        detail=f"Order {order_id} is not in a payable state")
-
                 # simulate payment processing delay
                 time.sleep(2)
                 orders[i]["status"] = "Paid"
                 self.repo.update_orders(orders)
-                return Order(**orders[i])
+                return Order(**order)
 
         raise HTTPException(status_code=404, detail=f"Order {order_id} Not Found")
 
