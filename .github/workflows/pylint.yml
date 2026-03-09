@@ -2,7 +2,7 @@ name: Pylint
 
 on: 
   push:
-    branches: ["features/**", "refactor/**"]
+    branches: ["features/**", "refactor/**", "docs/**"]
   pull_request:
     branches: ["main"]
     
@@ -32,4 +32,5 @@ jobs:
     - name: Testing coverage with pytest-cov
       run: |
         python -m pytest --cov
+        python -m pytest --cov --cov-branch
       
