@@ -194,3 +194,43 @@ def test_get_order_by_user_id_with_no_orders(order_test_client,
     r = order_test_client.get("/orders", headers={"user-id" : test_users[2]["id"]})
 
     assert r.status_code == 404
+
+#simulate_payment Tests
+def test_simulate_payment_success(temp_order_path,
+                                  order_test_client,
+                                  test_orders,
+                                  test_users):
+    """
+    Spec: System should simulate payment for an order
+    Input: valid order_id
+    Expected behavior: Order status should update to Paid
+    """
+
+    order_id = test_orders[0]["id"]
+
+    request = f"/orders/{order_id}/simulate-payment"
+
+    r = order_test_client.post(request,
+                               headers={"user-id": test_users[0]["id"]})
+
+    orders = pandas.read_csv(temp_order_path)
+
+    updated_order = orders.iloc[0].to_dict()
+
+    assert r.status_code == 200
+    assert updated_order["status"] == "Paid"
+
+def test_simulate_payment_order_not_found(order_test_client,
+                                          test_users):
+    """
+    Spec: System should return error if order does not exist
+    Input: invalid order_id
+    Expected behavior: Method raises 404 HTTPException
+    """
+
+    request = "/orders/INVALIDID/simulate-payment"
+
+    r = order_test_client.post(request,
+                               headers={"user-id": test_users[0]["id"]})
+
+    assert r.status_code == 404
