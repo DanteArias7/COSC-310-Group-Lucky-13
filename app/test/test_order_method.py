@@ -62,6 +62,17 @@ def test_orders():
                       "order_date": "03-06-2025",
                       "order_value": 24.35}]
 
+@pytest.fixture
+def test_order_status():
+    """Initialize test order data with status for payment tests"""
+    return[{"id": "AAAAAAA",
+         "restaurant_id": 101,
+         "customer_id": "00000000-0000-0000-0000-000000000001",
+         "food_items": "1x Burger",
+         "order_date": "03-06-2026",
+         "order_value": 12.50,
+         "status": "Pending"}]
+
 
 #place_order Unit Tests
 def test_place_order_success(mocker, mocked_repo, order_service, test_carts):
@@ -128,3 +139,32 @@ def test_get_order_by_user_id_user_with_no_orders(mocked_repo, order_service, te
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "No Orders Found for User"
+
+def test_simulate_payment_success(mocked_repo, order_service, test_order_status):
+    """
+    Spec: Method should simulate payment for an order
+    Input: valid order_id
+    Expected behavior: Order status should update to Paid
+    """
+
+    mocked_repo.load_all_orders.return_value = test_order_status
+    mocked_repo.update_orders.return_value = None
+
+    order = order_service.simulate_payment(test_order_status[0]["id"])
+
+    assert order.status == "Paid"
+
+def test_simulate_payment_order_not_found(mocked_repo, order_service):
+    """
+    Spec: Method should raise exception if order does not exist
+    Input: invalid order_id
+    Expected behavior: HTTPException with status 404
+    """
+
+    mocked_repo.load_all_orders.return_value = []
+
+    with pytest.raises(HTTPException) as exc_info:
+        order_service.simulate_payment("invalid-id")
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Order invalid-id Not Found"

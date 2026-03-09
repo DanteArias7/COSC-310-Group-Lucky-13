@@ -30,3 +30,13 @@ class OrderRepo():
         Returns: Nothing"""
         orderdf = pandas.DataFrame([order])
         orderdf.to_csv(self.data_path, mode="a", index=False, header=False)
+
+    def update_orders(self, orders: List[Dict[str, Any]]) -> None:
+        """Overwrites the order csv file
+
+        Args:
+            orders: A list of Order objects in dict form
+
+        Returns: Nothing"""
+        orderdf = pandas.DataFrame(orders)
+        orderdf.to_csv(self.data_path, index=False)

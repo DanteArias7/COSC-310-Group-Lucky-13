@@ -3,6 +3,7 @@ from datetime import date
 import random
 import string
 from typing import Any, Dict, List, Protocol
+import time
 
 from fastapi import HTTPException
 from app.schemas.cart import Cart
@@ -75,6 +76,28 @@ class OrderServices():
             raise HTTPException(status_code=404,
                                 detail="No Orders Found for User")
         return user_orders
+
+    def simulate_payment(self, order_id: str) -> Order:
+        """
+        Simulates the payment process for an order.
+
+        Args:
+            order_id: The ID of the order to simulate payment for.
+
+        Returns:
+            The updated Order object with status "Paid".
+        """
+        orders = self.repo.load_all_orders()
+
+        for i, order in enumerate(orders):
+            if order["id"] == order_id:
+                # simulate payment processing delay
+                time.sleep(2)
+                orders[i]["status"] = "Paid"
+                self.repo.update_orders(orders)
+                return Order(**order)
+
+        raise HTTPException(status_code=404, detail=f"Order {order_id} Not Found")
 
 
 class IOrderRepo(Protocol):
