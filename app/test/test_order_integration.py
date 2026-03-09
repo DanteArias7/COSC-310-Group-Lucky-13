@@ -183,7 +183,7 @@ def test_get_order_by_user_id_success(order_test_client, test_orders,
     assert r.status_code == 200
     assert user_orders == expected_orders
 
-def test_get_order_by_user_id_with_no_orders(order_test_client, test_orders,
+def test_get_order_by_user_id_with_no_orders(order_test_client,
                              test_users):
     """
     Spec: System should return error if user with no orders attempts to get order
