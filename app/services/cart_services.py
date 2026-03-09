@@ -3,8 +3,11 @@
 from typing import Any, Dict, List, Protocol
 import uuid
 from fastapi import HTTPException
-from app.schemas.cart import Cart, CartItem # pylint: disable=unused-import
+from app.schemas.cart import Cart
 from app.schemas.menu import MenuItem
+
+TAX_RATE = 0.10
+FEE_PER_KM = 0.35
 
 #pylint: disable=too-few-public-methods
 class CartServices():
@@ -53,6 +56,35 @@ class CartServices():
         self.repo.save_all_carts(carts)
 
         return new_cart
+
+    def calculate_cart(self, cart: Cart, distance : float) -> Cart:
+        """Calculate subtotal, delivery fee, tax, and total for a cart.
+        Rules:
+        - subtotal, delivery fee, tax, and total should be rounded to 2 decimal places
+        - delivery fee calculated based on distance * FEE_PER_KM
+        - tax calculated based on subtotal * TAX_RATE
+
+        Args:
+        - Cart object with up to date CartItems list
+            (subtotal, delivery fee, tax, and total not yet updated)
+        - distance: float of distance from restaurant to customer
+            (distance currently randomly selected, will implement Google API in M4)
+
+        Returns:
+            Cart object with updated subtotal, delivery fee tax, and total
+        """
+        subtotal = round(sum(item.item.price * item.quantity for item in cart.cart_items), 2)
+        delivery_fee = round(distance * FEE_PER_KM, 2)
+        if(subtotal==0): delivery_fee = 0
+        tax = round(subtotal * TAX_RATE, 2)
+        total = round(subtotal + delivery_fee + tax, 2)
+
+        return cart.model_copy(update={
+            "subtotal": subtotal,
+            "delivery_fee": delivery_fee,
+            "tax": tax,
+            "total": total
+        })
 
     def remove_item_from_cart(self, cart_id: str, menu_item_id: str) -> Cart:
         """Remove a menu item from a user's cart"""
