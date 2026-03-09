@@ -166,9 +166,8 @@ def delete_menu_item_from_cart(cart_id: str, menu_item_id: str,
     authorization_service.authorize(user_id, "manage_own_cart")
     authorization_service.authorize_access(user_id, cart_service.fetch_cart(cart_id).user_id)
     updated_cart = cart_service.remove_item_from_cart(cart_id, menu_item_id)
-    """TODO: change to distance calculate function instead of rand float"""
-    tempDist = random.uniform(1.00, 20.00)
-    return cart_service.calculate_cart(updated_cart, tempDist)
+    temp_dist = random.uniform(1.00, 20.00)
+    return cart_service.calculate_cart(updated_cart, temp_dist)
 
 @restaurant_router.post("/{restaurant_id}/cart/{cart_id}",
                         status_code=status.HTTP_201_CREATED)
@@ -183,6 +182,5 @@ def add_menu_item_to_cart(cart_id: str,
     authorization_service.authorize(user_id, "manage_own_cart")
     authorization_service.authorize_access(user_id, cart_service.fetch_cart(cart_id).user_id)
     updated_cart = cart_service.add_item_to_cart(cart_id, payload)
-    """TODO: change to distance calculate function instead of rand float"""
-    tempDist = random.uniform(1.00, 20.00)
-    return cart_service.calculate_cart(updated_cart, tempDist)
+    temp_dist = random.uniform(1.00, 20.00)
+    return cart_service.calculate_cart(updated_cart, temp_dist)
