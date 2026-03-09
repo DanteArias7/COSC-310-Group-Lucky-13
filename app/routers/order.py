@@ -69,3 +69,27 @@ def get_all_orders_for_a_user(order_repo: OrderRepo = Depends(create_order_repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "view_own_orders")
     return order_service.get_orders_by_user_id(user_id)
+
+@order_router.post("/{order_id}/simulate-payment", response_model=Order, status_code=200)
+def simulate_payment(order_id: str,
+                     order_repo: OrderRepo = Depends(create_order_repo),
+                     user_repo: UserRepo = Depends(create_user_repo),
+                     user_id: str = Header(..., alias="user-id")):
+    """Simulates payment processing for an order
+
+    Rules: User must have customer role
+
+    Args:
+        order_id: ID of order to process payment for
+        order_repo: Order repository instance
+        user_repo: User repository instance
+        user_id: header sent with request indicating current user
+
+    Returns:
+        Updated order object
+    """
+
+    order_service = OrderServices(order_repo)
+    authorization_service = AuthorizationServices(user_repo)
+    authorization_service.authorize(user_id, "make_payment")
+    return order_service.simulate_payment(order_id)
