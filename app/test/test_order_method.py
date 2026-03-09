@@ -73,6 +73,17 @@ def test_order_status():
          "order_value": 12.50,
          "status": "Pending"}]
 
+@pytest.fixture
+def test_order_status_2():
+    """Initialize test order data with status for payment tests"""
+    return[{"id": "BBBBBBB",
+         "restaurant_id": 101,
+         "customer_id": "00000000-0000-0000-0000-000000000001",
+         "food_items": "1x Burger",
+         "order_date": "03-06-2026",
+         "order_value": 12.50,
+         "status": "Paid"}]
+
 
 #place_order Unit Tests
 def test_place_order_success(mocker, mocked_repo, order_service, test_carts):
@@ -168,3 +179,19 @@ def test_simulate_payment_order_not_found(mocked_repo, order_service):
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Order invalid-id Not Found"
+
+def test_simulate_payment_order_already_paid(mocked_repo, order_service, test_order_status_2):
+    """
+    Spec: Method should raise exception if order is not in pending status
+    Input: order_id for order that is not in Pending status
+    Expected behavior: HTTPException with status 400
+    """
+
+    mocked_repo.load_all_orders.return_value = test_order_status_2
+
+    with pytest.raises(HTTPException) as exc_info:
+        order_service.simulate_payment(test_order_status_2[0]["id"])
+
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.detail == \
+        f"Order {test_order_status_2[0]['id']} is not in a payable state"
