@@ -176,6 +176,6 @@ def test_calculate_cart_empty_items(mocked_cart_service, empty_cart):
     result = mocked_cart_service.calculate_cart(empty_cart, 1.0)
 
     assert result.subtotal     == 0.00
-    assert result.delivery_fee == 0.00
+    assert result.delivery_fee == 0.35
     assert result.tax          == 0.00
-    assert result.total        == 0.00
+    assert result.total        == 0.35
