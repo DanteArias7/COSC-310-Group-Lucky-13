@@ -2,7 +2,9 @@
 from datetime import date
 import random
 import string
-from typing import Any, Dict, Protocol
+from typing import Any, Dict, List, Protocol
+
+from fastapi import HTTPException
 from app.schemas.cart import Cart
 from app.schemas.order import Order
 
@@ -50,6 +52,30 @@ class OrderServices():
 
         return new_order
 
+    def get_orders_by_user_id(self, user_id: str) -> List[Order]:
+        """
+        Gets all orders related to a user.
+
+        Args:
+            user_id: The ID of the requested user's orders.
+
+        Returns:
+            List of Order objects.
+        """
+        orders = self.repo.load_all_orders()
+
+        user_orders = []
+
+        for order in orders:
+            if order["customer_id"] == user_id:
+                Order(**order)
+                user_orders.append(order)
+
+        if not user_orders:
+            raise HTTPException(status_code=404,
+                                detail="No Orders Found for User")
+        return user_orders
+
 
 class IOrderRepo(Protocol):
     """Order Repo Interface"""
@@ -61,3 +87,7 @@ class IOrderRepo(Protocol):
             order attributes
 
         Returns: Nothing"""
+    def load_all_orders(self)-> List[Dict[str, Any]]:
+        """Loads all orders from data store
+
+        Returns: A list of dicts representing orders """
