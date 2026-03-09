@@ -172,6 +172,7 @@ def test_calculate_cart(test_carts, mocked_cart_service):
     assert result.total        == 14.64
 
 def test_calculate_cart_empty_items(mocked_cart_service, empty_cart):
+    """Test calculate_cart returns correct totals when cart is empty"""
     result = mocked_cart_service.calculate_cart(empty_cart, 1.0)
 
     assert result.subtotal     == 0.00

@@ -10,6 +10,8 @@ from app.routers.restaurant import create_cart_repo, create_restaurant_repo, cre
 
 #pylint: disable=duplicate-code
 #pylint: disable=redefined-outer-name
+#pylint: disable=too-many-arguments
+#pylint: disable=too-many-positional-arguments
 
 #Test Setup
 @pytest.fixture
