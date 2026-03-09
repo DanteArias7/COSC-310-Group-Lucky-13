@@ -6,7 +6,7 @@ certifi==2026.1.4
 charset-normalizer==3.4.4
 colorama==0.4.6
 dill==0.4.1
-fastapi==0.129.0
+fastapi[standard]==0.129.0
 greenlet==3.3.1
 idna==3.11
 iniconfig==2.3.0
@@ -37,6 +37,3 @@ typing-inspection==0.4.2
 typing_extensions==4.15.0
 urllib3==2.6.3
 httpx==0.28.1
-
-
-
