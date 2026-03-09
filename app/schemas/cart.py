@@ -17,5 +17,6 @@ class Cart(BaseModel):
     restaurant_id: int
     cart_items: List[CartItem] = []
     subtotal: float = 0.00
+    delivery_fee: float = 0.00
     tax: float = 0.00
     total: float = 0.00
