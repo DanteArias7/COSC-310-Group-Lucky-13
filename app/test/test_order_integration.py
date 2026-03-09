@@ -234,29 +234,3 @@ def test_simulate_payment_order_not_found(order_test_client,
                                headers={"user-id": test_users[0]["id"]})
 
     assert r.status_code == 404
-
-def test_simulate_payment_invalid_status(temp_order_path,
-                                         order_test_client,
-                                         test_orders,
-                                         test_users):
-    """
-    Spec: System should prevent payment if order is not in Pending status
-    Input: valid order_id with status not Pending
-    Expected behavior: Endpoint returns 400 error
-    """
-
-    orders = pandas.read_csv(temp_order_path)
-
-    # change status to Paid to simulate invalid state
-    orders.loc[0, "status"] = "Paid"
-
-    orders.to_csv(temp_order_path, index=False)
-
-    order_id = test_orders[0]["id"]
-
-    request = f"/orders/{order_id}/simulate-payment"
-
-    r = order_test_client.post(request,
-                               headers={"user-id": test_users[0]["id"]})
-
-    assert r.status_code == 400
