@@ -1,6 +1,7 @@
 """Unit tests for cart methods."""
 from fastapi import HTTPException
 import pytest
+from app.schemas.cart import Cart
 from app.services.cart_services import CartServices
 from app.schemas.menu import MenuItem
 
@@ -17,9 +18,21 @@ def test_carts():
                             "price": 12.99,
                             "tags": ["vegan"]},
                             "quantity": 1}],
-                "subtotal" : 12.99,
-                "tax" : 1.30,
-                "total" : 14.29}]
+                "subtotal" : 0.00,
+                "delivery_fee" : 0.00,
+                "tax" : 0.00,
+                "total" : 0.00}]
+
+@pytest.fixture
+def empty_cart():
+    """Empty cart with no items"""
+    return Cart(**{
+        "id": "00000000-0000-0000-0000-000000000002",
+        "user_id": "00000000-0000-0000-0000-000000000001",
+        "restaurant_id": 101,
+        "cart_items": [],
+        "subtotal": 0.00, "delivery_fee": 0.00, "tax": 0.00, "total": 0.00
+    })
 
 @pytest.fixture
 def mocked_repo(mocker):
@@ -145,3 +158,23 @@ def test_validate_cart_same_restaurant(test_carts, mocked_cart_service):
     cart = test_carts[0]
 
     mocked_cart_service.validate_cart_from_same_restaurant(cart, 101)
+
+# calculate_cart Tests
+
+def test_calculate_cart(test_carts, mocked_cart_service):
+    """Test calculate_cart returns correct totals when distance is 1.0 km."""
+    cart = Cart(**test_carts[0])
+    result = mocked_cart_service.calculate_cart(cart, 1.0)
+
+    assert result.subtotal     == 12.99
+    assert result.delivery_fee == 0.35
+    assert result.tax          == 1.30
+    assert result.total        == 14.64
+
+def test_calculate_cart_empty_items(mocked_cart_service, empty_cart):
+    result = mocked_cart_service.calculate_cart(empty_cart, 1.0)
+
+    assert result.subtotal     == 0.00
+    assert result.delivery_fee == 0.00
+    assert result.tax          == 0.00
+    assert result.total        == 0.00
