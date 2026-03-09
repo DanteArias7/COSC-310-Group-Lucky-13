@@ -1,5 +1,6 @@
 """Tests for restaurant functionality."""
 from datetime import date
+from fastapi import HTTPException
 import pytest
 from app.schemas.cart import Cart
 from app.services.order_services import OrderServices
@@ -39,6 +40,28 @@ def test_carts():
                 "tax" : 1.35,
                 "total" : 24.35}]
 
+@pytest.fixture
+def test_orders():
+    """Initialize test order data for each test"""
+    return[{"id": "QQQQQQQ",
+                      "restaurant_id": 101,
+                      "customer_id": "00000000-0000-0000-0000-000000000001",
+                      "food_items": "2x Vegan Burger, 1x Bacon Burger",
+                      "order_date": "03-06-2025",
+                      "order_value": 24.35},
+                      {"id": "QQQQQQQ",
+                      "restaurant_id": 101,
+                      "customer_id": "00000000-0000-0000-0000-000000000001",
+                      "food_items": "2x Vegan Burger",
+                      "order_date": "03-06-2025",
+                      "order_value": 24.35},
+                      {"id": "QQQQQQQ",
+                      "restaurant_id": 101,
+                      "customer_id": "00000000-0000-0000-0000-000000000002",
+                      "food_items": "1x Hot Dog",
+                      "order_date": "03-06-2025",
+                      "order_value": 24.35}]
+
 
 #place_order Unit Tests
 def test_place_order_success(mocker, mocked_repo, order_service, test_carts):
@@ -76,3 +99,32 @@ def test_place_order_success(mocker, mocked_repo, order_service, test_carts):
                       "status": "Pending"}
 
     assert order.model_dump() == expected_order
+
+#get_order_by_user_id Unit Tests
+def test_get_order_by_user_id_success(mocked_repo, order_service, test_orders):
+    """
+    Spec: Method should return orders for a user
+    Input: valid user_id
+    Expected behavior: Method returns List of order objects
+    """
+    mocked_repo.load_all_orders.return_value = test_orders
+
+    orders = order_service.get_orders_by_user_id(test_orders[0]["customer_id"])
+
+    expected_orders = [test_orders[0], test_orders[1]]
+
+    assert orders == expected_orders
+
+def test_get_order_by_user_id_user_with_no_orders(mocked_repo, order_service, test_orders):
+    """
+    Spec: Method should return orders for a user
+    Input: valid user_id
+    Expected behavior: Method returns List of order objects
+    """
+    mocked_repo.load_all_orders.return_value = test_orders
+
+    with pytest.raises(HTTPException) as exc_info:
+        order_service.get_orders_by_user_id("user-with-no-orders")
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "No Orders Found for User"
