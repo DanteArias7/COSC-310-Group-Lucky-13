@@ -529,6 +529,7 @@ def test_add_user_cart_for_a_restaurant_success(test_carts, test_users,
     test_carts[0]["cart_items"] = []
     test_carts[0]["tax"] = 0.00
     test_carts[0]["subtotal"] = 0.00
+    test_carts[0]["delivery_fee"] = 0.00
     test_carts[0]["total"] = 0.00
 
     test_carts[0]["id"] = carts[-1]["id"]
