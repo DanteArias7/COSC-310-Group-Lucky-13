@@ -1,5 +1,6 @@
 """API Endpoints for Order functionality"""
 from pathlib import Path
+from typing import List
 from fastapi import APIRouter, Depends, Header
 from app.repositories.order_repo import OrderRepo
 from app.repositories.user_repo import UserRepo
@@ -47,4 +48,24 @@ def add_order(payload: Cart,
     order_service = OrderServices(order_repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "create_order")
+    authorization_service.authorize_access(user_id, payload.user_id)
     return order_service.place_order(payload)
+
+@order_router.get("", response_model=List[Order], status_code=200)
+def get_all_orders_for_a_user(order_repo: OrderRepo = Depends(create_order_repo),
+                 user_repo: UserRepo = Depends(create_user_repo),
+                 user_id: str = Header(...,calias="user-id")):
+    """Gets all the previous and current orders for a given user.
+
+    Rules: User must have customer role
+
+    Args:
+    order_repo: The order repo object to allow order_service to access order data store,
+    user_repo: The user repo object to allow order_service to access user data store,
+    user_id: header sent with request indicating current user
+
+    Returns: List of order objects pertaining to the given user"""
+    order_service = OrderServices(order_repo)
+    authorization_service = AuthorizationServices(user_repo)
+    authorization_service.authorize(user_id, "view_own_orders")
+    return order_service.get_orders_by_user_id(user_id)

@@ -39,13 +39,28 @@ def test_carts():
 @pytest.fixture
 def test_orders():
     """Initialize test order data for each test"""
-    return{"id": "QQQQQQQ",
+    return[{"id": "QQQQQQQ",
                       "restaurant_id": 101,
                       "customer_id": "00000000-0000-0000-0000-000000000001",
                       "food_items": "2x Vegan Burger, 1x Bacon Burger",
                       "order_date": "03-06-2025",
                       "order_value": 24.35,
+                      "status": "Pending"},
+                      {"id": "QQQQQQQ",
+                      "restaurant_id": 101,
+                      "customer_id": "00000000-0000-0000-0000-000000000001",
+                      "food_items": "2x Vegan Burger",
+                      "order_date": "03-06-2025",
+                      "order_value": 24.35,
+                      "status": "Pending"},
+                      {"id": "QQQQQQQ",
+                      "restaurant_id": 101,
+                      "customer_id": "00000000-0000-0000-0000-000000000002",
+                      "food_items": "1x Hot Dog",
+                      "order_date": "03-06-2025",
+                      "order_value": 24.35,
                       "status": "Pending"}
+                      ]
 
 @pytest.fixture
 def test_users():
@@ -63,7 +78,14 @@ def test_users():
             "phone_number": "123-456-7890",
             "address": "123 Baron Rd, Kelowna, BC, A1B2C3",
             "password": "password",
-            "role": "restaurant_owner"}]
+            "role": "restaurant_owner"},
+            {"id": "00000000-0000-0000-0000-000000000003",
+            "name": "Alex",
+            "email": "alexsmith@gmail.com",
+            "phone_number": "123-456-7890",
+            "address": "123 Baron Rd, Kelowna, BC, A1B2C3",
+            "password": "password",
+            "role": "customer"}]
 
 
 @pytest.fixture
@@ -71,8 +93,18 @@ def temp_order_path(tmp_path, test_orders):
     """Create temporary cart file path for each test"""
     test_order_data_path = tmp_path / "order.csv"
 
-    orderdf = pandas.DataFrame([test_orders])
-    orderdf.to_csv(test_order_data_path, index=False)
+    headersdf = pandas.DataFrame(columns=["id",
+                                        "restaurant_id",
+                                        "customer_id",
+                                        "food_items",
+                                        "order_date",
+                                        "order_value",
+                                        "status"])
+
+    headersdf.to_csv(test_order_data_path, index=False)
+
+    orderdf = pandas.DataFrame(test_orders)
+    orderdf.to_csv(test_order_data_path, mode='a', index=False, header=False)
 
     return test_order_data_path
 
@@ -132,3 +164,33 @@ def test_add_order_success(temp_order_path,
 
     assert r.status_code == 201
     assert new_order == expected_order
+
+#get_order_by_user_id Tests
+def test_get_order_by_user_id_success(order_test_client, test_orders,
+                             test_users):
+    """
+    Spec: System should allow user to retrieve their own orders
+    Input: valid user_id
+    Expected behavior: Endpoint returns list of user orders
+    """
+
+    r = order_test_client.get("/orders", headers={"user-id" : test_users[0]["id"]})
+
+    expected_orders = [test_orders[0], test_orders[1]]
+
+    user_orders = r.json()
+
+    assert r.status_code == 200
+    assert user_orders == expected_orders
+
+def test_get_order_by_user_id_with_no_orders(order_test_client,
+                             test_users):
+    """
+    Spec: System should return error if user with no orders attempts to get order
+    Input: valid user_id that does not have any orders
+    Expected behavior: Method raises 404 HTTPException
+    """
+
+    r = order_test_client.get("/orders", headers={"user-id" : test_users[2]["id"]})
+
+    assert r.status_code == 404
