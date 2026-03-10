@@ -50,10 +50,10 @@ class RestaurantServices():
 
     def fetch_all_restaurants(self) -> List[RestaurantResult]:
         """
-        Return a representation of all restaurant objects
+        Gets a representation of all restaurant objects
 
         Returns:
-            A list of restaurantResult o
+            A list of restaurantResult objects
         """
 
         full_restaurants = self.repo.load_all_restaurants()
@@ -72,6 +72,29 @@ class RestaurantServices():
 
         return restaurants
 
+    def fetch_name_searched_restaurants(self, search: str):
+        """Gets restaurants based on a given search term string
+
+        Args:
+        search: A string used to compare to the restaurants name
+
+        Returns:
+        A list of RestaurantResult Objects where the restaurant's name contains the search string.
+        """
+        restaurants = self.repo.load_all_restaurants()
+        results = []
+        today = date.today().strftime("%A")
+
+        for restaurant in restaurants:
+            if search.lower() in restaurant["name"].lower():
+                result = RestaurantResult(id=restaurant["id"],
+                                  name=restaurant["name"],
+                                  address=restaurant["address"],
+                                  todays_hours=restaurant["hours"][today],
+                                  tags=restaurant["tags"])
+                results.append(result)
+
+        return results
     def fetch_restaurant(self, restaurant_id: int) -> Restaurant:
         """Return a restaurant by ID or raise 404."""
         restaurants = self.repo.load_all_restaurants()
