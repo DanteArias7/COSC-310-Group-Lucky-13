@@ -144,13 +144,48 @@ def menu_item_payload():
         "tags": ["fries"]
     }
 
-#get_all_restaurants Integration Tests
+#browse_restaurants Integration Tests
 
-def test_get_all_restaurants_integration(restaurant_test_client, temp_restaurant_path,
-                                         test_users):
-    """Test retrieving all restaurants via GET /restaurants/."""
+def test_browse_restaurants_integration_without_search_success(restaurant_test_client,
+                                                               temp_restaurant_path,
+                                                                test_users):
+    """Spec: Test retrieving all restaurants via GET /restaurants/browse.
+    Input: None
+    Expected Behaviour: A List of RestauntResult objects is returned"""
 
-    response = restaurant_test_client.get("/restaurants/", headers={"user-id": test_users[1]["id"]})
+    response = restaurant_test_client.get("/restaurants/browse",
+                                          headers={"user-id": test_users[1]["id"]})
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert isinstance(data, list)
+    assert len(data) > 0
+
+    restaurant = data[0]
+    today = date.today().strftime("%A")
+
+    with open(temp_restaurant_path, "r", encoding="utf-8") as f:
+        restaurants = json.load(f)
+
+    assert restaurants[0]["id"] == data[0]["id"]
+    assert restaurants[0]["name"] == data[0]["name"]
+    assert restaurants[0]["address"] == data[0]["address"]
+    assert restaurants[0]["hours"][today] == data[0]["todays_hours"]
+    assert restaurants[0]["tags"] == data[0]["tags"]
+
+    assert isinstance(restaurant["todays_hours"], str)
+    assert isinstance(restaurant["tags"], list)
+
+def test_browse_restaurants_with_name_search_success(restaurant_test_client,
+                                                    temp_restaurant_path,
+                                                    test_users):
+    """Test retrieving restaurants matching a searched term via GET /restaurants/browse.
+    Input: A search term that matches a restaurant's name
+    Expected Behaviour: A List of RestauntResult objects is returned"""
+
+    response = restaurant_test_client.get("/restaurants/browse?search=veg",
+                                          headers={"user-id": test_users[1]["id"]})
 
     assert response.status_code == 200
     data = response.json()
