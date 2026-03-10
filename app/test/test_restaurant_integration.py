@@ -1,4 +1,5 @@
 """Integration tests for restaurant endpoints."""
+from datetime import date
 import json
 from fastapi.testclient import TestClient
 import pytest
@@ -18,7 +19,14 @@ def test_restaurants():
     return [{"id": 101,
              "user_id" : "00000000-0000-0000-0000-000000000002",
                "name": "Veggie Palace",
-                "hours": {"Monday": "9:00-17:00"}, "phone_number": "1234567890",
+                "hours": { "Monday": "9:00-17:00",
+                            "Tuesday": "9:00-17:00",
+                            "Wednesday": "9:00-17:00",
+                            "Thursday": "9:00-17:00",
+                            "Friday": "9:00-17:00",
+                            "Saturday": "9:00-17:00",
+                            "Sunday": "9:00-17:00"},
+                "phone_number": "1234567890",
                 "address": "123 Green Street",
                 "tags": ["vegan", "brunch"],
                 "menu": [{"id": "00000000-0000-0000-0000-0000000000001",
@@ -151,15 +159,19 @@ def test_get_all_restaurants_integration(restaurant_test_client, temp_restaurant
     assert len(data) > 0
 
     restaurant = data[0]
+    today = date.today().strftime("%A")
 
     with open(temp_restaurant_path, "r", encoding="utf-8") as f:
         restaurants = json.load(f)
 
-    assert restaurants == data
+    assert restaurants[0]["id"] == data[0]["id"]
+    assert restaurants[0]["name"] == data[0]["name"]
+    assert restaurants[0]["address"] == data[0]["address"]
+    assert restaurants[0]["hours"][today] == data[0]["todays_hours"]
+    assert restaurants[0]["tags"] == data[0]["tags"]
 
-    assert isinstance(restaurant["hours"], dict)
+    assert isinstance(restaurant["todays_hours"], str)
     assert isinstance(restaurant["tags"], list)
-    assert isinstance(restaurant["menu"],list)
 
 #get_restaurant_by_id Integration Tests
 
