@@ -44,24 +44,33 @@ def create_restaurant(payload: RestaurantCreate,
     authorization_service.authorize(user_id, "manage_own_restaurant")
     return restaurant_service.create_new_restaurant(user_id, payload)
 
-@restaurant_router.get("", response_model=List[RestaurantResult], status_code=200)
-def get_all_restaurants(restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
+@restaurant_router.get("/browse", response_model=List[RestaurantResult], status_code=200)
+def browse_restaurants(restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
                         user_repo: UserRepo = Depends(create_user_repo),
-                        user_id: str = Header(...,alias="user-id")):
-    """API endpoint for a user to view all the restaurants
+                        user_id: str = Header(...,alias="user-id"),
+                        search: str | None = None):
+    """API endpoint for a user to brose all the restaurants
         Args:
         user_id: The id of the user viewing the restaurants,
         restaurant_repo: Restaurant Repo object to access the restaurant data store
         user_repo: User Repo object to allow authorization service object to access user data store,
 
         Returns:
-        A List of RestaurantResult objects, that show include a restaurants id, name, address,
-        current day's hours, and tags.
+        If search is None:
+        A List of RestaurantResult objects for all restaurants,
+        that includes a restaurants id, name, address,
+        current day's hours, and tags
+
+        If search is str:
+        A List of RestaurantResult objects for restaurants who's name contains the search string.
         """
     restaurant_service = RestaurantServices(restaurant_repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "browse_restaurants")
-    return restaurant_service.fetch_all_restaurants()
+    if search is None:
+        return restaurant_service.fetch_all_restaurants()
+
+    return restaurant_service.fetch_name_searched_restaurants(search)
 
 @restaurant_router.get("/{restaurant_id}", response_model=Restaurant, status_code=200)
 def get_restaurant_by_id(restaurant_id: int,
