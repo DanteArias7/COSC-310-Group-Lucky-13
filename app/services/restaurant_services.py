@@ -1,11 +1,12 @@
 """Service layer for restaurant business logic."""
 
+from datetime import date
 from typing import Any, Dict, List, Protocol
 import random
 import uuid
 from fastapi import HTTPException
 from app.schemas.menu import MenuItem, UpdateMenuItem
-from app.schemas.restaurant import Restaurant, RestaurantCreate, UpdateRestaurant
+from app.schemas.restaurant import RestaurantResult, Restaurant, RestaurantCreate, UpdateRestaurant
 
 class RestaurantServices():
     """Restaurant service methods"""
@@ -47,9 +48,29 @@ class RestaurantServices():
         self.repo.save_all_restaurants(restaurants)
         return restaurant
 
-    def fetch_all_restaurants(self) -> List[Dict[str, Any]]:
-        """Return all restaurants."""
-        return self.repo.load_all_restaurants()
+    def fetch_all_restaurants(self) -> List[RestaurantResult]:
+        """
+        Return a representation of all restaurant objects
+
+        Returns:
+            A list of restaurantResult o
+        """
+
+        full_restaurants = self.repo.load_all_restaurants()
+        restaurants = []
+        today = date.today().strftime("%A")
+
+        for restaurant in full_restaurants:
+            restaurant = RestaurantResult(
+                        id=restaurant["id"],
+                        name=restaurant["name"],
+                        address=restaurant["address"],
+                        todays_hours=restaurant["hours"][today],
+                        tags=restaurant["tags"]
+                        )
+            restaurants.append(restaurant)
+
+        return restaurants
 
     def fetch_restaurant(self, restaurant_id: int) -> Restaurant:
         """Return a restaurant by ID or raise 404."""
