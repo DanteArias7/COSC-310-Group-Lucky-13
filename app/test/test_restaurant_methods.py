@@ -95,6 +95,33 @@ def test_fetch_restaurant_not_found(mocked_repo, restaurant_service):
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Restaurant not found"
 
+#fetch_name_searched_restaurants Tests
+def test_fetch_name_searched_restaurant_success(test_restaurants, mocked_repo, restaurant_service):
+    """Testing that fetch_restaurant returns the result when requested ID exists"""
+
+    mocked_repo.load_all_restaurants.return_value = test_restaurants
+
+    result = restaurant_service.fetch_name_searched_restaurants("veg")
+    result[0] = result[0].model_dump()
+
+    today = date.today().strftime("%A")
+
+    assert test_restaurants[0]["id"] == result[0]["id"]
+    assert test_restaurants[0]["name"] == result[0]["name"]
+    assert test_restaurants[0]["address"] == result[0]["address"]
+    assert test_restaurants[0]["hours"][today] == result[0]["todays_hours"]
+    assert test_restaurants[0]["tags"] == result[0]["tags"]
+
+def test_fetch_name_searched_restaurant_no_matching_restaurant(test_restaurants,
+                                                               mocked_repo, restaurant_service):
+    """Testing that fetch_restaurant returns the result when requested ID exists"""
+
+    mocked_repo.load_all_restaurants.return_value = test_restaurants
+
+    result = restaurant_service.fetch_name_searched_restaurants("qqq")
+
+    assert result == []
+
 #create_restaurant  Unit Tests
 def test_create_new_restaurant(mocker, mocked_repo, restaurant_service):
     """Scenario: check that creating a valid restaurant returns a valid restaurant"""
