@@ -317,6 +317,51 @@ def test_delete_nonexistent_restaurant(test_restaurants, restaurant_test_client,
     assert r.status_code == 404
     assert restaurants == test_restaurants
 
+#browse_menu_item Integration Tests
+
+def test_browse_menu_items_success(test_restaurants, test_users,
+                                            restaurant_test_client, temp_restaurant_path):
+    """Spec: If a restaurant has menu items matching the search, it should be returned
+    Input:A valid request with a search term that matches a menu item
+    Exepected Behaviour:A List of menuitems whose names include the search term is returned"""
+
+    request = "/restaurants/" + str(test_restaurants[0]["id"]) + "/menu?search=veg"
+    response = restaurant_test_client.get(request, headers={"user-id": test_users[0]["id"]})
+
+    data = response.json()
+
+    with open(temp_restaurant_path, "r", encoding="utf-8") as f:
+        restaurants = json.load(f)
+
+    assert response.status_code == 200
+    assert restaurants[0]["menu"][0] == data[0]
+
+def test_browse_menu_items_no_search_match(test_restaurants, test_users,
+                                            restaurant_test_client):
+    """Spec: If a restaurant has no menu items matching the search, an empty list should be returned
+    Input:A valid request with a search term that does not match a menu item
+    Exepected Behaviour:An empty list is returned"""
+
+    request = "/restaurants/" + str(test_restaurants[0]["id"]) + "/menu?search=qqq"
+    response = restaurant_test_client.get(request, headers={"user-id": test_users[0]["id"]})
+
+    data = response.json()
+
+
+    assert response.status_code == 200
+    assert data == []
+
+def test_browse_menu_items_no_search_term_used(test_restaurants, test_users,
+                                            restaurant_test_client):
+    """Spec: If a user attempts to browse menuitems with no search term, an error is thrown
+    Input:An invalid request with no search term
+    Exepected Behaviour:A 400 HTTPException is thrown"""
+
+    request = "/restaurants/" + str(test_restaurants[0]["id"]) + "/menu"
+    response = restaurant_test_client.get(request, headers={"user-id": test_users[0]["id"]})
+
+    assert response.status_code == 400
+
 #add_menu_item_to_menu Integration Tests
 
 def test_adding_menu_item(test_restaurants, restaurant_test_client,
@@ -532,6 +577,7 @@ def test_add_user_cart_for_a_restaurant_success(test_carts, test_users,
 
     assert r.status_code == 201
     assert carts[-1] == test_carts[0]
+
 
 #delete_menu_item_from_cart Tests
 
