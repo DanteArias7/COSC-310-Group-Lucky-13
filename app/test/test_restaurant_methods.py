@@ -21,18 +21,6 @@ def test_restaurants():
                 "price": 12.99, "tags": ["vegan"]
                 }]
         }]
-test_carts = [{"id" : "00000000-0000-0000-0000-000000000001",
-            "user_id" : "00000000-0000-0000-0000-000000000001",
-            "restaurant_id" : 101,
-            "cart_items" :  [{"item": {"id": "018f8c10-7b2a-7f21-9a3c-0a1b2c3d4e01",
-                            "name": "Vegan Burger",
-                            "description": "Plant-based patty with lettuce and tomato",
-                            "price": 12.99,
-                            "tags": ["vegan"]},
-                            "quantity": 1}],
-                "subtotal" : 12.99,
-                "tax" : 1.30,
-                "total" : 14.29}]
 
 @pytest.fixture
 def mocked_repo(mocker):
