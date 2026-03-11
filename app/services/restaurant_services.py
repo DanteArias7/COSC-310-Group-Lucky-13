@@ -72,7 +72,7 @@ class RestaurantServices():
 
         return restaurants
 
-    def fetch_name_searched_restaurants(self, search: str):
+    def fetch_name_searched_restaurants(self, search: str) -> List[RestaurantResult]:
         """Gets restaurants based on a given search term string
 
         Args:
@@ -95,6 +95,7 @@ class RestaurantServices():
                 results.append(result)
 
         return results
+
     def fetch_restaurant(self, restaurant_id: int) -> Restaurant:
         """Return a restaurant by ID or raise 404."""
         restaurants = self.repo.load_all_restaurants()
