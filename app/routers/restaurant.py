@@ -2,7 +2,7 @@
 
 from pathlib import Path
 from typing import List
-from fastapi import APIRouter, Depends, Header, status
+from fastapi import APIRouter, Depends, HTTPException, Header, status
 from app.repositories.cart_repo import CartRepo
 from app.repositories.user_repo import UserRepo
 from app.schemas.menu import CreateMenuItem, MenuItem, UpdateMenuItem
@@ -92,6 +92,37 @@ def delete_restaurant(restaurant_id: int,
     authorization_service.authorize_access(user_id,
                             restaurant_service.fetch_restaurant(restaurant_id).user_id)
     return restaurant_service.delete_restaurant(restaurant_id)
+
+@restaurant_router.get("/{restaurant_id}/menu", response_model=List[MenuItem], status_code=200)
+def browse_menu_items(restaurant_id: int,
+                        restaurant_repo: RestaurantRepo=Depends(create_restaurant_repo),
+                        user_repo: UserRepo = Depends(create_user_repo),
+                        user_id: str  = Header(...,alias="user-id"),
+                        search: str | None = None):
+    """API endpoint for a user to browse a given restaurants menu
+    Args:
+        user_id: The id of the user viewing the restaurants,
+        restaurant_id: The ID of the restaurant whose menu is being browsed
+        restaurant_repo: Restaurant Repo object to access the restaurant data store
+        user_repo: User Repo object to allow authorization service object to access user data store,
+        search: An optional argument, a string to compare the menu items names to.
+
+    Returns:
+        A List of MenuItem objects, whose names include the search string
+
+    Raises:
+        A 400 HTTPException if the search term is None
+    """
+    restaurant_service = RestaurantServices(restaurant_repo)
+    authorization_service = AuthorizationServices(user_repo)
+    authorization_service.authorize(user_id, "browse_restaurants")
+
+    if search is None:
+        raise HTTPException(status_code=400,
+                            detail="No search term used.")
+
+    restaurant = restaurant_service.fetch_restaurant(restaurant_id)
+    return restaurant_service.get_name_searched_menu_items(restaurant, search)
 
 @restaurant_router.post("/{restaurant_id}/menu", response_model=MenuItem, status_code=201)
 def add_menu_item_to_menu(restaurant_id: int, payload: CreateMenuItem,
