@@ -30,7 +30,7 @@ def create_cart_repo():
     """"Initialize repo object with data path to restaurant json file"""
     return CartRepo(CART_DATA_PATH)
 def create_user_repo():
-    """Initalize repo object with data paht to user json file"""
+    """Initalize repo object with data path to user json file"""
     return UserRepo(USER_DATA_PATH)
 
 @restaurant_router.post("", response_model=Restaurant, status_code=201)
@@ -49,7 +49,7 @@ def browse_restaurants(restaurant_repo: RestaurantRepo = Depends(create_restaura
                         user_repo: UserRepo = Depends(create_user_repo),
                         user_id: str = Header(...,alias="user-id"),
                         search: str | None = None):
-    """API endpoint for a user to brose all the restaurants
+    """API endpoint for a user to browse all the restaurants
         Args:
         user_id: The id of the user viewing the restaurants,
         restaurant_repo: Restaurant Repo object to access the restaurant data store
