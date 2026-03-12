@@ -1,4 +1,6 @@
 """Tests for restaurant functionality."""
+from datetime import date
+
 from fastapi import HTTPException
 import pytest
 from app.schemas.menu import CreateMenuItem, MenuItem, UpdateMenuItem
@@ -13,7 +15,14 @@ def test_restaurants():
     return [{"id": 101,
               "user_id": "00000000-0000-0000-0000-000000000001",
              "name": "Veggie Palace",
-                "hours": {"Monday": "9:00-17:00"}, "phone_number": "1234567890",
+                "hours": { "Monday": "9:00-17:00",
+                            "Tuesday": "9:00-17:00",
+                            "Wednesday": "9:00-17:00",
+                            "Thursday": "9:00-17:00",
+                            "Friday": "9:00-17:00",
+                            "Saturday": "9:00-17:00",
+                            "Sunday": "9:00-17:00"},
+                "phone_number": "1234567890",
                 "address": "123 Green Street",
                 "tags": ["vegan", "brunch"],
                 "menu": [{"id": "00000000-0000-0000-0000-0000000000001",
@@ -40,8 +49,15 @@ def test_fetch_all_restaurants(test_restaurants, mocked_repo, restaurant_service
     mocked_repo.load_all_restaurants.return_value = test_restaurants
 
     result = restaurant_service.fetch_all_restaurants()
+    result[0] = result[0].model_dump()
 
-    assert result == test_restaurants
+    today = date.today().strftime("%A")
+
+    assert test_restaurants[0]["id"] == result[0]["id"]
+    assert test_restaurants[0]["name"] == result[0]["name"]
+    assert test_restaurants[0]["address"] == result[0]["address"]
+    assert test_restaurants[0]["hours"][today] == result[0]["todays_hours"]
+    assert test_restaurants[0]["tags"] == result[0]["tags"]
 
 #fetch_restaurant Tests
 

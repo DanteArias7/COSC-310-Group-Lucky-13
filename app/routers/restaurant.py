@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Header, status
 from app.repositories.cart_repo import CartRepo
 from app.repositories.user_repo import UserRepo
 from app.schemas.menu import CreateMenuItem, MenuItem, UpdateMenuItem
-from app.schemas.restaurant import Restaurant, UpdateRestaurant, RestaurantCreate
+from app.schemas.restaurant import Restaurant, UpdateRestaurant, RestaurantCreate, RestaurantResult
 from app.services.authorization_services import AuthorizationServices
 from app.services.cart_services import CartServices
 from app.services.restaurant_services import RestaurantServices
@@ -45,11 +45,20 @@ def create_restaurant(payload: RestaurantCreate,
     authorization_service.authorize(user_id, "manage_own_restaurant")
     return restaurant_service.create_new_restaurant(user_id, payload)
 
-@restaurant_router.get("", response_model=List[Restaurant], status_code=200)
+@restaurant_router.get("", response_model=List[RestaurantResult], status_code=200)
 def get_all_restaurants(restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
                         user_repo: UserRepo = Depends(create_user_repo),
                         user_id: str = Header(...,alias="user-id")):
-    """Return a list of all restaurants."""
+    """API endpoint for a user to view all the restaurants
+        Args:
+        user_id: The id of the user viewing the restaurants,
+        restaurant_repo: Restaurant Repo object to access the restaurant data store
+        user_repo: User Repo object to allow authorization service object to access user data store,
+
+        Returns:
+        A List of RestaurantResult objects, that show include a restaurants id, name, address,
+        current day's hours, and tags.
+        """
     restaurant_service = RestaurantServices(restaurant_repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "browse_restaurants")
