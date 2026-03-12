@@ -135,6 +135,45 @@ def order_test_client(temp_user_path, temp_order_path):
 
     app.dependency_overrides.clear()
 
+@pytest.fixture
+def valid_payment():
+    """Sample valid payment details for payment simulation tests"""
+    return {
+        "card_number": "1234567812345678",
+        "cvv": "123",
+        "expiration_date": "12/30"
+    }
+
+
+@pytest.fixture
+def invalid_card_payment():
+    """Sample payment details with invalid card number for payment simulation tests"""
+    return {
+        "card_number": "1234",
+        "cvv": "123",
+        "expiration_date": "12/30"
+    }
+
+
+@pytest.fixture
+def invalid_cvv_payment():
+    """Sample payment details with invalid CVV for payment simulation tests"""
+    return {
+        "card_number": "1234567812345678",
+        "cvv": "12",
+        "expiration_date": "12/30"
+    }
+
+
+@pytest.fixture
+def expired_payment():
+    """Sample payment details with expired card for payment simulation tests"""
+    return {
+        "card_number": "1234567812345678",
+        "cvv": "123",
+        "expiration_date": "01/20"
+    }
+
 #add_order
 def test_add_order_success(temp_order_path,
                              order_test_client, test_carts,
@@ -199,29 +238,33 @@ def test_get_order_by_user_id_with_no_orders(order_test_client,
 def test_simulate_payment_success(temp_order_path,
                                   order_test_client,
                                   test_orders,
-                                  test_users):
+                                  test_users,
+                                  valid_payment):
     """
     Spec: System should simulate payment for an order
-    Input: valid order_id
-    Expected behavior: Order status should update to Paid
+    Input: valid order_id and valid payment details
+    Expected behavior: Order status updated to Paid and success message returned
     """
 
     order_id = test_orders[0]["id"]
 
     request = f"/orders/{order_id}/simulate-payment"
 
-    r = order_test_client.post(request,
-                               headers={"user-id": test_users[0]["id"]})
+    r = order_test_client.post(
+        request,
+        headers={"user-id": test_users[0]["id"]},
+        json=valid_payment
+    )
 
     orders = pandas.read_csv(temp_order_path)
-
     updated_order = orders.iloc[0].to_dict()
 
     assert r.status_code == 200
+    assert r.json()["message"] == "Payment Accepted"
     assert updated_order["status"] == "Paid"
 
 def test_simulate_payment_order_not_found(order_test_client,
-                                          test_users):
+                                          test_users, valid_payment):
     """
     Spec: System should return error if order does not exist
     Input: invalid order_id
@@ -231,14 +274,14 @@ def test_simulate_payment_order_not_found(order_test_client,
     request = "/orders/INVALIDID/simulate-payment"
 
     r = order_test_client.post(request,
-                               headers={"user-id": test_users[0]["id"]})
+                               headers={"user-id": test_users[0]["id"]}, json=valid_payment)
 
     assert r.status_code == 404
 
 def test_simulate_payment_invalid_status(temp_order_path,
                                          order_test_client,
                                          test_orders,
-                                         test_users):
+                                         test_users,  valid_payment):
     """
     Spec: System should prevent payment if order is not in Pending status
     Input: valid order_id with status not Pending
@@ -256,7 +299,75 @@ def test_simulate_payment_invalid_status(temp_order_path,
 
     request = f"/orders/{order_id}/simulate-payment"
 
-    r = order_test_client.post(request,
-                               headers={"user-id": test_users[0]["id"]})
+    r = order_test_client.post(
+        request,
+        headers={"user-id": test_users[0]["id"]},
+        json=valid_payment
+    )
 
     assert r.status_code == 400
+
+def test_simulate_payment_invalid_card(order_test_client,
+                                       test_orders,
+                                       test_users,
+                                       invalid_card_payment):
+    """Spec: System should validate card number and reject payment if invalid
+    Input: valid order_id and invalid card number in payment details
+    Expected behavior: Endpoint returns 400 error with appropriate message"""
+
+    order_id = test_orders[0]["id"]
+
+    request = f"/orders/{order_id}/simulate-payment"
+
+    r = order_test_client.post(
+        request,
+        headers={"user-id": test_users[0]["id"]},
+        json=invalid_card_payment
+    )
+
+    assert r.status_code == 400
+    assert r.json()["detail"] == "Payment Rejected: Invalid card number"
+
+def test_simulate_payment_invalid_cvv(order_test_client,
+                                      test_orders,
+                                      test_users,
+                                      invalid_cvv_payment):
+    """Spec: System should validate CVV and reject payment if invalid
+    Input: valid order_id and invalid CVV in payment details
+    Expected behavior: Endpoint returns 400 error with appropriate message
+    """
+
+    order_id = test_orders[0]["id"]
+
+    request = f"/orders/{order_id}/simulate-payment"
+
+    r = order_test_client.post(
+        request,
+        headers={"user-id": test_users[0]["id"]},
+        json=invalid_cvv_payment
+    )
+
+    assert r.status_code == 400
+    assert r.json()["detail"] == "Payment Rejected: Invalid CVV"
+
+def test_simulate_payment_expired_card(order_test_client,
+                                       test_orders,
+                                       test_users,
+                                       expired_payment):
+    """Spec: System should validate card expiration date and reject payment if card is expired
+    Input: valid order_id and expired card details in payment
+    Expected behavior: Endpoint returns 400 error with appropriate message
+    """
+
+    order_id = test_orders[0]["id"]
+
+    request = f"/orders/{order_id}/simulate-payment"
+
+    r = order_test_client.post(
+        request,
+        headers={"user-id": test_users[0]["id"]},
+        json=expired_payment
+    )
+
+    assert r.status_code == 400
+    assert r.json()["detail"] == "Payment Rejected: Card has expired"
