@@ -1,5 +1,5 @@
 """Service layer for order business logic."""
-from datetime import date
+from datetime import date, datetime
 import random
 import string
 from typing import Any, Dict, List, Protocol
@@ -8,6 +8,7 @@ import time
 from fastapi import HTTPException
 from app.schemas.cart import Cart
 from app.schemas.order import Order
+from app.schemas.payment import Payment, PaymentResult
 
 #pylint: disable=too-few-public-methods
 class OrderServices():
@@ -77,15 +78,16 @@ class OrderServices():
                                 detail="No Orders Found for User")
         return user_orders
 
-    def simulate_payment(self, order_id: str) -> Order:
+    def simulate_payment(self, order_id: str , payment: Payment) -> PaymentResult:
         """
         Simulates the payment process for an order.
 
         Args:
             order_id: The ID of the order to simulate payment for.
+            payment: Payment object containing the payment details to validate.
 
         Returns:
-            The updated Order object with status "Paid".
+            The payment result.
         """
         orders = self.repo.load_all_orders()
 
@@ -95,14 +97,49 @@ class OrderServices():
                 if order["status"] != "Pending":
                     raise HTTPException(status_code=400,
                                         detail=f"Order {order_id} is not in a payable state")
-
+                #validate payment details
+                self.validate_payment_details(payment)
                 # simulate payment processing delay
                 time.sleep(2)
+                # update order status to Paid and save to CSV
                 orders[i]["status"] = "Paid"
                 self.repo.update_orders(orders)
-                return Order(**orders[i])
+                # return payment result
+                return PaymentResult(message="Payment Accepted")
 
         raise HTTPException(status_code=404, detail=f"Order {order_id} Not Found")
+
+    def validate_payment_details(self, payment: Payment) -> bool:
+        """
+        Validates payment details using predefined rules.
+
+        Args:
+        payment: Payment object containing card details.
+
+        Returns:
+        True if payment details are valid.
+
+        Raises:
+        HTTPException if validation fails.
+    """
+        #validate card number length
+        if len(payment.card_number) != 16 or not payment.card_number.isdigit():
+            raise HTTPException(status_code=400, detail="Payment Rejected: Invalid card number")
+
+        #validate cvv
+        if len(payment.cvv) != 3 or not payment.cvv.isdigit():
+            raise HTTPException(status_code=400, detail="Payment Rejected: Invalid CVV")
+
+        #validate expiration date
+        try:
+            exp = datetime.strptime(payment.expiration_date, "%m/%y")
+            if exp < datetime.now():
+                raise HTTPException(status_code=400, detail="Payment Rejected: Card has expired")
+        except ValueError as exc:
+            raise HTTPException(status_code=400,
+                                detail="Payment Rejected: Invalid expiration date") from exc
+        return True
+
 
 
 class IOrderRepo(Protocol):

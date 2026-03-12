@@ -9,6 +9,7 @@ from app.schemas.cart import Cart
 from app.schemas.order import Order
 from app.services.authorization_services import AuthorizationServices
 from app.services.order_services import OrderServices
+from app.schemas.payment import Payment, PaymentResult
 
 ORDER_DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "orders.csv"
 
@@ -70,8 +71,9 @@ def get_all_orders_for_a_user(order_repo: OrderRepo = Depends(create_order_repo)
     authorization_service.authorize(user_id, "view_own_orders")
     return order_service.get_orders_by_user_id(user_id)
 
-@order_router.post("/{order_id}/simulate-payment", response_model=Order, status_code=200)
+@order_router.post("/{order_id}/simulate-payment", response_model=PaymentResult, status_code=200)
 def simulate_payment(order_id: str,
+                     payload: Payment,
                      order_repo: OrderRepo = Depends(create_order_repo),
                      user_repo: UserRepo = Depends(create_user_repo),
                      user_id: str = Header(..., alias="user-id")):
@@ -81,15 +83,16 @@ def simulate_payment(order_id: str,
 
     Args:
         order_id: ID of order to process payment for
+        payload: Payment object containing the payment details to validate
         order_repo: Order repository instance
         user_repo: User repository instance
         user_id: header sent with request indicating current user
 
     Returns:
-        Updated order object
+        The payment result of the simulated payment process
     """
 
     order_service = OrderServices(order_repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "make_payment")
-    return order_service.simulate_payment(order_id)
+    return order_service.simulate_payment(order_id, payload)
