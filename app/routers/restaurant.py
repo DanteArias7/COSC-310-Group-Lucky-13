@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import List
 import random
-from fastapi import APIRouter, Depends, Header, status
+from fastapi import APIRouter, HTTPException, Depends, Header, status
 from app.repositories.cart_repo import CartRepo
 from app.repositories.user_repo import UserRepo
 from app.schemas.menu import CreateMenuItem, MenuItem, UpdateMenuItem
