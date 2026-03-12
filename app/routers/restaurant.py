@@ -2,7 +2,6 @@
 
 from pathlib import Path
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, Header, status
 import random
 from fastapi import APIRouter, Depends, Header, status
 from app.repositories.cart_repo import CartRepo
