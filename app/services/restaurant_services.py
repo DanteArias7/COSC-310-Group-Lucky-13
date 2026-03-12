@@ -1,11 +1,12 @@
 """Service layer for restaurant business logic."""
 
+from datetime import date
 from typing import Any, Dict, List, Protocol
 import random
 import uuid
 from fastapi import HTTPException
 from app.schemas.menu import MenuItem, UpdateMenuItem
-from app.schemas.restaurant import Restaurant, RestaurantCreate, UpdateRestaurant
+from app.schemas.restaurant import RestaurantResult, Restaurant, RestaurantCreate, UpdateRestaurant
 
 class RestaurantServices():
     """Restaurant service methods"""
@@ -47,9 +48,53 @@ class RestaurantServices():
         self.repo.save_all_restaurants(restaurants)
         return restaurant
 
-    def fetch_all_restaurants(self) -> List[Dict[str, Any]]:
-        """Return all restaurants."""
-        return self.repo.load_all_restaurants()
+    def fetch_all_restaurants(self) -> List[RestaurantResult]:
+        """
+        Gets a representation of all restaurant objects
+
+        Returns:
+            A list of restaurantResult objects
+        """
+
+        full_restaurants = self.repo.load_all_restaurants()
+        restaurants = []
+        today = date.today().strftime("%A")
+
+        for restaurant in full_restaurants:
+            restaurant = RestaurantResult(
+                        id=restaurant["id"],
+                        name=restaurant["name"],
+                        address=restaurant["address"],
+                        todays_hours=restaurant["hours"][today],
+                        tags=restaurant["tags"]
+                        )
+            restaurants.append(restaurant)
+
+        return restaurants
+
+    def fetch_name_searched_restaurants(self, search: str) -> List[RestaurantResult]:
+        """Gets restaurants based on a given search term string
+
+        Args:
+        search: A string used to compare to the restaurants name
+
+        Returns:
+        A list of RestaurantResult Objects where the restaurant's name contains the search string.
+        """
+        restaurants = self.repo.load_all_restaurants()
+        results = []
+        today = date.today().strftime("%A")
+
+        for restaurant in restaurants:
+            if search.lower() in restaurant["name"].lower():
+                result = RestaurantResult(id=restaurant["id"],
+                                  name=restaurant["name"],
+                                  address=restaurant["address"],
+                                  todays_hours=restaurant["hours"][today],
+                                  tags=restaurant["tags"])
+                results.append(result)
+
+        return results
 
     def fetch_restaurant(self, restaurant_id: int) -> Restaurant:
         """Return a restaurant by ID or raise 404."""
@@ -99,6 +144,25 @@ class RestaurantServices():
                 return
 
             raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
+
+    def get_name_searched_menu_items(self, restaurant: Restaurant, search: str):
+        """Get menu items that include a given search term
+
+        Args:
+            restaurant: The restaurant object to get the menu from
+            search: A string to check if the menu items name includes it
+
+        Returns:
+            A list of menuitems including the search term
+        """
+        menu_items = []
+        restaurant = restaurant.model_dump()
+
+        for menu_item in restaurant["menu"]:
+            if search.lower() in menu_item["name"].lower():
+                menu_items.append(MenuItem(**menu_item))
+
+        return menu_items
 
     def add_item_to_menu(self, restaurant_id: int, payload: MenuItem) -> MenuItem:
         """Add a menu item to a restaurants menu"""

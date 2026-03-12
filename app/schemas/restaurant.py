@@ -31,3 +31,11 @@ class UpdateRestaurant(BaseModel):
     phone_number: str
     address: str
     tags: List[str] = []
+
+class RestaurantResult(BaseModel):
+    """Searched restaurant entity for browsing"""
+    id: int
+    name: str
+    address: str
+    todays_hours: str
+    tags: List[str] = []

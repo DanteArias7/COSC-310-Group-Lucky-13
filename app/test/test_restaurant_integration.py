@@ -1,4 +1,5 @@
 """Integration tests for restaurant endpoints."""
+from datetime import date
 import json
 from fastapi.testclient import TestClient
 import pytest
@@ -10,6 +11,8 @@ from app.routers.restaurant import create_cart_repo, create_restaurant_repo, cre
 
 #pylint: disable=duplicate-code
 #pylint: disable=redefined-outer-name
+#pylint: disable=too-many-arguments
+#pylint: disable=too-many-positional-arguments
 
 #Test Setup
 @pytest.fixture
@@ -18,7 +21,14 @@ def test_restaurants():
     return [{"id": 101,
              "user_id" : "00000000-0000-0000-0000-000000000002",
                "name": "Veggie Palace",
-                "hours": {"Monday": "9:00-17:00"}, "phone_number": "1234567890",
+                "hours": { "Monday": "9:00-17:00",
+                            "Tuesday": "9:00-17:00",
+                            "Wednesday": "9:00-17:00",
+                            "Thursday": "9:00-17:00",
+                            "Friday": "9:00-17:00",
+                            "Saturday": "9:00-17:00",
+                            "Sunday": "9:00-17:00"},
+                "phone_number": "1234567890",
                 "address": "123 Green Street",
                 "tags": ["vegan", "brunch"],
                 "menu": [{"id": "00000000-0000-0000-0000-0000000000001",
@@ -40,8 +50,9 @@ def test_carts():
                             "tags": ["vegan"]},
                             "quantity": 1}],
                 "subtotal" : 12.99,
+                "delivery_fee" : 0.35,
                 "tax" : 1.30,
-                "total" : 14.29}]
+                "total": 14.64}]
 
 @pytest.fixture
 def test_users():
@@ -136,13 +147,17 @@ def menu_item_payload():
         "tags": ["fries"]
     }
 
-#get_all_restaurants Integration Tests
+#browse_restaurants Integration Tests
 
-def test_get_all_restaurants_integration(restaurant_test_client, temp_restaurant_path,
-                                         test_users):
-    """Test retrieving all restaurants via GET /restaurants/."""
+def test_browse_restaurants_integration_without_search_success(restaurant_test_client,
+                                                               temp_restaurant_path,
+                                                                test_users):
+    """Spec: Test retrieving all restaurants via GET /restaurants/browse.
+    Input: None
+    Expected Behaviour: A List of RestauntResult objects is returned"""
 
-    response = restaurant_test_client.get("/restaurants/", headers={"user-id": test_users[1]["id"]})
+    response = restaurant_test_client.get("/restaurants/browse",
+                                          headers={"user-id": test_users[1]["id"]})
 
     assert response.status_code == 200
     data = response.json()
@@ -151,15 +166,50 @@ def test_get_all_restaurants_integration(restaurant_test_client, temp_restaurant
     assert len(data) > 0
 
     restaurant = data[0]
+    today = date.today().strftime("%A")
 
     with open(temp_restaurant_path, "r", encoding="utf-8") as f:
         restaurants = json.load(f)
 
-    assert restaurants == data
+    assert restaurants[0]["id"] == data[0]["id"]
+    assert restaurants[0]["name"] == data[0]["name"]
+    assert restaurants[0]["address"] == data[0]["address"]
+    assert restaurants[0]["hours"][today] == data[0]["todays_hours"]
+    assert restaurants[0]["tags"] == data[0]["tags"]
 
-    assert isinstance(restaurant["hours"], dict)
+    assert isinstance(restaurant["todays_hours"], str)
     assert isinstance(restaurant["tags"], list)
-    assert isinstance(restaurant["menu"],list)
+
+def test_browse_restaurants_with_name_search_success(restaurant_test_client,
+                                                    temp_restaurant_path,
+                                                    test_users):
+    """Test retrieving restaurants matching a searched term via GET /restaurants/browse.
+    Input: A search term that matches a restaurant's name
+    Expected Behaviour: A List of RestauntResult objects is returned"""
+
+    response = restaurant_test_client.get("/restaurants/browse?search=veg",
+                                          headers={"user-id": test_users[1]["id"]})
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert isinstance(data, list)
+    assert len(data) > 0
+
+    restaurant = data[0]
+    today = date.today().strftime("%A")
+
+    with open(temp_restaurant_path, "r", encoding="utf-8") as f:
+        restaurants = json.load(f)
+
+    assert restaurants[0]["id"] == data[0]["id"]
+    assert restaurants[0]["name"] == data[0]["name"]
+    assert restaurants[0]["address"] == data[0]["address"]
+    assert restaurants[0]["hours"][today] == data[0]["todays_hours"]
+    assert restaurants[0]["tags"] == data[0]["tags"]
+
+    assert isinstance(restaurant["todays_hours"], str)
+    assert isinstance(restaurant["tags"], list)
 
 #get_restaurant_by_id Integration Tests
 
@@ -316,6 +366,51 @@ def test_delete_nonexistent_restaurant(test_restaurants, restaurant_test_client,
 
     assert r.status_code == 404
     assert restaurants == test_restaurants
+
+#browse_menu_item Integration Tests
+
+def test_browse_menu_items_success(test_restaurants, test_users,
+                                            restaurant_test_client, temp_restaurant_path):
+    """Spec: If a restaurant has menu items matching the search, it should be returned
+    Input:A valid request with a search term that matches a menu item
+    Exepected Behaviour:A List of menuitems whose names include the search term is returned"""
+
+    request = "/restaurants/" + str(test_restaurants[0]["id"]) + "/menu?search=veg"
+    response = restaurant_test_client.get(request, headers={"user-id": test_users[0]["id"]})
+
+    data = response.json()
+
+    with open(temp_restaurant_path, "r", encoding="utf-8") as f:
+        restaurants = json.load(f)
+
+    assert response.status_code == 200
+    assert restaurants[0]["menu"][0] == data[0]
+
+def test_browse_menu_items_no_search_match(test_restaurants, test_users,
+                                            restaurant_test_client):
+    """Spec: If a restaurant has no menu items matching the search, an empty list should be returned
+    Input:A valid request with a search term that does not match a menu item
+    Exepected Behaviour:An empty list is returned"""
+
+    request = "/restaurants/" + str(test_restaurants[0]["id"]) + "/menu?search=qqq"
+    response = restaurant_test_client.get(request, headers={"user-id": test_users[0]["id"]})
+
+    data = response.json()
+
+
+    assert response.status_code == 200
+    assert data == []
+
+def test_browse_menu_items_no_search_term_used(test_restaurants, test_users,
+                                            restaurant_test_client):
+    """Spec: If a user attempts to browse menuitems with no search term, an error is thrown
+    Input:An invalid request with no search term
+    Exepected Behaviour:A 400 HTTPException is thrown"""
+
+    request = "/restaurants/" + str(test_restaurants[0]["id"]) + "/menu"
+    response = restaurant_test_client.get(request, headers={"user-id": test_users[0]["id"]})
+
+    assert response.status_code == 400
 
 #add_menu_item_to_menu Integration Tests
 
@@ -526,6 +621,7 @@ def test_add_user_cart_for_a_restaurant_success(test_carts, test_users,
     test_carts[0]["cart_items"] = []
     test_carts[0]["tax"] = 0.00
     test_carts[0]["subtotal"] = 0.00
+    test_carts[0]["delivery_fee"] = 0.00
     test_carts[0]["total"] = 0.00
 
     test_carts[0]["id"] = carts[-1]["id"]
@@ -533,11 +629,14 @@ def test_add_user_cart_for_a_restaurant_success(test_carts, test_users,
     assert r.status_code == 201
     assert carts[-1] == test_carts[0]
 
-#delete_menu_item_from_cart Tests
+#delete_cart_item_from_cart Tests
 
-def test_deleting_menu_item_from_cart_success(test_carts, test_users,
-                                              cart_test_client, temp_cart_path):
-    """Testing a successful deleting of a menu item from a users cart"""
+def test_deleting_cart_item_from_cart_success(test_carts, test_users,
+                                              cart_test_client, temp_cart_path,
+                                              mocker):
+    """Testing a successful deleting of a CartItem from a users cart"""
+    distance_mock = mocker.patch("app.routers.restaurant.random.uniform")
+    distance_mock.return_value = 1.0
 
     request = "/restaurants/" + str(test_carts[0]["restaurant_id"])
     request = request + "/cart/" + test_carts[0]["id"]
@@ -552,9 +651,9 @@ def test_deleting_menu_item_from_cart_success(test_carts, test_users,
     assert r.status_code == 204
     assert test_carts == carts
 
-def test_deleting_menu_item_from_nonexistent_cart(test_carts, test_users,
+def test_deleting_cart_item_from_nonexistent_cart(test_carts, test_users,
                                                   cart_test_client, temp_cart_path):
-    """Testing a successful deleting of a menu item from a users cart"""
+    """Testing a successful deleting of a CartItem from a users cart"""
 
     request = "/restaurants/" + str(test_carts[0]["restaurant_id"])
     request = request + "/cart/fake-id"
@@ -567,9 +666,9 @@ def test_deleting_menu_item_from_nonexistent_cart(test_carts, test_users,
     assert r.status_code == 404
     assert test_carts == carts
 
-def test_deleting_nonexistent_menu_item_from_cart(test_carts, test_users,
+def test_deleting_nonexistent_cart_item_from_cart(test_carts, test_users,
                                                   cart_test_client, temp_cart_path):
-    """Testing a successful deleting of a menu item from a users cart"""
+    """Testing a successful deleting of a CartItem from a users cart"""
 
     request = "/restaurants/" + str(test_carts[0]["restaurant_id"])
     request = request + "/cart/" + test_carts[0]["id"]
@@ -582,14 +681,18 @@ def test_deleting_nonexistent_menu_item_from_cart(test_carts, test_users,
     assert r.status_code == 404
     assert test_carts == carts
 
-def test_add_menu_item_to_cart_integration(test_carts, test_users,
+#add_cart_item_to_cart Tests
+
+def test_add_cart_item_to_cart_success(test_carts, test_users,
                                            cart_test_client, temp_cart_path ,
-                                           menu_item_payload):
+                                           menu_item_payload, mocker):
     """
     Spec: If a valid cart exists, a user should be able to add a menu item to it.
     Input: valid restaurant_id, valid cart_id, and menu item payload.
     Expected behavior: API returns 201 and the item is added to the cart.
     """
+    distance_mock = mocker.patch("app.routers.restaurant.random.uniform")
+    distance_mock.return_value = 1.0
 
     request = "/restaurants/" + str(test_carts[0]["restaurant_id"])
     request = request + "/cart/" + test_carts[0]["id"]
@@ -600,11 +703,16 @@ def test_add_menu_item_to_cart_integration(test_carts, test_users,
     with open(temp_cart_path, "r", encoding="utf-8") as f:
         carts = json.load(f)
 
+    data = r.json()
     assert r.status_code == 201
     assert len(carts[0]["cart_items"]) == 2
     assert carts[0]["cart_items"][1]["item"]["id"] == menu_item_payload["id"]
+    assert data["subtotal"]     == 17.99
+    assert data["delivery_fee"] == 0.35
+    assert data["tax"]          == 1.80
+    assert data["total"]        == 20.14
 
-def test_add_menu_item_to_nonexistent_cart_integration(test_carts, test_users,
+def test_add_cart_item_to_nonexistent_cart_integration(test_carts, test_users,
                                                        cart_test_client, temp_cart_path,
                                                        menu_item_payload):
     """

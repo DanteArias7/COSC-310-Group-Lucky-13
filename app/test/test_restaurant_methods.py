@@ -1,4 +1,6 @@
 """Tests for restaurant functionality."""
+from datetime import date
+
 from fastapi import HTTPException
 import pytest
 from app.schemas.menu import CreateMenuItem, MenuItem, UpdateMenuItem
@@ -13,7 +15,14 @@ def test_restaurants():
     return [{"id": 101,
               "user_id": "00000000-0000-0000-0000-000000000001",
              "name": "Veggie Palace",
-                "hours": {"Monday": "9:00-17:00"}, "phone_number": "1234567890",
+                "hours": { "Monday": "9:00-17:00",
+                            "Tuesday": "9:00-17:00",
+                            "Wednesday": "9:00-17:00",
+                            "Thursday": "9:00-17:00",
+                            "Friday": "9:00-17:00",
+                            "Saturday": "9:00-17:00",
+                            "Sunday": "9:00-17:00"},
+                "phone_number": "1234567890",
                 "address": "123 Green Street",
                 "tags": ["vegan", "brunch"],
                 "menu": [{"id": "00000000-0000-0000-0000-0000000000001",
@@ -21,18 +30,6 @@ def test_restaurants():
                 "price": 12.99, "tags": ["vegan"]
                 }]
         }]
-test_carts = [{"id" : "00000000-0000-0000-0000-000000000001",
-            "user_id" : "00000000-0000-0000-0000-000000000001",
-            "restaurant_id" : 101,
-            "cart_items" :  [{"item": {"id": "018f8c10-7b2a-7f21-9a3c-0a1b2c3d4e01",
-                            "name": "Vegan Burger",
-                            "description": "Plant-based patty with lettuce and tomato",
-                            "price": 12.99,
-                            "tags": ["vegan"]},
-                            "quantity": 1}],
-                "subtotal" : 12.99,
-                "tax" : 1.30,
-                "total" : 14.29}]
 
 @pytest.fixture
 def mocked_repo(mocker):
@@ -52,8 +49,15 @@ def test_fetch_all_restaurants(test_restaurants, mocked_repo, restaurant_service
     mocked_repo.load_all_restaurants.return_value = test_restaurants
 
     result = restaurant_service.fetch_all_restaurants()
+    result[0] = result[0].model_dump()
 
-    assert result == test_restaurants
+    today = date.today().strftime("%A")
+
+    assert test_restaurants[0]["id"] == result[0]["id"]
+    assert test_restaurants[0]["name"] == result[0]["name"]
+    assert test_restaurants[0]["address"] == result[0]["address"]
+    assert test_restaurants[0]["hours"][today] == result[0]["todays_hours"]
+    assert test_restaurants[0]["tags"] == result[0]["tags"]
 
 #fetch_restaurant Tests
 
@@ -78,6 +82,33 @@ def test_fetch_restaurant_not_found(mocked_repo, restaurant_service):
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Restaurant not found"
+
+#fetch_name_searched_restaurants Tests
+def test_fetch_name_searched_restaurant_success(test_restaurants, mocked_repo, restaurant_service):
+    """Testing that fetch_restaurant returns the result when requested ID exists"""
+
+    mocked_repo.load_all_restaurants.return_value = test_restaurants
+
+    result = restaurant_service.fetch_name_searched_restaurants("veg")
+    result[0] = result[0].model_dump()
+
+    today = date.today().strftime("%A")
+
+    assert test_restaurants[0]["id"] == result[0]["id"]
+    assert test_restaurants[0]["name"] == result[0]["name"]
+    assert test_restaurants[0]["address"] == result[0]["address"]
+    assert test_restaurants[0]["hours"][today] == result[0]["todays_hours"]
+    assert test_restaurants[0]["tags"] == result[0]["tags"]
+
+def test_fetch_name_searched_restaurant_no_matching_restaurant(test_restaurants,
+                                                               mocked_repo, restaurant_service):
+    """Testing that fetch_restaurant returns the result when requested ID exists"""
+
+    mocked_repo.load_all_restaurants.return_value = test_restaurants
+
+    result = restaurant_service.fetch_name_searched_restaurants("qqq")
+
+    assert result == []
 
 #create_restaurant  Unit Tests
 def test_create_new_restaurant(mocker, mocked_repo, restaurant_service):
@@ -182,6 +213,34 @@ def test_delete_nonexistent_restaurant(test_restaurants, mocked_repo, restaurant
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Restaurant 999 Not Found"
+
+
+#fetch_name_searched_menu_items Unit Tests
+def test_fetch_name_searched_menu_items_success(test_restaurants, restaurant_service):
+    """Spec: A restaurant exists and has menu items matching the search term,
+    they should be return in a list
+    Input: A valid restaurant and a search term matching a menu item,
+    Expected Behaviour: Method retruns a List of MenuItem objects"""
+
+    payload = Restaurant(**test_restaurants[0])
+
+    expected_menu_item = test_restaurants[0]["menu"][0]
+
+    result = restaurant_service.get_name_searched_menu_items(payload, "veg")
+
+    assert result[0].model_dump() == expected_menu_item
+
+def test_fetch_name_searched_menu_items_no_search_match(test_restaurants, restaurant_service):
+    """Spec: A restaurant exists and does not have a menu item matching the search term,
+    it should return nothing
+    Input: A valid restaurant and a search term not matching a menu item,
+    Expected Behaviour: Method retruns an empty list"""
+
+    payload = Restaurant(**test_restaurants[0])
+
+    result = restaurant_service.get_name_searched_menu_items(payload, "qqq")
+
+    assert result == []
 
 #add_menu_item Unit Tests
 

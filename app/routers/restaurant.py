@@ -2,11 +2,12 @@
 
 from pathlib import Path
 from typing import List
-from fastapi import APIRouter, Depends, Header, status
+import random
+from fastapi import APIRouter, HTTPException, Depends, Header, status
 from app.repositories.cart_repo import CartRepo
 from app.repositories.user_repo import UserRepo
 from app.schemas.menu import CreateMenuItem, MenuItem, UpdateMenuItem
-from app.schemas.restaurant import Restaurant, UpdateRestaurant, RestaurantCreate
+from app.schemas.restaurant import Restaurant, UpdateRestaurant, RestaurantCreate, RestaurantResult
 from app.services.authorization_services import AuthorizationServices
 from app.services.cart_services import CartServices
 from app.services.restaurant_services import RestaurantServices
@@ -30,7 +31,7 @@ def create_cart_repo():
     """"Initialize repo object with data path to restaurant json file"""
     return CartRepo(CART_DATA_PATH)
 def create_user_repo():
-    """Initalize repo object with data paht to user json file"""
+    """Initalize repo object with data path to user json file"""
     return UserRepo(USER_DATA_PATH)
 
 @restaurant_router.post("", response_model=Restaurant, status_code=201)
@@ -44,15 +45,33 @@ def create_restaurant(payload: RestaurantCreate,
     authorization_service.authorize(user_id, "manage_own_restaurant")
     return restaurant_service.create_new_restaurant(user_id, payload)
 
-@restaurant_router.get("", response_model=List[Restaurant], status_code=200)
-def get_all_restaurants(restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
+@restaurant_router.get("/browse", response_model=List[RestaurantResult], status_code=200)
+def browse_restaurants(restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
                         user_repo: UserRepo = Depends(create_user_repo),
-                        user_id: str = Header(...,alias="user-id")):
-    """Return a list of all restaurants."""
+                        user_id: str = Header(...,alias="user-id"),
+                        search: str | None = None):
+    """API endpoint for a user to browse all the restaurants
+        Args:
+        user_id: The id of the user viewing the restaurants,
+        restaurant_repo: Restaurant Repo object to access the restaurant data store
+        user_repo: User Repo object to allow authorization service object to access user data store,
+
+        Returns:
+        If search is None:
+        A List of RestaurantResult objects for all restaurants,
+        that includes a restaurants id, name, address,
+        current day's hours, and tags
+
+        If search is str:
+        A List of RestaurantResult objects for restaurants who's name contains the search string.
+        """
     restaurant_service = RestaurantServices(restaurant_repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "browse_restaurants")
-    return restaurant_service.fetch_all_restaurants()
+    if search is None:
+        return restaurant_service.fetch_all_restaurants()
+
+    return restaurant_service.fetch_name_searched_restaurants(search)
 
 @restaurant_router.get("/{restaurant_id}", response_model=Restaurant, status_code=200)
 def get_restaurant_by_id(restaurant_id: int,
@@ -92,6 +111,37 @@ def delete_restaurant(restaurant_id: int,
     authorization_service.authorize_access(user_id,
                             restaurant_service.fetch_restaurant(restaurant_id).user_id)
     return restaurant_service.delete_restaurant(restaurant_id)
+
+@restaurant_router.get("/{restaurant_id}/menu", response_model=List[MenuItem], status_code=200)
+def browse_menu_items(restaurant_id: int,
+                        restaurant_repo: RestaurantRepo=Depends(create_restaurant_repo),
+                        user_repo: UserRepo = Depends(create_user_repo),
+                        user_id: str  = Header(...,alias="user-id"),
+                        search: str | None = None):
+    """API endpoint for a user to browse a given restaurants menu
+    Args:
+        user_id: The id of the user viewing the restaurants,
+        restaurant_id: The ID of the restaurant whose menu is being browsed
+        restaurant_repo: Restaurant Repo object to access the restaurant data store
+        user_repo: User Repo object to allow authorization service object to access user data store,
+        search: An optional argument, a string to compare the menu items names to.
+
+    Returns:
+        A List of MenuItem objects, whose names include the search string
+
+    Raises:
+        A 400 HTTPException if the search term is None
+    """
+    restaurant_service = RestaurantServices(restaurant_repo)
+    authorization_service = AuthorizationServices(user_repo)
+    authorization_service.authorize(user_id, "browse_restaurants")
+
+    if search is None:
+        raise HTTPException(status_code=400,
+                            detail="No search term used.")
+
+    restaurant = restaurant_service.fetch_restaurant(restaurant_id)
+    return restaurant_service.get_name_searched_menu_items(restaurant, search)
 
 @restaurant_router.post("/{restaurant_id}/menu", response_model=MenuItem, status_code=201)
 def add_menu_item_to_menu(restaurant_id: int, payload: CreateMenuItem,
@@ -164,7 +214,9 @@ def delete_menu_item_from_cart(cart_id: str, menu_item_id: str,
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "manage_own_cart")
     authorization_service.authorize_access(user_id, cart_service.fetch_cart(cart_id).user_id)
-    return cart_service.remove_item_from_cart(cart_id, menu_item_id)
+    updated_cart = cart_service.remove_item_from_cart(cart_id, menu_item_id)
+    temp_dist = random.uniform(1.00, 20.00)
+    return cart_service.calculate_cart(updated_cart, temp_dist)
 
 @restaurant_router.post("/{restaurant_id}/cart/{cart_id}",
                         status_code=status.HTTP_201_CREATED)
@@ -178,4 +230,6 @@ def add_menu_item_to_cart(cart_id: str,
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "manage_own_cart")
     authorization_service.authorize_access(user_id, cart_service.fetch_cart(cart_id).user_id)
-    return cart_service.add_item_to_cart(cart_id, payload)
+    updated_cart = cart_service.add_item_to_cart(cart_id, payload)
+    temp_dist = random.uniform(1.00, 20.00)
+    return cart_service.calculate_cart(updated_cart, temp_dist)
