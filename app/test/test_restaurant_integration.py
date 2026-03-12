@@ -36,6 +36,17 @@ def test_restaurants():
                 "price": 12.99, "tags": ["vegan"]
                 }]
         }]
+@pytest.fixture
+def test_restaurant_results(test_restaurants):
+    """Initialize Test RestaurantResult data"""
+    today = date.today().strftime("%A")
+    return [{
+            "id": test_restaurants[0]["id"],
+            "name": test_restaurants[0]["name"],
+            "address": test_restaurants[0]["address"],
+            "todays_hours": test_restaurants[0]["hours"][today],
+            "tags": test_restaurants[0]["tags"]
+            }]
 
 @pytest.fixture
 def test_carts():
@@ -151,7 +162,8 @@ def menu_item_payload():
 
 def test_browse_restaurants_integration_without_search_success(restaurant_test_client,
                                                                temp_restaurant_path,
-                                                                test_users):
+                                                                test_users,
+                                                                test_restaurant_results):
     """Spec: Test retrieving all restaurants via GET /restaurants/browse.
     Input: None
     Expected Behaviour: A List of RestauntResult objects is returned"""
@@ -166,26 +178,19 @@ def test_browse_restaurants_integration_without_search_success(restaurant_test_c
     assert len(data) > 0
 
     restaurant = data[0]
-    today = date.today().strftime("%A")
 
-    with open(temp_restaurant_path, "r", encoding="utf-8") as f:
-        restaurants = json.load(f)
-
-    assert restaurants[0]["id"] == data[0]["id"]
-    assert restaurants[0]["name"] == data[0]["name"]
-    assert restaurants[0]["address"] == data[0]["address"]
-    assert restaurants[0]["hours"][today] == data[0]["todays_hours"]
-    assert restaurants[0]["tags"] == data[0]["tags"]
+    assert test_restaurant_results[0] == data[0]
 
     assert isinstance(restaurant["todays_hours"], str)
     assert isinstance(restaurant["tags"], list)
 
 def test_browse_restaurants_with_name_search_success(restaurant_test_client,
-                                                    temp_restaurant_path,
+                                                    test_restaurant_results,
                                                     test_users):
-    """Test retrieving restaurants matching a searched term via GET /restaurants/browse.
-    Input: A search term that matches a restaurant's name
-    Expected Behaviour: A List of RestauntResult objects is returned"""
+    """Spec: A user using a search term to find a restaurant should be shown
+    restaurants matching, or partially matching the restaurants name.
+    Input: A search term that matches or partially matches a restaurant's name
+    Expected Behaviour: A List of RestauntResult objects is returned that matches the search term"""
 
     response = restaurant_test_client.get("/restaurants/browse?search=veg",
                                           headers={"user-id": test_users[1]["id"]})
@@ -197,19 +202,45 @@ def test_browse_restaurants_with_name_search_success(restaurant_test_client,
     assert len(data) > 0
 
     restaurant = data[0]
-    today = date.today().strftime("%A")
 
-    with open(temp_restaurant_path, "r", encoding="utf-8") as f:
-        restaurants = json.load(f)
-
-    assert restaurants[0]["id"] == data[0]["id"]
-    assert restaurants[0]["name"] == data[0]["name"]
-    assert restaurants[0]["address"] == data[0]["address"]
-    assert restaurants[0]["hours"][today] == data[0]["todays_hours"]
-    assert restaurants[0]["tags"] == data[0]["tags"]
+    assert test_restaurant_results[0] == data[0]
 
     assert isinstance(restaurant["todays_hours"], str)
     assert isinstance(restaurant["tags"], list)
+
+def test_browse_restaurants_with_name_and_tags_success(restaurant_test_client,
+                                                    test_users,
+                                                    test_restaurant_results):
+    """Spec: A user using a searched term and specified tags via GET /restaurants/browse, should
+    see those specified restaurants.
+    Input: A search term that matches a restaurant's name and
+    list of tags that matches the restaurants tags.
+    Expected Behaviour: A List of RestauntResult objects is
+    returned that match the search and tags"""
+
+    response = restaurant_test_client.get("/restaurants/browse?search=veg&tags=vegan",
+                                          headers={"user-id": test_users[1]["id"]})
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert test_restaurant_results[0] == data[0]
+
+def test_browse_restaurants_with_not_all_tags(restaurant_test_client,
+                                                    test_users):
+    """Spec: A user using specified tags of which one matches a restaurant but the other does not,
+    should show no matching restaurants.
+    Input: A list of tags that includes tags the test restaurant does and does not have.
+    Expected Behaviour: An empty list should be returned"""
+
+    response = restaurant_test_client.get("/restaurants/browse?search=veg&tags=vegan&tags=tag",
+                                          headers={"user-id": test_users[1]["id"]})
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert data == []
+
 
 #get_restaurant_by_id Integration Tests
 
