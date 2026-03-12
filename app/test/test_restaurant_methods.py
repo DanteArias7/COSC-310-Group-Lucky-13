@@ -214,6 +214,34 @@ def test_delete_nonexistent_restaurant(test_restaurants, mocked_repo, restaurant
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Restaurant 999 Not Found"
 
+
+#fetch_name_searched_menu_items Unit Tests
+def test_fetch_name_searched_menu_items_success(test_restaurants, restaurant_service):
+    """Spec: A restaurant exists and has menu items matching the search term,
+    they should be return in a list
+    Input: A valid restaurant and a search term matching a menu item,
+    Expected Behaviour: Method retruns a List of MenuItem objects"""
+
+    payload = Restaurant(**test_restaurants[0])
+
+    expected_menu_item = test_restaurants[0]["menu"][0]
+
+    result = restaurant_service.get_name_searched_menu_items(payload, "veg")
+
+    assert result[0].model_dump() == expected_menu_item
+
+def test_fetch_name_searched_menu_items_no_search_match(test_restaurants, restaurant_service):
+    """Spec: A restaurant exists and does not have a menu item matching the search term,
+    it should return nothing
+    Input: A valid restaurant and a search term not matching a menu item,
+    Expected Behaviour: Method retruns an empty list"""
+
+    payload = Restaurant(**test_restaurants[0])
+
+    result = restaurant_service.get_name_searched_menu_items(payload, "qqq")
+
+    assert result == []
+
 #add_menu_item Unit Tests
 
 def test_add_menu_item(mocker, test_restaurants, mocked_repo, restaurant_service):

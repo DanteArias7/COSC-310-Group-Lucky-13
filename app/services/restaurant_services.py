@@ -145,6 +145,25 @@ class RestaurantServices():
 
             raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
 
+    def get_name_searched_menu_items(self, restaurant: Restaurant, search: str):
+        """Get menu items that include a given search term
+
+        Args:
+            restaurant: The restaurant object to get the menu from
+            search: A string to check if the menu items name includes it
+
+        Returns:
+            A list of menuitems including the search term
+        """
+        menu_items = []
+        restaurant = restaurant.model_dump()
+
+        for menu_item in restaurant["menu"]:
+            if search.lower() in menu_item["name"].lower():
+                menu_items.append(MenuItem(**menu_item))
+
+        return menu_items
+
     def add_item_to_menu(self, restaurant_id: int, payload: MenuItem) -> MenuItem:
         """Add a menu item to a restaurants menu"""
 
