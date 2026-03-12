@@ -3,6 +3,7 @@ from datetime import date
 from fastapi import HTTPException
 import pytest
 from app.schemas.cart import Cart
+from app.schemas.payment import Payment
 from app.services.order_services import OrderServices
 
 #pylint: disable=redefined-outer-name
@@ -84,6 +85,42 @@ def test_order_status_2():
          "order_value": 12.50,
          "status": "Paid"}]
 
+@pytest.fixture
+def valid_payment():
+    """Valid payment payload"""
+    return {
+        "card_number": "1234567812345678",
+        "cvv": "123",
+        "expiration_date": "12/30"
+    }
+
+@pytest.fixture
+def invalid_card_payment():
+    """Invalid card number payment payload"""
+    return {
+        "card_number": "123",
+        "cvv": "123",
+        "expiration_date": "12/30"
+    }
+
+@pytest.fixture
+def invalid_cvv_payment():
+    """Invalid CVV payment payload"""
+    return {
+        "card_number": "1234567812345678",
+        "cvv": "12",
+        "expiration_date": "12/30"
+    }
+
+@pytest.fixture
+def expired_payment():
+    """Expired card"""
+    return {
+        "card_number": "1234567812345678",
+        "cvv": "123",
+        "expiration_date": "01/20"
+    }
+
 
 #place_order Unit Tests
 def test_place_order_success(mocker, mocked_repo, order_service, test_carts):
@@ -151,47 +188,124 @@ def test_get_order_by_user_id_user_with_no_orders(mocked_repo, order_service, te
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "No Orders Found for User"
 
-def test_simulate_payment_success(mocked_repo, order_service, test_order_status):
+#simulate_payment Unit Tests
+def test_simulate_payment_success(mocked_repo, order_service, test_order_status, valid_payment):
     """
     Spec: Method should simulate payment for an order
-    Input: valid order_id
-    Expected behavior: Order status should update to Paid
+    Input: valid order_id and valid payment details
+    Expected behavior: Order status should update to Paid &&
+                        method should return payment result message
     """
 
     mocked_repo.load_all_orders.return_value = test_order_status
     mocked_repo.update_orders.return_value = None
 
-    order = order_service.simulate_payment(test_order_status[0]["id"])
+    payment = Payment(**valid_payment)
 
-    assert order.status == "Paid"
+    result = order_service.simulate_payment(
+        test_order_status[0]["id"],
+        payment
+    )
 
-def test_simulate_payment_order_not_found(mocked_repo, order_service):
+    assert result.message == "Payment Accepted"
+    assert test_order_status[0]["status"] == "Paid"
+    mocked_repo.update_orders.assert_called_once()
+
+def test_simulate_payment_order_not_found(mocked_repo, order_service , valid_payment):
     """
     Spec: Method should raise exception if order does not exist
-    Input: invalid order_id
+    Input: invalid order_id, valid payment details
     Expected behavior: HTTPException with status 404
     """
 
     mocked_repo.load_all_orders.return_value = []
 
+    payment = Payment(**valid_payment)
+
     with pytest.raises(HTTPException) as exc_info:
-        order_service.simulate_payment("invalid-id")
+        order_service.simulate_payment("invalid-id", payment)
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Order invalid-id Not Found"
 
-def test_simulate_payment_order_already_paid(mocked_repo, order_service, test_order_status_2):
+def test_simulate_payment_order_already_paid(mocked_repo, order_service,
+                                             test_order_status_2 , valid_payment):
     """
     Spec: Method should raise exception if order is not in pending status
-    Input: order_id for order that is not in Pending status
+    Input: order_id for order that is not in Pending status, valid payment details
     Expected behavior: HTTPException with status 400
     """
 
     mocked_repo.load_all_orders.return_value = test_order_status_2
 
+    payment = Payment(**valid_payment)
+
     with pytest.raises(HTTPException) as exc_info:
-        order_service.simulate_payment(test_order_status_2[0]["id"])
+        order_service.simulate_payment(test_order_status_2[0]["id"], payment)
 
     assert exc_info.value.status_code == 400
     assert exc_info.value.detail == \
         f"Order {test_order_status_2[0]['id']} is not in a payable state"
+
+def test_simulate_payment_invalid_card_number(mocked_repo,
+                                              order_service,
+                                              test_order_status,
+                                              invalid_card_payment):
+    """
+    Spec: Method should reject payment if card number is invalid
+    Input: valid order_id and invalid card number
+    Expected behavior: HTTPException with status 400
+    """
+
+    mocked_repo.load_all_orders.return_value = test_order_status
+
+    payment = Payment(**invalid_card_payment)
+
+    with pytest.raises(HTTPException) as exc_info:
+        order_service.simulate_payment(
+            test_order_status[0]["id"],
+            payment
+        )
+
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.detail == "Payment Rejected: Invalid card number"
+
+def test_simulate_payment_invalid_cvv(mocked_repo,
+                                      order_service,
+                                      test_order_status,
+                                      invalid_cvv_payment):
+    """
+    Spec: Method should reject payment if CVV is invalid
+    Input: valid order_id and invalid CVV
+    Expected behavior: HTTPException raised and order not updated
+    """
+
+    mocked_repo.load_all_orders.return_value = test_order_status
+
+    payment = Payment(**invalid_cvv_payment)
+
+    with pytest.raises(HTTPException) as exc_info:
+        order_service.simulate_payment(test_order_status[0]["id"], payment)
+
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.detail == "Payment Rejected: Invalid CVV"
+
+def test_simulate_payment_expired_card(mocked_repo,
+                                       order_service,
+                                       test_order_status,
+                                       expired_payment):
+    """
+    Spec: Method should reject payment if card is expired
+    Input: valid order_id and expired card
+    Expected behavior: HTTPException raised and order not updated
+    """
+
+    mocked_repo.load_all_orders.return_value = test_order_status
+
+    payment = Payment(**expired_payment)
+
+    with pytest.raises(HTTPException) as exc_info:
+        order_service.simulate_payment(test_order_status[0]["id"], payment)
+
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.detail == "Payment Rejected: Card has expired"
