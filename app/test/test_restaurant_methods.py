@@ -239,7 +239,7 @@ def test_filter_restaurant_by_tags_not_all_tags(restaurant_service, test_restaur
     Input: A valid list of RestaurantResults and a list of tags that do not match any restaurant
     Expected Behaviour: Method returnns an empty list"""
 
-    result = restaurant_service.filter_restaurants_by_tags(test_restaurant_results, 
+    result = restaurant_service.filter_restaurants_by_tags(test_restaurant_results,
                                                            ["vegan", "green"])
 
     assert result == []
