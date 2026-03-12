@@ -161,7 +161,6 @@ def menu_item_payload():
 #browse_restaurants Integration Tests
 
 def test_browse_restaurants_integration_without_search_success(restaurant_test_client,
-                                                               temp_restaurant_path,
                                                                 test_users,
                                                                 test_restaurant_results):
     """Spec: Test retrieving all restaurants via GET /restaurants/browse.
