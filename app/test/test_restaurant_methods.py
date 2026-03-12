@@ -223,6 +223,25 @@ def test_delete_nonexistent_restaurant(test_restaurants, mocked_repo, restaurant
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Restaurant 999 Not Found"
 
+#filter_restaurants_by_tags Unit Tests
+def test_filter_restaurant_by_tags_success(restaurant_service, test_restaurant_results):
+    """Spec: A list of tags is given, matching at least one restaurant
+    Input: A list of RestaurantResults and a List of tags matching a restaurants tags,
+    Expected Behaviour: Method retruns a List of RestaurantResult objects,
+    whose tags include all the given tags"""
+
+    result = restaurant_service.filter_restaurants_by_tags(test_restaurant_results, ["vegan"])
+
+    assert result == test_restaurant_results
+
+def test_filter_restaurant_by_tags_not_all_tags(restaurant_service, test_restaurant_results):
+    """Spec: If none of the restaurants contain all the tags specified, nothing should be returned
+    Input: A valid list of RestaurantResults and a list of tags that do not match any restaurant
+    Expected Behaviour: Method returnns an empty list"""
+
+    result = restaurant_service.filter_restaurants_by_tags(test_restaurant_results, ["vegan", "green"])
+
+    assert result == []
 
 #fetch_name_searched_menu_items Unit Tests
 def test_fetch_name_searched_menu_items_success(test_restaurants, restaurant_service):
@@ -238,25 +257,6 @@ def test_fetch_name_searched_menu_items_success(test_restaurants, restaurant_ser
     result = restaurant_service.get_name_searched_menu_items(payload, "veg")
 
     assert result[0].model_dump() == expected_menu_item
-
-def test_filter_restaurant_by_tags_success(restaurant_service, test_restaurant_results):
-    """Spec: A list of tags is given, matching at least one restaurant
-    Input: A list of RestaurantResults and a List of tags matching a restaurants tags,
-    Expected Behaviour: Method retruns a List of RestaurantResult objects,
-    whose tags include all the given tags"""
-
-    result = restaurant_service.filter_restaurants_tags(test_restaurant_results, ["vegan"])
-
-    assert result == test_restaurant_results
-
-def test_filter_restaurant_by_tags_not_all_tags(restaurant_service, test_restaurant_results):
-    """Spec: If none of the restaurants contain all the tags specified, nothing should be returned
-    Input: A valid list of RestaurantResults and a list of tags that do not match any restaurant
-    Expected Behaviour: Method returnns an empty list"""
-
-    result = restaurant_service.filter_restaurants_tags(test_restaurant_results, ["vegan", "green"])
-
-    assert result == []
 
 def test_fetch_name_searched_menu_items_no_search_match(test_restaurants, restaurant_service):
     """Spec: A restaurant exists and does not have a menu item matching the search term,
