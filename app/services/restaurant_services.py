@@ -164,6 +164,27 @@ class RestaurantServices():
 
         return menu_items
 
+    def filter_menu_items_by_price(self, menu_items: List[MenuItem],
+                                   price_max: float, price_min: float):
+        """
+        Filter a given list of menuItems based on a price range.
+
+        Args:
+            menu_items: list of MenuItem objects to be filtered
+            max: Maximum range of the price
+            min: Minimum wage of the price
+
+        Returns:
+            List of menuItems that have a price within the given range
+        """
+        filtered_menu_items = []
+
+        for menu_item in menu_items:
+            if menu_item.price < price_max and menu_item.price > price_min:
+                filtered_menu_items.append(menu_item)
+
+        return filtered_menu_items
+
     def filter_restaurants_by_tags(self, restaurants: List[RestaurantResult],
                                    tags: List[str] ) -> List[RestaurantResult]:
         """
