@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import List
 import random
-from fastapi import APIRouter, HTTPException, Depends, Header, status
+from fastapi import APIRouter, HTTPException, Depends, Header, Query, status
 from app.repositories.cart_repo import CartRepo
 from app.repositories.user_repo import UserRepo
 from app.schemas.menu import CreateMenuItem, MenuItem, UpdateMenuItem
@@ -49,29 +49,46 @@ def create_restaurant(payload: RestaurantCreate,
 def browse_restaurants(restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
                         user_repo: UserRepo = Depends(create_user_repo),
                         user_id: str = Header(...,alias="user-id"),
-                        search: str | None = None):
+                        search: str | None = None,
+                        tags: List[str] | None = Query(None)):
     """API endpoint for a user to browse all the restaurants
         Args:
-        user_id: The id of the user viewing the restaurants,
-        restaurant_repo: Restaurant Repo object to access the restaurant data store
-        user_repo: User Repo object to allow authorization service object to access user data store,
+            user_id: The id of the user viewing the restaurants,
+            restaurant_repo: Restaurant Repo object to access the restaurant data store
+            user_repo: User Repo object to allow the authorization
+            service object to access user data store,
+            search: string to be compared to restaurant names,
+            tags: List of strings representing restaurant tags
 
         Returns:
-        If search is None:
-        A List of RestaurantResult objects for all restaurants,
-        that includes a restaurants id, name, address,
-        current day's hours, and tags
+            If search is None:
+                A List of RestaurantResult objects for all restaurants,
+                that includes a restaurants id, name, address,
+                day's hours, and tags
 
-        If search is str:
-        A List of RestaurantResult objects for restaurants who's name contains the search string.
+            If search is str:
+                The List of RestaurantResult objects will contain
+                restaurants who's name contains the search string.
+
+            If tags is List[str]:
+                The List of RestaurantResult objects will contain
+                restaurants who's tags include all tags in the tags argument.
         """
     restaurant_service = RestaurantServices(restaurant_repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "browse_restaurants")
-    if search is None:
+    if search is None and tags is None:
         return restaurant_service.fetch_all_restaurants()
 
-    return restaurant_service.fetch_name_searched_restaurants(search)
+    if tags is None:
+        return restaurant_service.fetch_name_searched_restaurants(search)
+
+    if search is None:
+        restaurants = restaurant_service.fetch_all_restaurants()
+        return restaurant_service.filter_restaurants_by_tags(restaurants, tags)
+
+    searched_restaurants = restaurant_service.fetch_name_searched_restaurants(search)
+    return restaurant_service.filter_restaurants_by_tags(searched_restaurants, tags)
 
 @restaurant_router.get("/{restaurant_id}", response_model=Restaurant, status_code=200)
 def get_restaurant_by_id(restaurant_id: int,

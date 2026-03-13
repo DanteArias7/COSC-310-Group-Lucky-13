@@ -164,6 +164,26 @@ class RestaurantServices():
 
         return menu_items
 
+    def filter_restaurants_by_tags(self, restaurants: List[RestaurantResult],
+                                   tags: List[str] ) -> List[RestaurantResult]:
+        """
+        Filter a given list of restaurnts based on given list of tags.
+
+        Args:
+            restaurants: list of RestaurantResult objects to be filtered
+            tags: Specified list of strings to compare to the restaurants tags'
+
+        Returns:
+            List of restaurants that have all the tags in the tags List.
+        """
+        filtered_restaurants = []
+
+        for restaurant in restaurants:
+            if set(tags).issubset(restaurant.tags):
+                filtered_restaurants.append(restaurant)
+
+        return filtered_restaurants
+
     def add_item_to_menu(self, restaurant_id: int, payload: MenuItem) -> MenuItem:
         """Add a menu item to a restaurants menu"""
 
