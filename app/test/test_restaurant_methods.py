@@ -271,6 +271,33 @@ def test_fetch_name_searched_menu_items_no_search_match(test_restaurants, restau
 
     assert result == []
 
+def test_filter_menu_items_by_price_success(test_restaurants, restaurant_service):
+    """Spec: A menu exists and has items within a range
+    Input: A valid menu with items within the given range and the min,
+    and max of the range.
+    Expected Behaviour: Method returns a List of MenuItem objects with
+    a price within the given range"""
+
+    payload = [MenuItem(**test_restaurants[0]["menu"][0])]
+
+    expected_menu_item = test_restaurants[0]["menu"][0]
+
+    result = restaurant_service.filter_menu_items_by_price(payload, 15.00, 6.00)
+
+    assert result[0].model_dump() == expected_menu_item
+
+def test_filter_menu_items_by_price_no_items_in_range(test_restaurants, restaurant_service):
+    """Spec: A menu exists and has no items within a range
+    are none within the price range
+    Input: A valid menu with no items within the given range
+    Expected Behaviour: Method returns an empty list"""
+
+    payload = [MenuItem(**test_restaurants[0]["menu"][0])]
+
+    result = restaurant_service.filter_menu_items_by_price(payload, 21.00, 18.00)
+
+    assert result == []
+
 #add_menu_item Unit Tests
 
 def test_add_menu_item(mocker, test_restaurants, mocked_repo, restaurant_service):
