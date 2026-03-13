@@ -1,0 +1,19 @@
+Date: 12 March
+Type of meeting : Weekly Lab
+
+Attendees : Dante Arias, Varun Garg, Zheng Xue
+
+Key discussion points:
+1. Ways to tackle the refactoring requirements :
+       - Add Exception handling to methods
+       - Update docstrings to have more details
+2. Discussed about how to tackle delivery management feature (feature 5)
+3. Cleared some queries with TA :
+        - Asked whether we need prefilled data in the datasets for demo
+        - Asked whether we need admin features implemented or not
+4. Reassigned some of the issues
+
+Action Items:
+- continue working on the assigned features
+- Try refactoring code and generating PR's for that
+- next meeting March 16, Monday
