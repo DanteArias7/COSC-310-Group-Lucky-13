@@ -189,14 +189,14 @@ def update_menu_item_in_menu(restaurant_id: int, menu_item_id: str, payload: Upd
                         restaurant_repo: RestaurantRepo=Depends(create_restaurant_repo),
                         user_repo: UserRepo = Depends(create_user_repo),
                         user_id: str  = Header(...,alias="user-id"),
-                        status: str | None = None):
+                        item_status: str | None = None):
     """Update a menu item in a specifed restaurants menu"""
     restaurant_service = RestaurantServices(restaurant_repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "manage_own_menu")
     authorization_service.authorize_access(user_id,
                                 restaurant_service.fetch_restaurant(restaurant_id).user_id)
-    return restaurant_service.update_menu_item(restaurant_id, menu_item_id, payload, status)
+    return restaurant_service.update_menu_item(restaurant_id, menu_item_id, payload, item_status)
 
 @restaurant_router.delete("/{restaurant_id}/menu/{menu_item_id}",
                           status_code=status.HTTP_204_NO_CONTENT)
