@@ -3,13 +3,16 @@ from pathlib import Path
 from typing import List
 from fastapi import APIRouter, Depends, Header
 from app.repositories.order_repo import OrderRepo
+from app.repositories.restaurant_repo import RestaurantRepo
 from app.repositories.user_repo import UserRepo
+from app.routers.restaurant import RESTAURANT_DATA_PATH
 from app.routers.user import USER_DATA_PATH
 from app.schemas.cart import Cart
 from app.schemas.order import Order
 from app.services.authorization_services import AuthorizationServices
 from app.services.order_services import OrderServices
 from app.schemas.payment import Payment, PaymentResult
+from app.services.restaurant_services import RestaurantServices
 
 ORDER_DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "orders.csv"
 
@@ -23,6 +26,13 @@ def create_order_repo():
             UserRepo object with the order data path attribute"""
     return OrderRepo(ORDER_DATA_PATH)
 
+def create_restaurant_repo():
+    """"Initialize repo object with data path to user data store
+
+    Returns:
+            UserRepo object with the order data path attribute"""
+    return RestaurantRepo(RESTAURANT_DATA_PATH)
+
 def create_user_repo():
     """"Initialize repo object with data path to user data store
 
@@ -33,29 +43,38 @@ def create_user_repo():
 @order_router.post("", response_model=Order, status_code=201)
 def add_order(payload: Cart,
                  order_repo: OrderRepo = Depends(create_order_repo),
+                 restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
                  user_repo: UserRepo = Depends(create_user_repo),
-                 user_id: str = Header(...,calias="user-id")):
+                 user_id: str = Header(...,alias="user-id")):
     """Adds a user created order to the data store
 
-    Rules: User must have customer role
+    Rules: User must have customer role, Restayrant must be open
 
     Args:
-    payload: Cart object to get information from to create cart object,
-    order_repo: The order repo object to allow order_service to access order data store,
-    user_repo: The user repo object to allow order_service to access user data store,
-    user_id: header sent with request indicating current user
+        payload: Cart object to get information from to create cart object,
+        order_repo: The order repo object to allow order_service to access order data store,
+        user_repo: The user repo object to allow order_service to access user data store,
+        user_id: header sent with request indicating current user
 
-    Returns: New order object"""
+    Returns: New order object
+
+    Raises:
+        409 Error if restaurant is closed
+        404 Error if requesting user is not found
+        403 Error if requesting user does not have the correct access or role
+        """
     order_service = OrderServices(order_repo)
     authorization_service = AuthorizationServices(user_repo)
+    restaurant_service = RestaurantServices(restaurant_repo)
     authorization_service.authorize(user_id, "create_order")
     authorization_service.authorize_access(user_id, payload.user_id)
+    restaurant_service.validate_restaurant_is_open(payload.restaurant_id)
     return order_service.place_order(payload)
 
 @order_router.get("", response_model=List[Order], status_code=200)
 def get_all_orders_for_a_user(order_repo: OrderRepo = Depends(create_order_repo),
                  user_repo: UserRepo = Depends(create_user_repo),
-                 user_id: str = Header(...,calias="user-id")):
+                 user_id: str = Header(...,alias="user-id")):
     """Gets all the previous and current orders for a given user.
 
     Rules: User must have customer role

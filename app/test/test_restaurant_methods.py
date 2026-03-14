@@ -271,6 +271,40 @@ def test_filter_closed_restaurants_closed(mocker, restaurant_service, test_resta
 
     assert result == []
 
+#validate_restaurant_is_open Unit Tests
+def test_validate_restaurant_is_open(mocker, mocked_repo, test_restaurants, restaurant_service):
+    """Scenario: Method validates a resturant that is currently open
+    Input: ID of currently open restaurant
+    Expected Behvaiour: Method returns true"""
+
+    mocked_repo.load_all_restaurants.return_value = test_restaurants
+
+    mocked_time = mocker.patch("app.services.restaurant_services.datetime")
+    mocked_time.now.return_value.time.return_value = time(10,30)
+    restaurant_id = test_restaurants[0]["id"]
+
+    result = restaurant_service.validate_restaurant_is_open(restaurant_id)
+
+    assert result
+
+def test_validate_restaurant_is_open_closed_restaurant(mocker, mocked_repo,
+                                                        test_restaurants, restaurant_service):
+    """Scenario: Method does not validate a resturant that is currently closed
+    Input: ID of currently closed restaurant
+    Expected Behvaiour: Method raises 409 HTTPException """
+    mocked_repo.load_all_restaurants.return_value = test_restaurants
+    mocked_time = mocker.patch("app.services.restaurant_services.datetime")
+
+    mocked_time.now.return_value.time.return_value = time(20,30)
+
+    restaurant_id = test_restaurants[0]["id"]
+
+    with  pytest.raises(HTTPException) as exc_info:
+        restaurant_service.validate_restaurant_is_open(restaurant_id)
+
+    assert exc_info.value.status_code == 409
+    assert exc_info.value.detail == "Restaurant is currently closed"
+
 #fetch_name_searched_menu_items Unit Tests
 def test_fetch_name_searched_menu_items_success(test_restaurants, restaurant_service):
     """Spec: A restaurant exists and has menu items matching the search term,
@@ -298,6 +332,7 @@ def test_fetch_name_searched_menu_items_no_search_match(test_restaurants, restau
 
     assert result == []
 
+#filter_menu_items_by_price Unit Tests
 def test_filter_menu_items_by_price_success(test_restaurants, restaurant_service):
     """Spec: A menu exists and has items within a range
     Input: A valid menu with items within the given range and the min,

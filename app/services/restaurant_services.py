@@ -146,6 +146,37 @@ class RestaurantServices():
 
             raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
 
+    def validate_restaurant_is_open(self, restaurant_id: int) -> bool:
+        """Validates that a given restaurant is currently open.
+
+        Args:
+            restaurant_id: The ID of the restaurant being validated
+
+        Returns:
+            True if the restaurant is open
+
+        Raises: 409 HTTPException if restaurant is closed.
+        """
+        restaurant = self.fetch_restaurant(restaurant_id)
+        restaurant = restaurant.model_dump()
+
+        current_time = datetime.now().time()
+        today = date.today().strftime("%A")
+
+        times = re.split(r"[:-]", restaurant["hours"][today])
+        open_hour = int(times[0])
+        open_minute = int(times[1])
+        closed_hour = int(times[2])
+        closed_minute = int(times[3])
+        open_time = time(open_hour, open_minute)
+        closed_time = time(closed_hour, closed_minute)
+
+        if open_time <= current_time < closed_time:
+            return True
+
+        raise HTTPException(status_code=409,
+                            detail="Restaurant is currently closed")
+
     def get_name_searched_menu_items(self, restaurant: Restaurant, search: str):
         """Get menu items that include a given search term
 
