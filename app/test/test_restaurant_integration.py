@@ -592,7 +592,9 @@ def test_adding_menu_item_nonexistent_restaurant(test_restaurants, restaurant_te
 
 def test_updating_menu_item_status_successful(test_restaurants, restaurant_test_client,
                                        temp_restaurant_path, test_users):
-    """Testing successful updating of a menu item to a menu"""
+    """Scenario: A restaurant owner updates the status of their menu item
+    Input: An Updated menuITem object with an item_status query included
+    Expected Behviour: Returns the updated menu item with the new status"""
 
     payload = {"id": "00000000-0000-0000-0000-0000000000001",
                 "name": "Vegan Burger", "description": "Plant-based patty with lettuce and tomato",
