@@ -1,5 +1,5 @@
 """Integration tests for restaurant endpoints."""
-from datetime import date
+from datetime import date, time
 import json
 from fastapi.testclient import TestClient
 import pytest
@@ -160,12 +160,15 @@ def menu_item_payload():
 
 #browse_restaurants Integration Tests
 
-def test_browse_restaurants_integration_without_search_success(restaurant_test_client,
+def test_browse_restaurants_integration_without_search_success(mocker, restaurant_test_client,
                                                                 test_users,
                                                                 test_restaurant_results):
     """Spec: Test retrieving all restaurants via GET /restaurants/browse.
     Input: None
     Expected Behaviour: A List of RestauntResult objects is returned"""
+
+    mocked_time = mocker.patch("app.services.restaurant_services.datetime")
+    mocked_time.now.return_value.time.return_value = time(10,30)
 
     response = restaurant_test_client.get("/restaurants/browse",
                                           headers={"user-id": test_users[1]["id"]})
@@ -183,6 +186,43 @@ def test_browse_restaurants_integration_without_search_success(restaurant_test_c
     assert isinstance(restaurant["todays_hours"], str)
     assert isinstance(restaurant["tags"], list)
 
+def test_browse_restaurants_integration_filters_closed_restaurants_open(mocker,
+                                                                restaurant_test_client,
+                                                                test_users,
+                                                                test_restaurant_results):
+    """Spec: Test retrieving all restaurants via GET /restaurants/browse.
+    Input: None
+    Expected Behaviour: A List of RestauntResult objects is returned"""
+
+    mocked_time = mocker.patch("app.services.restaurant_services.datetime")
+    mocked_time.now.return_value.time.return_value = time(10,30)
+
+    response = restaurant_test_client.get("/restaurants/browse",
+                                          headers={"user-id": test_users[1]["id"]})
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert test_restaurant_results[0] == data[0]
+
+def test_browse_restaurants_integration_filters_closed_restaurants_closed(mocker,
+                                                                restaurant_test_client,
+                                                                test_users):
+    """Spec: Test retrieving all restaurants via GET /restaurants/browse.
+    Input: None
+    Expected Behaviour: A List of RestauntResult objects is returned"""
+
+    mocked_time = mocker.patch("app.services.restaurant_services.datetime")
+    mocked_time.now.return_value.time.return_value = time(18,30)
+
+    response = restaurant_test_client.get("/restaurants/browse",
+                                          headers={"user-id": test_users[1]["id"]})
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert data == []
+
 def test_browse_restaurants_with_name_search_success(restaurant_test_client,
                                                     test_restaurant_results,
                                                     test_users):
@@ -193,6 +233,7 @@ def test_browse_restaurants_with_name_search_success(restaurant_test_client,
 
     response = restaurant_test_client.get("/restaurants/browse?search=veg",
                                           headers={"user-id": test_users[1]["id"]})
+
 
     assert response.status_code == 200
     data = response.json()
