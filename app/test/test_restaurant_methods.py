@@ -1,5 +1,5 @@
 """Tests for restaurant functionality."""
-from datetime import date
+from datetime import date, time
 
 from fastapi import HTTPException
 import pytest
@@ -241,6 +241,33 @@ def test_filter_restaurant_by_tags_not_all_tags(restaurant_service, test_restaur
 
     result = restaurant_service.filter_restaurants_by_tags(test_restaurant_results,
                                                            ["vegan", "green"])
+
+    assert result == []
+
+#filter_closed_restaurants Unit Tests
+def test_filter_closed_restaurants_open(mocker, restaurant_service, test_restaurant_results):
+    """Spec: If a restaurantresult object is open, it should not be filtered out
+    Input: A list of RestaurantResults
+    Expected Behaviour: Method retruns a List of RestaurantResult objects,
+    all who are currently open"""
+
+    mocked_time = mocker.patch("app.services.restaurant_services.datetime")
+    mocked_time.now.return_value.time.return_value = time(10,30)
+
+    result = restaurant_service.filter_closed_restaurants(test_restaurant_results)
+
+    assert result == test_restaurant_results
+
+def test_filter_closed_restaurants_closed(mocker, restaurant_service, test_restaurant_results):
+    """Spec: If a restaurantresult object is closed, it should be filtered out
+    Input: A list of RestaurantResults
+    Expected Behaviour: Method returns a List of RestaurantResult objects,
+    excluding the ones that are closed."""
+
+    mocked_time = mocker.patch("app.services.restaurant_services.datetime")
+    mocked_time.now.return_value.time.return_value = time(18,30)
+
+    result = restaurant_service.filter_closed_restaurants(test_restaurant_results)
 
     assert result == []
 
