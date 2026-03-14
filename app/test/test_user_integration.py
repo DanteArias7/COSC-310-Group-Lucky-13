@@ -9,6 +9,58 @@ from app.routers.user import create_user_repo
 
 client = TestClient(app)
 
+
+def test_get_user_successful(tmp_path):
+    """Scenario: A valid user attempts to get their own profile
+    Input: A request including a header with a valid id
+    Expected Behaviour: Matching user object is returned"""
+    test_user_data_path = tmp_path / "users.json"
+
+    def override_create_user_repo():
+        return UserRepo(test_user_data_path)
+
+    app.dependency_overrides[create_user_repo] = override_create_user_repo
+
+    user = [{"id" : "00000000-0000-0000-0000-000000000001", "name" : "Alex", "email" : "alexsmith@gmail.com",
+                "phone_number" : "123-456-7890", "address" : "123 Baron Rd, Kelowna, BC, A1B2C3",
+                "password" : "password",  "role" : "customer"}]
+
+    with open(test_user_data_path, "w", encoding="utf-8") as f:
+        json.dump(user, f, ensure_ascii=False)
+
+    request = "/users/00000000-0000-0000-0000-000000000001"
+
+    r = client.get(request, headers={"user-id": "00000000-0000-0000-0000-000000000001"})
+
+    assert r.status_code == 200
+    assert r.json() == user[0]
+
+def test_get_nonexistent_user(tmp_path):
+    """Scenario: A valid user attempts to get their own profile
+    Input: A request including a header with a valid id
+    Expected Behaviour: Matching user object is returned"""
+    test_user_data_path = tmp_path / "users.json"
+
+    def override_create_user_repo():
+        return UserRepo(test_user_data_path)
+
+    app.dependency_overrides[create_user_repo] = override_create_user_repo
+
+    user = [{"id" : "00000000-0000-0000-0000-000000000001", "name" : "Alex", "email" : "alexsmith@gmail.com",
+                "phone_number" : "123-456-7890", "address" : "123 Baron Rd, Kelowna, BC, A1B2C3",
+                "password" : "password",  "role" : "customer"}]
+
+    with open(test_user_data_path, "w", encoding="utf-8") as f:
+        json.dump(user, f, ensure_ascii=False)
+
+    request = "/users/00000000-0000-0000-0000-000000000002"
+
+    r = client.get(request, headers={"user-id": "00000000-0000-0000-0000-000000000002"})
+
+    assert r.status_code == 404
+    assert r.json() == {"detail" : "User '00000000-0000-0000-0000-000000000002' not found."}
+
+
 def test_create_user(tmp_path):
     """Integration test of add user functionality"""
     test_user_data_path = tmp_path / "users.json"
