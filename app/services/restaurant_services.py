@@ -1,6 +1,7 @@
 """Service layer for restaurant business logic."""
 
-from datetime import date
+from datetime import date, datetime, time
+import re
 from typing import Any, Dict, List, Protocol
 import random
 import uuid
@@ -183,6 +184,40 @@ class RestaurantServices():
                 filtered_restaurants.append(restaurant)
 
         return filtered_restaurants
+
+    def filter_closed_restaurants(self,
+                                  restaurants: List[RestaurantResult]) -> List[RestaurantResult]:
+        """
+        Filter a given list of restaurnts based on given list of tags.
+
+        Args:
+            restaurants: list of RestaurantResult objects to be filtered
+            tags: Specified list of strings to compare to the restaurants tags'
+
+        Returns:
+            List of restaurants that have all the tags in the tags List.
+        """
+        open_restaurants = []
+
+        current_time = datetime.now().time()
+
+        for restaurant in restaurants:
+            times = re.split(r"[:-]", restaurant.todays_hours)
+            open_hour = int(times[0])
+            open_minute = int(times[1])
+            closed_hour = int(times[2])
+            closed_minute = int(times[3])
+            open_time = time(open_hour, open_minute)
+            closed_time = time(closed_hour, closed_minute)
+
+            if open_time <= closed_time:
+                if open_time <= current_time <= closed_time:
+                    open_restaurants.append(restaurant)
+            else:
+                if(open_time <= current_time or current_time <= closed_time):
+                    open_restaurants.append(restaurant)
+
+        return open_restaurants
 
     def add_item_to_menu(self, restaurant_id: int, payload: MenuItem) -> MenuItem:
         """Add a menu item to a restaurants menu"""
