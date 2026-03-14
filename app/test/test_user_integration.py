@@ -21,9 +21,9 @@ def test_get_user_successful(tmp_path):
 
     app.dependency_overrides[create_user_repo] = override_create_user_repo
 
-    user = [{"id" : "00000000-0000-0000-0000-000000000001", 
+    user = [{"id" : "00000000-0000-0000-0000-000000000001",
              "name" : "Alex", "email" : "alexsmith@gmail.com",
-                "phone_number" : "123-456-7890", 
+                "phone_number" : "123-456-7890",
              "address" : "123 Baron Rd, Kelowna, BC, A1B2C3",
                 "password" : "password",  "role" : "customer"}]
 
@@ -48,9 +48,9 @@ def test_get_nonexistent_user(tmp_path):
 
     app.dependency_overrides[create_user_repo] = override_create_user_repo
 
-    user = [{"id" : "00000000-0000-0000-0000-000000000001", 
+    user = [{"id" : "00000000-0000-0000-0000-000000000001",
              "name" : "Alex", "email" : "alexsmith@gmail.com",
-                "phone_number" : "123-456-7890", 
+                "phone_number" : "123-456-7890",
              "address" : "123 Baron Rd, Kelowna, BC, A1B2C3",
                 "password" : "password",  "role" : "customer"}]
 
