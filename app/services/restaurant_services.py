@@ -282,6 +282,7 @@ class RestaurantServices():
                 for j, menu_item in enumerate(restaurant["menu"]):
                     if menu_item["id"] == menu_item_id:
                         restaurant["menu"][j]={"id" : menu_item_id} | updated_menu_item.model_dump()
+                        restaurant["menu"][j]=restaurant["menu"][j]|{"status" : menu_item["status"]}
                         restaurants[i] = restaurant
                         self.repo.save_all_restaurants(restaurants)
                         return MenuItem(**restaurant["menu"][j])
