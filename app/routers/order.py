@@ -95,4 +95,5 @@ def simulate_payment(order_id: str,
     order_service = OrderServices(order_repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "make_payment")
+    authorization_service.authorize_access(user_id, payload.user_id)
     return order_service.simulate_payment(order_id, payload)
