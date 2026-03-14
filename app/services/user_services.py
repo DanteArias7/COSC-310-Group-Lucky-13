@@ -11,6 +11,23 @@ class UserServices():
         """Initialize instance with repo object"""
         self.repo = repo
 
+    def get_user_by_id(self, user_id: str) -> User:
+        """Gets a users information whose ID matches the given ID
+
+        Args:
+            user_id: The ID of the user's info being requested
+
+        Returns:
+            A User object matching the given ID """
+        users = self.repo.load_all_users()
+
+        for user in users:
+            if user["id"] == user_id:
+                return User(**user)
+
+        raise HTTPException(status_code=404,
+                            detail=f"User {user_id} not found")
+
     def create_user(self, payload: UserCreate) -> User:
         """Create a new user"""
         new_id = str(uuid.uuid7())
@@ -54,8 +71,8 @@ class UserServices():
 class IUserRepo(Protocol):
     """User Service Class"""
     def load_all_users(self) -> List[Dict[str, Any]]:
-        """Load all users"""  
+        """Load all users"""
     def save_user(self, user : Dict[str : any]) -> None:
-        """save a user""" 
+        """save a user"""
     def save_all_users(self, user : List[Dict[str : any]]) -> None:
-        """save all users""" 
+        """save all users"""
