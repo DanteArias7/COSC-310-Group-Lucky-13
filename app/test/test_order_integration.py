@@ -1,13 +1,14 @@
 """Integration tests for order endpoints."""
-from datetime import date
+from datetime import date, time
 import json
 from fastapi.testclient import TestClient
 import pandas
 import pytest
 from app.main import app
 from app.repositories.order_repo import OrderRepo
+from app.repositories.restaurant_repo import RestaurantRepo
 from app.repositories.user_repo import UserRepo
-from app.routers.order import create_order_repo, create_user_repo
+from app.routers.order import create_order_repo, create_restaurant_repo, create_user_repo
 
 
 #pylint: disable=duplicate-code
@@ -35,6 +36,28 @@ def test_carts():
                 "subtotal" : 23.00,
                 "tax" : 1.35,
                 "total" : 24.35}]
+
+@pytest.fixture
+def test_restaurants():
+    """Initialize test restaurant data for each test"""
+    return [{"id": 101,
+             "user_id" : "00000000-0000-0000-0000-000000000002",
+               "name": "Veggie Palace",
+                "hours": { "Monday": "9:00-17:00",
+                            "Tuesday": "9:00-17:00",
+                            "Wednesday": "9:00-17:00",
+                            "Thursday": "9:00-17:00",
+                            "Friday": "9:00-17:00",
+                            "Saturday": "9:00-17:00",
+                            "Sunday": "9:00-17:00"},
+                "phone_number": "1234567890",
+                "address": "123 Green Street",
+                "tags": ["vegan", "brunch"],
+                "menu": [{"id": "00000000-0000-0000-0000-0000000000001",
+                "name": "Vegan Burger", "description": "Plant-based patty with lettuce and tomato",
+                "price": 12.99, "tags": ["vegan"]
+                }]
+        }]
 
 @pytest.fixture
 def test_orders():
@@ -119,7 +142,17 @@ def temp_user_path(tmp_path, test_users):
     return test_user_data_path
 
 @pytest.fixture
-def order_test_client(temp_user_path, temp_order_path):
+def temp_restaurant_path(tmp_path, test_restaurants):
+    """Create temporary restaurant file path for each test"""
+    test_restaurant_data_path = tmp_path / "restaurants.json"
+
+    with open(test_restaurant_data_path, "w", encoding="utf-8") as f:
+        json.dump(test_restaurants, f, ensure_ascii=False)
+
+    return test_restaurant_data_path
+
+@pytest.fixture
+def order_test_client(temp_user_path, temp_order_path, temp_restaurant_path):
     """Override dependency injection for restaurant repo object"""
 
     def override_order_repo():
@@ -128,8 +161,12 @@ def order_test_client(temp_user_path, temp_order_path):
     def override_user_repo():
         return UserRepo(temp_user_path)
 
+    def override_restaurant_repo():
+        return RestaurantRepo(temp_restaurant_path)
+
     app.dependency_overrides[create_order_repo] = override_order_repo
     app.dependency_overrides[create_user_repo] = override_user_repo
+    app.dependency_overrides[create_restaurant_repo] = override_restaurant_repo
 
     yield TestClient(app)
 
@@ -179,7 +216,7 @@ def expired_payment(test_users):
     }
 
 #add_order
-def test_add_order_success(temp_order_path,
+def test_add_order_success(mocker, temp_order_path,
                              order_test_client, test_carts,
                              test_users):
     """Scenario: Test succesful endpoint use to create an order"""
@@ -187,6 +224,12 @@ def test_add_order_success(temp_order_path,
     payload = test_carts[0]
 
     request = "/orders/"
+
+    mocked_time = mocker.patch("app.services.restaurant_services.datetime")
+    mocked_time.now.return_value.time.return_value = time(10,0)
+
+    mocked_time = mocker.patch("app.services.restaurant_services.date")
+    mocked_time.today.return_value.strftime.return_value = "Monday"
 
     r =order_test_client.post(request, headers={"user-id" : test_users[0]["id"]},
                            json=payload)
@@ -207,6 +250,29 @@ def test_add_order_success(temp_order_path,
 
     assert r.status_code == 201
     assert new_order == expected_order
+
+def test_add_order_restaurant_closed(mocker,
+                             order_test_client, test_carts,
+                             test_users):
+    """Scenario: Test order is rejected if the restaurant is closed"""
+
+    payload = test_carts[0]
+
+    request = "/orders/"
+
+    mocked_time = mocker.patch("app.services.restaurant_services.datetime")
+    mocked_time.now.return_value.time.return_value = time(19,0)
+
+    mocked_time = mocker.patch("app.services.restaurant_services.date")
+    mocked_time.today.return_value.strftime.return_value = "Monday"
+
+    r =order_test_client.post(request, headers={"user-id" : test_users[0]["id"]},
+                           json=payload)
+
+
+    assert r.status_code == 409
+    assert r.json() == {"detail": "Restaurant is currently closed"}
+
 
 #get_order_by_user_id Tests
 def test_get_order_by_user_id_success(order_test_client, test_orders,
