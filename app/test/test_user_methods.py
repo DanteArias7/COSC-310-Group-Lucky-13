@@ -12,10 +12,13 @@ def test_get_user_success(mocker):
     Expected Behviour: The associated user object is returned"""
 
     mocked_repo = mocker.Mock()
-    mocked_users = [{"id" : "00000000-0000-0000-0000-000000000001", "name" : "Alex", "email" : "alexsmith@gmail.com",
-                "phone_number" : "123-456-7890", "address" : "123 Baron Rd, Kelowna, BC, A1B2C3",
+    mocked_users = [{"id" : "00000000-0000-0000-0000-000000000001",
+                     "name" : "Alex", "email" : "alexsmith@gmail.com",
+                "phone_number" : "123-456-7890",
+                     "address" : "123 Baron Rd, Kelowna, BC, A1B2C3",
                 "password" : "password",  "role" : "customer"},
-                {"id" : "00000000-0000-0000-0000-000000000002", "name" : "Jeff", "email" : "Jeffsmith@gmail.com",
+                {"id" : "00000000-0000-0000-0000-000000000002",
+                 "name" : "Jeff", "email" : "Jeffsmith@gmail.com",
                 "phone_number" : "555-555-5555", "address" : "321 Ellis Rd, Kelowna, BC, A1B2C3",
                 "password" : "pass",  "role" : "customer"}]
 
@@ -33,12 +36,16 @@ def test_get_nonexistent_user(mocker):
     Expected Behviour: A 404 HTTPException error is raised"""
 
     mocked_repo = mocker.Mock()
-    mocked_users = [{"id" : "00000000-0000-0000-0000-000000000001", "name" : "Alex", "email" : "alexsmith@gmail.com",
-                "phone_number" : "123-456-7890", "address" : "123 Baron Rd, Kelowna, BC, A1B2C3",
+    mocked_users = [{"id" : "00000000-0000-0000-0000-000000000001",
+                     "name" : "Alex", "email" : "alexsmith@gmail.com",
+                "phone_number" : "123-456-7890",
+                     "address" : "123 Baron Rd, Kelowna, BC, A1B2C3",
                 "password" : "password",  "role" : "customer"},
-                {"id" : "00000000-0000-0000-0000-000000000002", "name" : "Jeff", "email" : "Jeffsmith@gmail.com",
+                {"id" : "00000000-0000-0000-0000-000000000002",
+                 "name" : "Jeff", "email" : "Jeffsmith@gmail.com",
                 "phone_number" : "555-555-5555", "address" : "321 Ellis Rd, Kelowna, BC, A1B2C3",
                 "password" : "pass",  "role" : "customer"}]
+
 
     mocked_repo.load_all_users.return_value =mocked_users
 
