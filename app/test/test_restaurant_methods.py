@@ -27,7 +27,7 @@ def test_restaurants():
                 "tags": ["vegan", "brunch"],
                 "menu": [{"id": "00000000-0000-0000-0000-0000000000001",
                 "name": "Vegan Burger", "description": "Plant-based patty with lettuce and tomato",
-                "price": 12.99, "tags": ["vegan"]
+                "price": 12.99, "tags": ["vegan"], "status":"Available"
                 }]
         }]
 
@@ -392,7 +392,7 @@ def test_update_menu_item_success(test_restaurants, mocked_repo, restaurant_serv
 
     expected_menu_item = MenuItem(id="00000000-0000-0000-0000-0000000000001",
                                   name="Classic Burger", description="Cheeseburger",
-                                  price= 10.50, tags=["burger"])
+                                  price= 10.50, tags=["burger"], status="Available")
 
     updated_menu_item = restaurant_service.update_menu_item(
                             test_restaurants[0]["id"],
