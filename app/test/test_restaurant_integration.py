@@ -603,7 +603,7 @@ def test_updating_menu_item_status_successful(test_restaurants, restaurant_test_
 
     request = "/restaurants/" + str(test_restaurants[0]["id"])
     request = request + "/menu/" + test_restaurants[0]["menu"][0]["id"]
-    request = request + "?status=Sold+Out"
+    request = request + "?item_status=Sold+Out"
     r = restaurant_test_client.put(request, headers= {"user-id" : test_users[1]["id"]},
                                     json=payload)
 
