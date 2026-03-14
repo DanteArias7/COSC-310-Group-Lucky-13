@@ -188,14 +188,13 @@ class RestaurantServices():
     def filter_closed_restaurants(self,
                                   restaurants: List[RestaurantResult]) -> List[RestaurantResult]:
         """
-        Filter a given list of restaurnts based on given list of tags.
+        Filter a given list of restaurnts based on if they are currently open or not.
 
         Args:
             restaurants: list of RestaurantResult objects to be filtered
-            tags: Specified list of strings to compare to the restaurants tags'
 
         Returns:
-            List of restaurants that have all the tags in the tags List.
+            List of restaurants that are currently open
         """
         open_restaurants = []
 
