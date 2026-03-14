@@ -77,18 +77,18 @@ def browse_restaurants(restaurant_repo: RestaurantRepo = Depends(create_restaura
     restaurant_service = RestaurantServices(restaurant_repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "browse_restaurants")
-    if search is None and tags is None:
-        return restaurant_service.fetch_all_restaurants()
+    restaurants = restaurant_service.fetch_all_restaurants()
 
-    if tags is None:
-        return restaurant_service.fetch_name_searched_restaurants(search)
+    if search is not None:
+        restaurants = restaurant_service.fetch_name_searched_restaurants(search)
+
+    if tags is not None:
+        restaurants = restaurant_service.filter_restaurants_by_tags(restaurants, tags)
 
     if search is None:
-        restaurants = restaurant_service.fetch_all_restaurants()
-        return restaurant_service.filter_restaurants_by_tags(restaurants, tags)
+        restaurants = restaurant_service.filter_closed_restaurants(restaurants)
 
-    searched_restaurants = restaurant_service.fetch_name_searched_restaurants(search)
-    return restaurant_service.filter_restaurants_by_tags(searched_restaurants, tags)
+    return restaurants
 
 @restaurant_router.get("/{restaurant_id}", response_model=Restaurant, status_code=200)
 def get_restaurant_by_id(restaurant_id: int,
