@@ -64,11 +64,13 @@ def browse_restaurants(restaurant_repo: RestaurantRepo = Depends(create_restaura
             If search is None:
                 A List of RestaurantResult objects for all restaurants,
                 that includes a restaurants id, name, address,
-                day's hours, and tags
+                day's hours, and tags. Only currently open restaurants 
+                will be returned.
 
             If search is str:
                 The List of RestaurantResult objects will contain
-                restaurants who's name contains the search string.
+                restaurants who's name contains the search string. Closed
+                restaurants will also be returned. 
 
             If tags is List[str]:
                 The List of RestaurantResult objects will contain
