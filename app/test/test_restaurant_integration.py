@@ -431,16 +431,63 @@ def test_browse_menu_items_no_search_match(test_restaurants, test_users,
     assert response.status_code == 200
     assert data == []
 
-def test_browse_menu_items_no_search_term_used(test_restaurants, test_users,
+def test_browse_menu_items_with_menu_items_in_price_ranges(test_restaurants, test_users,
+                                            restaurant_test_client, temp_restaurant_path):
+    """Spec: A valid restaurant has menu items within a price range
+    Input:A valid request with a max and min that a menu items price falls between
+    Exepected Behaviour:A List of menuitems whose prices are in between max and min,
+    with a 200 status"""
+
+    request = "/restaurants/" + str(test_restaurants[0]["id"]) + "/menu?price-max=14.00"
+    max_response = restaurant_test_client.get(request, headers={"user-id": test_users[0]["id"]})
+
+    request = "/restaurants/" + str(test_restaurants[0]["id"]) + "/menu?price_min=6.00"
+    min_response = restaurant_test_client.get(request, headers={"user-id": test_users[0]["id"]})
+
+    request = "/restaurants/" + str(test_restaurants[0]["id"]) + \
+    "/menu?price-max=21.00&price_min=6.00"
+
+    max_and_min_response = restaurant_test_client.get(request,
+                                                      headers={"user-id": test_users[0]["id"]})
+
+    max_data = max_response.json()
+    min_data = min_response.json()
+    min_max_data = max_and_min_response.json()
+
+    with open(temp_restaurant_path, "r", encoding="utf-8") as f:
+        restaurants = json.load(f)
+
+    assert max_response.status_code == 200
+    assert restaurants[0]["menu"][0] == max_data[0]
+    assert restaurants[0]["menu"][0] == min_data[0]
+    assert restaurants[0]["menu"][0] == min_max_data[0]
+
+def test_browse_menu_items_with_menu_items_not_in_price_ranges(test_restaurants, test_users,
                                             restaurant_test_client):
-    """Spec: If a user attempts to browse menuitems with no search term, an error is thrown
-    Input:An invalid request with no search term
-    Exepected Behaviour:A 400 HTTPException is thrown"""
+    """Spec: A valid restaurant has menu items not within a price range
+    Input:A valid request with a max and min that no menu items price falls between
+    Exepected Behaviour:An empty list is returned with a 200 status"""
 
-    request = "/restaurants/" + str(test_restaurants[0]["id"]) + "/menu"
-    response = restaurant_test_client.get(request, headers={"user-id": test_users[0]["id"]})
+    request = "/restaurants/" + str(test_restaurants[0]["id"]) + "/menu?price_max=5.00"
+    max_response = restaurant_test_client.get(request, headers={"user-id": test_users[0]["id"]})
 
-    assert response.status_code == 400
+    request = "/restaurants/" + str(test_restaurants[0]["id"]) + "/menu?price_min=18.00"
+    min_response = restaurant_test_client.get(request, headers={"user-id": test_users[0]["id"]})
+
+    request = "/restaurants/" + str(test_restaurants[0]["id"]) + \
+        "/menu?price-max=21.00&price_min=18.00"
+
+    max_and_min_response = restaurant_test_client.get(request,
+                                                      headers={"user-id": test_users[0]["id"]})
+
+    max_data = max_response.json()
+    min_data = min_response.json()
+    min_max_data = max_and_min_response.json()
+
+    assert max_response.status_code == 200
+    assert max_data == []
+    assert min_data == []
+    assert min_max_data == []
 
 #add_menu_item_to_menu Integration Tests
 
