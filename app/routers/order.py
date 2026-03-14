@@ -45,7 +45,7 @@ def add_order(payload: Cart,
                  order_repo: OrderRepo = Depends(create_order_repo),
                  restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
                  user_repo: UserRepo = Depends(create_user_repo),
-                 user_id: str = Header(...,calias="user-id")):
+                 user_id: str = Header(...,alias="user-id")):
     """Adds a user created order to the data store
 
     Rules: User must have customer role, Restayrant must be open
@@ -74,7 +74,7 @@ def add_order(payload: Cart,
 @order_router.get("", response_model=List[Order], status_code=200)
 def get_all_orders_for_a_user(order_repo: OrderRepo = Depends(create_order_repo),
                  user_repo: UserRepo = Depends(create_user_repo),
-                 user_id: str = Header(...,calias="user-id")):
+                 user_id: str = Header(...,alias="user-id")):
     """Gets all the previous and current orders for a given user.
 
     Rules: User must have customer role
