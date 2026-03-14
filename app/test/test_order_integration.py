@@ -136,9 +136,10 @@ def order_test_client(temp_user_path, temp_order_path):
     app.dependency_overrides.clear()
 
 @pytest.fixture
-def valid_payment():
+def valid_payment(test_users):
     """Sample valid payment details for payment simulation tests"""
     return {
+        "user_id": test_users[0]["id"],
         "card_number": "1234567812345678",
         "cvv": "123",
         "expiration_date": "12/30"
@@ -146,9 +147,10 @@ def valid_payment():
 
 
 @pytest.fixture
-def invalid_card_payment():
+def invalid_card_payment(test_users):
     """Sample payment details with invalid card number for payment simulation tests"""
     return {
+        "user_id": test_users[0]["id"],
         "card_number": "1234",
         "cvv": "123",
         "expiration_date": "12/30"
@@ -156,9 +158,10 @@ def invalid_card_payment():
 
 
 @pytest.fixture
-def invalid_cvv_payment():
+def invalid_cvv_payment(test_users):
     """Sample payment details with invalid CVV for payment simulation tests"""
     return {
+        "user_id": test_users[0]["id"],
         "card_number": "1234567812345678",
         "cvv": "12",
         "expiration_date": "12/30"
@@ -166,9 +169,10 @@ def invalid_cvv_payment():
 
 
 @pytest.fixture
-def expired_payment():
+def expired_payment(test_users):
     """Sample payment details with expired card for payment simulation tests"""
     return {
+        "user_id": test_users[0]["id"],
         "card_number": "1234567812345678",
         "cvv": "123",
         "expiration_date": "01/20"
@@ -371,3 +375,24 @@ def test_simulate_payment_expired_card(order_test_client,
 
     assert r.status_code == 400
     assert r.json()["detail"] == "Payment Rejected: Card has expired"
+
+def test_simulate_payment_unauthorized_user(order_test_client,
+                                          test_orders,
+                                          test_users,
+                                          valid_payment):
+    """Spec: System should prevent users from simulating payment for orders that are not their own
+    Input: valid payment details but user_id in header does not match user_id in payment details
+    Expected behavior: Endpoint returns 403 error
+    """
+
+    order_id = test_orders[0]["id"]
+
+    request = f"/orders/{order_id}/simulate-payment"
+
+    r = order_test_client.post(
+        request,
+        headers={"user-id": test_users[2]["id"]}, # user with different id than payment user_id
+        json=valid_payment
+    )
+
+    assert r.status_code == 403
