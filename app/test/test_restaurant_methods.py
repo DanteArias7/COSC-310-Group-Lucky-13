@@ -365,6 +365,27 @@ def test_update_menu_item_success(test_restaurants, mocked_repo, restaurant_serv
 
     assert updated_menu_item == expected_menu_item
 
+def test_update_menu_items_status_success(test_restaurants, mocked_repo, restaurant_service):
+    """Scenario: Test that the update_menu_item returns the proper menu
+    item object when updating status attribute
+    Input: An Updated menu object and item_status string
+    Expected Behviour: Returns the updated menu item with the new status"""
+
+    mocked_repo.load_all_restaurants.return_value = test_restaurants
+
+    payload = UpdateMenuItem(name="Classic Burger", description="Cheeseburger",
+                             price= 10.50, tags=["burger"])
+
+    expected_menu_item = MenuItem(id="00000000-0000-0000-0000-0000000000001",
+                                  name="Classic Burger", description="Cheeseburger",
+                                  price= 10.50, tags=["burger"], status="Sold Out")
+
+    updated_menu_item = restaurant_service.update_menu_item(
+                            test_restaurants[0]["id"],
+                            "00000000-0000-0000-0000-0000000000001", payload, "Sold Out")
+
+    assert updated_menu_item == expected_menu_item
+
 def test_update_menu_item_nonexistent_menu_item(test_restaurants, mocked_repo,
                                                 restaurant_service):
     """Test that update menu item method returns proper exception if menuitem does not exist"""
