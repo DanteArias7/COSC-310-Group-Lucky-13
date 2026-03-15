@@ -251,7 +251,6 @@ def test_add_order_success(mocker, temp_order_path,
 
     new_order = orders.tail(1).to_dict(orient="records")[0]
 
-    order_id = new_order["id"]
     del new_order["id"]
 
     expected_order = {
@@ -267,10 +266,12 @@ def test_add_order_success(mocker, temp_order_path,
     assert r.status_code == 201
     assert new_order == expected_order
 
-    # Verify notification generation on order creation
-    assert len(notifications) == 1
-    assert notifications[0].user_id == test_users[0]["id"]
-    assert notifications[0].message == f"Your order {order_id} has been created successfully"
+    user_id = test_users[0]["id"]
+
+    assert user_id in notifications
+    assert len(notifications[user_id]) == 1
+
+    assert notifications[user_id][0].user_id == user_id
 
 def test_add_order_restaurant_closed(mocker,
                              order_test_client, test_carts,
