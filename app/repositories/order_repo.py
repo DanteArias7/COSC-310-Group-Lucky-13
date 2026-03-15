@@ -17,7 +17,7 @@ class OrderRepo():
         """Loads all orders from csv file
 
         Returns: All orders in as  List of Dicts."""
-        orders = pandas.read_csv(self.data_path)
+        orders = pandas.read_csv(self.data_path, keep_default_na=False)
 
         return orders.to_dict(orient="records")
 

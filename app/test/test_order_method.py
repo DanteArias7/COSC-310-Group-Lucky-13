@@ -48,21 +48,31 @@ def test_orders():
     return[{"id": "QQQQQQQ",
                       "restaurant_id": 101,
                       "customer_id": "00000000-0000-0000-0000-000000000001",
+                      "assigned_driver_id": "",
                       "food_items": "2x Vegan Burger, 1x Bacon Burger",
                       "order_date": "03-06-2025",
-                      "order_value": 24.35},
+                      "order_value": 24.35,
+                      "status": "Pending",
+                      "delivery_time": 0.0},
                       {"id": "QQQQQQQ",
                       "restaurant_id": 101,
                       "customer_id": "00000000-0000-0000-0000-000000000001",
+                      "assigned_driver_id": "",
                       "food_items": "2x Vegan Burger",
                       "order_date": "03-06-2025",
-                      "order_value": 24.35},
+                      "order_value": 24.35,
+                      "status": "Pending",
+                      "delivery_time": 0.0},
                       {"id": "QQQQQQQ",
                       "restaurant_id": 101,
                       "customer_id": "00000000-0000-0000-0000-000000000002",
+                      "assigned_driver_id": "",
                       "food_items": "1x Hot Dog",
                       "order_date": "03-06-2025",
-                      "order_value": 24.35}]
+                      "order_value": 24.35,
+                      "status": "Pending",
+                      "delivery_time": 0.0}
+                      ]
 
 @pytest.fixture
 def test_order_status():
@@ -161,10 +171,12 @@ def test_place_order_success(mocker, mocked_repo, order_service, test_carts):
     expected_order = {"id": "QQQQQQQ",
                       "restaurant_id": 101,
                       "customer_id": "00000000-0000-0000-0000-000000000001",
+                      "assigned_driver_id": "",
                       "food_items": "2x Vegan Burger, 1x Bacon Burger",
                       "order_date": mocked_date,
                       "order_value": 24.35,
-                      "status": "Pending"}
+                      "status": "Pending",
+                      "delivery_time": 0.0}
 
     assert order.model_dump() == expected_order
 
