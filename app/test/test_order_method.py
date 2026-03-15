@@ -89,6 +89,7 @@ def test_order_status_2():
 def valid_payment():
     """Valid payment payload"""
     return {
+        "user_id" : "00000000-0000-0000-0000-000000000001",
         "card_number": "1234567812345678",
         "cvv": "123",
         "expiration_date": "12/30"
@@ -98,6 +99,7 @@ def valid_payment():
 def invalid_card_payment():
     """Invalid card number payment payload"""
     return {
+        "user_id" : "00000000-0000-0000-0000-000000000001",
         "card_number": "123",
         "cvv": "123",
         "expiration_date": "12/30"
@@ -107,6 +109,7 @@ def invalid_card_payment():
 def invalid_cvv_payment():
     """Invalid CVV payment payload"""
     return {
+        "user_id" : "00000000-0000-0000-0000-000000000001",
         "card_number": "1234567812345678",
         "cvv": "12",
         "expiration_date": "12/30"
@@ -116,6 +119,7 @@ def invalid_cvv_payment():
 def expired_payment():
     """Expired card"""
     return {
+        "user_id" : "00000000-0000-0000-0000-000000000001",
         "card_number": "1234567812345678",
         "cvv": "123",
         "expiration_date": "01/20"

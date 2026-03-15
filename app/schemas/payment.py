@@ -5,6 +5,7 @@ from pydantic import BaseModel
 class Payment(BaseModel):
     """Payment request payload."""
 
+    user_id: str
     card_number: str
     cvv: str
     expiration_date: str
