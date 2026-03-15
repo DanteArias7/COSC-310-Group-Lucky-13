@@ -5,7 +5,7 @@ import pytest
 from app.schemas.cart import Cart
 from app.schemas.payment import Payment
 from app.services.order_services import OrderServices
-from app.routers.notification_router import notifications
+from app.services.notification_services import notifications
 
 #pylint: disable=redefined-outer-name
 #pylint: disable=duplicate-code
@@ -180,12 +180,15 @@ def test_place_order_success(mocker, mocked_repo, order_service, test_carts):
 
     assert order.model_dump() == expected_order
 
-    #verifying notification generation on order_creation
-    assert len(notifications) == 1
-    assert notifications[0].user_id == cart.user_id
-    assert notifications[0].message == (
+    assert cart.user_id in notifications
+    assert len(notifications[cart.user_id]) == 1
+
+    assert notifications[cart.user_id][0].user_id == cart.user_id
+
+    assert notifications[cart.user_id][0].message == (
         f"Your order {expected_order['id']} "
-        "has been created successfully")
+        "has been created successfully"
+    )
 
 #get_order_by_user_id Unit Tests
 def test_get_order_by_user_id_success(mocked_repo, order_service, test_orders):
