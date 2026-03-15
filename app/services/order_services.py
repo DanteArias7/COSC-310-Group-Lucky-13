@@ -9,6 +9,8 @@ from fastapi import HTTPException
 from app.schemas.cart import Cart
 from app.schemas.order import Order
 from app.schemas.payment import Payment, PaymentResult
+from app.schemas.notification import Notification
+from app.routers.notification_router import notifications
 
 #pylint: disable=too-few-public-methods
 class OrderServices():
@@ -51,6 +53,12 @@ class OrderServices():
                           )
 
         self.repo.save_order(new_order.model_dump())
+        notifications.append(
+            Notification(user_id=cart.user_id,
+                         message=f"Your order {new_id} has been created successfully",
+                         timestamp=datetime.now()
+                         )
+        )
 
         return new_order
 
