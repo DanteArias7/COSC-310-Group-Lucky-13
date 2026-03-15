@@ -590,6 +590,32 @@ def test_adding_menu_item_nonexistent_restaurant(test_restaurants, restaurant_te
 
 #update_menu_item_in_menu Integration Tests
 
+def test_updating_menu_item_status_successful(test_restaurants, restaurant_test_client,
+                                       temp_restaurant_path, test_users):
+    """Scenario: A restaurant owner updates the status of their menu item
+    Input: An Updated menuITem object with an item_status query included
+    Expected Behviour: Returns the updated menu item with the new status"""
+
+    payload = {"id": "00000000-0000-0000-0000-0000000000001",
+                "name": "Vegan Burger", "description": "Plant-based patty with lettuce and tomato",
+                "price": 12.99, "tags": ["vegan"], "status" : "Available"
+                }
+
+    request = "/restaurants/" + str(test_restaurants[0]["id"])
+    request = request + "/menu/" + test_restaurants[0]["menu"][0]["id"]
+    request = request + "?item_status=Sold+Out"
+    r = restaurant_test_client.put(request, headers= {"user-id" : test_users[1]["id"]},
+                                    json=payload)
+
+
+    with open(temp_restaurant_path, "r", encoding="utf-8") as f:
+        restaurants = json.load(f)
+
+    test_restaurants[0]["menu"][0]["status"] = "Sold Out"
+
+    assert r.status_code == 200
+    assert restaurants == test_restaurants
+
 def test_updating_menu_item_successful(test_restaurants, restaurant_test_client,
                                        temp_restaurant_path, test_users):
     """Testing successful updating of a menu item to a menu"""

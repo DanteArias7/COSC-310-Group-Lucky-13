@@ -65,13 +65,13 @@ def browse_restaurants(restaurant_repo: RestaurantRepo = Depends(create_restaura
             If search is None:
                 A List of RestaurantResult objects for all restaurants,
                 that includes a restaurants id, name, address,
-                day's hours, and tags. Only currently open restaurants 
+                day's hours, and tags. Only currently open restaurants
                 will be returned.
 
             If search is str:
                 The List of RestaurantResult objects will contain
                 restaurants who's name contains the search string. Closed
-                restaurants will also be returned. 
+                restaurants will also be returned.
 
             If tags is List[str]:
                 The List of RestaurantResult objects will contain
@@ -188,14 +188,15 @@ def add_menu_item_to_menu(restaurant_id: int, payload: CreateMenuItem,
 def update_menu_item_in_menu(restaurant_id: int, menu_item_id: str, payload: UpdateMenuItem,
                         restaurant_repo: RestaurantRepo=Depends(create_restaurant_repo),
                         user_repo: UserRepo = Depends(create_user_repo),
-                        user_id: str  = Header(...,alias="user-id")):
+                        user_id: str  = Header(...,alias="user-id"),
+                        item_status: str | None = None):
     """Update a menu item in a specifed restaurants menu"""
     restaurant_service = RestaurantServices(restaurant_repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "manage_own_menu")
     authorization_service.authorize_access(user_id,
                                 restaurant_service.fetch_restaurant(restaurant_id).user_id)
-    return restaurant_service.update_menu_item(restaurant_id, menu_item_id, payload)
+    return restaurant_service.update_menu_item(restaurant_id, menu_item_id, payload, item_status)
 
 @restaurant_router.delete("/{restaurant_id}/menu/{menu_item_id}",
                           status_code=status.HTTP_204_NO_CONTENT)
