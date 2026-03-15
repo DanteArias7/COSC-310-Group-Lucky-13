@@ -15,6 +15,25 @@ def create_user_repo():
     """"Initialize repo object with data path to user json file"""
     return UserRepo(USER_DATA_PATH)
 
+@user_router.get("/{user_id}", response_model=User, status_code=200)
+def get_user_by_id(user_id: str, user_repo: UserRepo = Depends(create_user_repo),
+             current_user_id = Header(...,alias="user-id"),):
+    """API endpoint to get a user by their id
+
+    Args:
+        user_repo: UserRepo object to allow user_service to access user data store
+        user_id: The ID of the user making the request
+
+    Returns:
+        A user object who's id matches the given ID
+
+    Raises: 404 HTTPexception if user is not found"""
+    user_service = UserServices(user_repo)
+    authorization_service = AuthorizationServices(user_repo)
+    authorization_service.authorize(user_id, "manage_own_account")
+    authorization_service.authorize_access(current_user_id, user_id)
+    return user_service.get_user_by_id(user_id)
+
 @user_router.post("", response_model=User, status_code=201)
 def add_user(payload: UserCreate, repo: UserRepo = Depends(create_user_repo)):
     """API endpoint to create a user"""
