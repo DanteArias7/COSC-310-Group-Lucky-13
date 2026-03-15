@@ -65,24 +65,30 @@ def test_orders():
     return[{"id": "QQQQQQQ",
                       "restaurant_id": 101,
                       "customer_id": "00000000-0000-0000-0000-000000000001",
+                      "assigned_driver_id": "",
                       "food_items": "2x Vegan Burger, 1x Bacon Burger",
                       "order_date": "03-06-2025",
                       "order_value": 24.35,
-                      "status": "Pending"},
+                      "status": "Pending",
+                      "delivery_time": 0.0},
                       {"id": "QQQQQQQ",
                       "restaurant_id": 101,
                       "customer_id": "00000000-0000-0000-0000-000000000001",
+                      "assigned_driver_id": "",
                       "food_items": "2x Vegan Burger",
                       "order_date": "03-06-2025",
                       "order_value": 24.35,
-                      "status": "Pending"},
+                      "status": "Pending",
+                      "delivery_time": 0.0},
                       {"id": "QQQQQQQ",
                       "restaurant_id": 101,
                       "customer_id": "00000000-0000-0000-0000-000000000002",
+                      "assigned_driver_id": "",
                       "food_items": "1x Hot Dog",
                       "order_date": "03-06-2025",
                       "order_value": 24.35,
-                      "status": "Pending"}
+                      "status": "Pending",
+                      "delivery_time": 0.0}
                       ]
 
 @pytest.fixture
@@ -119,10 +125,12 @@ def temp_order_path(tmp_path, test_orders):
     headersdf = pandas.DataFrame(columns=["id",
                                         "restaurant_id",
                                         "customer_id",
+                                        "assigned_driver_id",
                                         "food_items",
                                         "order_date",
                                         "order_value",
-                                        "status"])
+                                        "status",
+                                        "delivery_time"])
 
     headersdf.to_csv(test_order_data_path, index=False)
 
@@ -234,7 +242,7 @@ def test_add_order_success(mocker, temp_order_path,
     r =order_test_client.post(request, headers={"user-id" : test_users[0]["id"]},
                            json=payload)
 
-    orders = pandas.read_csv(temp_order_path)
+    orders = pandas.read_csv(temp_order_path, keep_default_na=False)
 
     new_order = orders.tail(1).to_dict(orient="records")[0]
 
@@ -243,10 +251,12 @@ def test_add_order_success(mocker, temp_order_path,
     expected_order = {
                       "restaurant_id": 101,
                       "customer_id": "00000000-0000-0000-0000-000000000001",
+                      "assigned_driver_id": "",
                       "food_items": "2x Vegan Burger, 1x Bacon Burger",
                       "order_date": date.today().strftime("%m-%d-%Y"),
                       "order_value": 24.35,
-                      "status": "Pending"}
+                      "status": "Pending",
+                      "delivery_time": 0.0}
 
     assert r.status_code == 201
     assert new_order == expected_order
@@ -326,7 +336,7 @@ def test_simulate_payment_success(temp_order_path,
         json=valid_payment
     )
 
-    orders = pandas.read_csv(temp_order_path)
+    orders = pandas.read_csv(temp_order_path, keep_default_na=False)
     updated_order = orders.iloc[0].to_dict()
 
     assert r.status_code == 200
@@ -358,7 +368,7 @@ def test_simulate_payment_invalid_status(temp_order_path,
     Expected behavior: Endpoint returns 400 error
     """
 
-    orders = pandas.read_csv(temp_order_path)
+    orders = pandas.read_csv(temp_order_path, keep_default_na=False)
 
     # change status to Paid to simulate invalid state
     orders.loc[0, "status"] = "Paid"

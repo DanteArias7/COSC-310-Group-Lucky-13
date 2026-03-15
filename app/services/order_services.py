@@ -7,7 +7,7 @@ import time
 
 from fastapi import HTTPException
 from app.schemas.cart import Cart
-from app.schemas.order import Order
+from app.schemas.order import Order, OrderStatus
 from app.schemas.payment import Payment, PaymentResult
 
 #pylint: disable=too-few-public-methods
@@ -16,7 +16,6 @@ class OrderServices():
     def __init__(self, repo: IOrderRepo):
         """Initialize instance with repo object"""
         self.repo = repo
-
 
     def place_order(self, cart: Cart) -> Order:
         """
@@ -45,9 +44,11 @@ class OrderServices():
         new_order = Order(id=new_id,
                           restaurant_id=cart.restaurant_id,
                           customer_id=cart.user_id,
+                          assigned_driver_id="",
                           food_items=items,
                           order_date=todays_date,
                           order_value=cart.total,
+                          delivery_time=0.0
                           )
 
         self.repo.save_order(new_order.model_dump())
