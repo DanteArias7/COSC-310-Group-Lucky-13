@@ -10,7 +10,7 @@ from app.schemas.cart import Cart
 from app.schemas.order import Order
 from app.schemas.payment import Payment, PaymentResult
 from app.schemas.notification import Notification
-from app.routers.notification_router import notifications
+from app.services.notification_services import send_notification
 
 #pylint: disable=too-few-public-methods
 class OrderServices():
@@ -54,9 +54,13 @@ class OrderServices():
                           )
 
         self.repo.save_order(new_order.model_dump())
-        send_notification(cart.user_id,
-                          f"Your order {new_id} has been created successfully"
-        )
+
+        send_notification(
+            Notification(
+                user_id=cart.user_id,
+                message=f"Your order {new_id} has been created successfully"
+                )
+                )
 
         return new_order
 
@@ -145,22 +149,6 @@ class OrderServices():
             raise HTTPException(status_code=400,
                                 detail="Payment Rejected: Invalid expiration date") from exc
         return True
-
-def send_notification(user_id: str, message: str):
-    """Sends a notification to the user by appending it to the notifications list
-
-    Args:
-        user_id: The ID of the user to send the notification to
-        message: The message content of the notification
-
-    Returns: Nothing
-    """
-    notifications.append(
-        Notification(user_id=user_id,
-                     message=message,
-                     timestamp=datetime.now()
-                     )
-    )
 
 class IOrderRepo(Protocol):
     """Order Repo Interface"""
