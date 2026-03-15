@@ -7,7 +7,7 @@ import time
 
 from fastapi import HTTPException
 from app.schemas.cart import Cart
-from app.schemas.order import Order, OrderStatus
+from app.schemas.order import Order
 from app.schemas.payment import Payment, PaymentResult
 
 #pylint: disable=too-few-public-methods
