@@ -9,7 +9,7 @@ from app.repositories.order_repo import OrderRepo
 from app.repositories.restaurant_repo import RestaurantRepo
 from app.repositories.user_repo import UserRepo
 from app.routers.order import create_order_repo, create_restaurant_repo, create_user_repo
-
+from app.routers.notification_router import notifications
 
 #pylint: disable=duplicate-code
 #pylint: disable=redefined-outer-name
@@ -227,7 +227,12 @@ def expired_payment(test_users):
 def test_add_order_success(mocker, temp_order_path,
                              order_test_client, test_carts,
                              test_users):
-    """Scenario: Test succesful endpoint use to create an order"""
+    """Spec: System should allow user to create order and generate notification
+    Input: valid order request
+    Expected behavior : Order created and notification generated for the customer
+    """
+
+    notifications.clear()
 
     payload = test_carts[0]
 
@@ -246,6 +251,7 @@ def test_add_order_success(mocker, temp_order_path,
 
     new_order = orders.tail(1).to_dict(orient="records")[0]
 
+    order_id = new_order["id"]
     del new_order["id"]
 
     expected_order = {
@@ -260,6 +266,11 @@ def test_add_order_success(mocker, temp_order_path,
 
     assert r.status_code == 201
     assert new_order == expected_order
+
+    # Verify notification generation on order creation
+    assert len(notifications) == 1
+    assert notifications[0].user_id == test_users[0]["id"]
+    assert notifications[0].message == f"Your order {order_id} has been created successfully"
 
 def test_add_order_restaurant_closed(mocker,
                              order_test_client, test_carts,
