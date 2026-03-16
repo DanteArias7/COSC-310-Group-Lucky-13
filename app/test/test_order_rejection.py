@@ -1,3 +1,4 @@
+# pylint: disable=missing-final-newline
 """Unit tests for Issue Order rejection (OrderRejectionServices).
 
 Covers FR3, Sub-123 (driver reassignment), Sub-124 (cancel + refund).
