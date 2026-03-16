@@ -325,6 +325,31 @@ class RestaurantServices():
 
         raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
 
+    def validate_menu_item_is_available(self, restaurant_id: int, menu_item_id: str) -> bool:
+        """Validates that a given menu_item is currently available.
+
+        Args:
+            menu_item_id: The ID of the menu_item being validated
+
+        Returns:
+            True if the MenuItem is available
+
+        Raises:
+            400 HTTPException if menuItem is not available.
+            404 HTTPException if MenuItem is not found.
+        """
+        restaurant = self.fetch_restaurant(restaurant_id)
+
+        for menu_item in restaurant.menu:
+            if menu_item.id == menu_item_id:
+                if menu_item.status != "Available":
+                    raise HTTPException(status_code=400,
+                                        detail=f"{menu_item.name} Is Unavailable")
+                return True
+
+        raise HTTPException(status_code=404,
+                            detail=f"Menu Item {menu_item_id} Not Found.")
+
     def validate_menu_existence(self, restaurant: Dict[str, Any]) -> None:
         """Ensure restaurant always has at least one menu item."""
         if not restaurant.get("menu") or len(restaurant["menu"]) == 0:
