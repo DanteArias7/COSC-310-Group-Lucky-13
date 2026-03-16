@@ -151,18 +151,6 @@ def test_place_order_success(mocker, mocked_repo, order_service, test_carts):
         "app.services.order_services.send_notification"
     )
 
-    class MockedDate():
-        """Mocked date class"""
-        @classmethod
-        def today(cls):
-            """Mocked date.today method
-            Returns:
-                    test date"""
-            return date(2026, 3, 6)
-
-    mocked_date = "03-06-2026"
-    mocker.patch("app.services.order_services.date", MockedDate)
-
     test_date = "03-06-2026"
     mocked_date = mocker.patch("app.services.order_services.date")
     mocked_date.today.return_value.strftime.return_value = test_date
