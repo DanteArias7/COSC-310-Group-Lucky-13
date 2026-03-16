@@ -1,5 +1,6 @@
 # pylint: disable=missing-final-newline,trailing-whitespace
 # pylint: disable=duplicate-code
+# pylint: disable=import-error
 """Unit tests for Issue Order rejection (OrderRejectionServices).
 
 Covers FR3, Sub-123 (driver reassignment), Sub-124 (cancel + refund).

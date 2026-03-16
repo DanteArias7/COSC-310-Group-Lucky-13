@@ -1,6 +1,7 @@
 # pylint: disable=missing-final-newline
 # pylint: disable=trailing-whitespace
 # pylint: disable=duplicate-code
+# pylint: disable=import-error
 """Integration tests for – Order rejection endpoints."""
 
 import json
