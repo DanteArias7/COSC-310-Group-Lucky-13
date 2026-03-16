@@ -5,6 +5,8 @@ import sys
 from typing import List
 import random
 from fastapi import APIRouter, Depends, Header, Query, status
+from fastapi_pagination import Page, paginate
+from fastapi_pagination.utils import disable_installed_extensions_check
 from app.repositories.cart_repo import CartRepo
 from app.repositories.user_repo import UserRepo
 from app.schemas.menu import CreateMenuItem, MenuItem, UpdateMenuItem
@@ -14,6 +16,8 @@ from app.services.cart_services import CartServices
 from app.services.restaurant_services import RestaurantServices
 from app.repositories.restaurant_repo import RestaurantRepo
 from app.routers.user import USER_DATA_PATH
+
+disable_installed_extensions_check()
 
 RESTAURANT_DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "restaurants.json"
 CART_DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "carts.json"
@@ -46,12 +50,12 @@ def create_restaurant(payload: RestaurantCreate,
     authorization_service.authorize(user_id, "manage_own_restaurant")
     return restaurant_service.create_new_restaurant(user_id, payload)
 
-@restaurant_router.get("/browse", response_model=List[RestaurantResult], status_code=200)
+@restaurant_router.get("/browse", response_model=Page[RestaurantResult], status_code=200)
 def browse_restaurants(restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
                         user_repo: UserRepo = Depends(create_user_repo),
                         user_id: str = Header(...,alias="user-id"),
                         search: str | None = None,
-                        tags: List[str] | None = Query(None)):
+                        tags: List[str] | None = Query(None)) -> Page[RestaurantResult]:
     """API endpoint for a user to browse all the restaurants
         Args:
             user_id: The id of the user viewing the restaurants,
@@ -91,7 +95,7 @@ def browse_restaurants(restaurant_repo: RestaurantRepo = Depends(create_restaura
     if search is None:
         restaurants = restaurant_service.filter_closed_restaurants(restaurants)
 
-    return restaurants
+    return paginate(restaurants)
 
 @restaurant_router.get("/{restaurant_id}", response_model=Restaurant, status_code=200)
 def get_restaurant_by_id(restaurant_id: int,
@@ -132,14 +136,14 @@ def delete_restaurant(restaurant_id: int,
                             restaurant_service.fetch_restaurant(restaurant_id).user_id)
     return restaurant_service.delete_restaurant(restaurant_id)
 
-@restaurant_router.get("/{restaurant_id}/menu", response_model=List[MenuItem], status_code=200)
+@restaurant_router.get("/{restaurant_id}/menu", response_model=Page[MenuItem], status_code=200)
 def browse_menu_items(restaurant_id: int,
                         restaurant_repo: RestaurantRepo=Depends(create_restaurant_repo),
                         user_repo: UserRepo = Depends(create_user_repo),
                         user_id: str  = Header(...,alias="user-id"),
                         search: str | None = None,
                         price_max: float = sys.float_info.max,
-                        price_min: float = 0.00):
+                        price_min: float = 0.00) -> Page[MenuItem]:
     """API endpoint for a user to browse a given restaurants menu
     Args:
         user_id: The id of the user viewing the restaurants,
@@ -165,9 +169,10 @@ def browse_menu_items(restaurant_id: int,
         menu_items = restaurant_service.get_name_searched_menu_items(restaurant, search)
 
     if(price_max != sys.float_info.max or price_min != 0.00):
-        return restaurant_service.filter_menu_items_by_price(menu_items, price_max, price_min)
+        return paginate(restaurant_service.filter_menu_items_by_price(menu_items,
+                                                                      price_max, price_min))
 
-    return menu_items
+    return paginate(menu_items)
 
 
 @restaurant_router.post("/{restaurant_id}/menu", response_model=MenuItem, status_code=201)

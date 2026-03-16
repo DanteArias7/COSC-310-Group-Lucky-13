@@ -158,18 +158,11 @@ class RestaurantServices():
         Raises: 409 HTTPException if restaurant is closed.
         """
         restaurant = self.fetch_restaurant(restaurant_id)
-        restaurant = restaurant.model_dump()
-
+        times = self.get_current_operating_times(restaurant)
         current_time = datetime.now().time()
-        today = date.today().strftime("%A")
 
-        times = re.split(r"[:-]", restaurant["hours"][today])
-        open_hour = int(times[0])
-        open_minute = int(times[1])
-        closed_hour = int(times[2])
-        closed_minute = int(times[3])
-        open_time = time(open_hour, open_minute)
-        closed_time = time(closed_hour, closed_minute)
+        open_time = times["open"]
+        closed_time = times["closed"]
 
         if open_time <= current_time < closed_time:
             return True
@@ -253,13 +246,9 @@ class RestaurantServices():
         current_time = datetime.now().time()
 
         for restaurant in restaurants:
-            times = re.split(r"[:-]", restaurant.todays_hours)
-            open_hour = int(times[0])
-            open_minute = int(times[1])
-            closed_hour = int(times[2])
-            closed_minute = int(times[3])
-            open_time = time(open_hour, open_minute)
-            closed_time = time(closed_hour, closed_minute)
+            times = self.get_current_operating_times(restaurant)
+            open_time = times["open"]
+            closed_time = times["closed"]
 
             if open_time <= closed_time:
                 if open_time <= current_time <= closed_time:
@@ -269,6 +258,35 @@ class RestaurantServices():
                     open_restaurants.append(restaurant)
 
         return open_restaurants
+
+    def get_current_operating_times(self, restaurant: RestaurantResult | Restaurant):
+        """
+        Determine a given restaurants open and closing times.
+
+        Args:
+            restaurants: Either a restaurantResult or a Restaurant object
+
+        Returns:
+            A dict of the open and closing times as time objects, of the
+            given Restaurant/RestaurantResult object
+        """
+
+        today = date.today().strftime("%A")
+
+        if isinstance(restaurant, RestaurantResult):
+            times = re.split(r"[:-]", restaurant.todays_hours)
+        else:
+            times = re.split(r"[:-]", restaurant.hours[today])
+
+        open_hour = int(times[0])
+        open_minute = int(times[1])
+        closed_hour = int(times[2])
+        closed_minute = int(times[3])
+        open_time = time(open_hour, open_minute)
+        closed_time = time(closed_hour, closed_minute)
+
+        times = {"open":open_time, "closed":closed_time}
+        return times
 
     def add_item_to_menu(self, restaurant_id: int, payload: MenuItem) -> MenuItem:
         """Add a menu item to a restaurants menu"""
