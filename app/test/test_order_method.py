@@ -140,10 +140,16 @@ def expired_payment():
 
 #place_order Unit Tests
 def test_place_order_success(mocker, mocked_repo, order_service, test_carts):
-    """Scenario: check that creating a valid order returns a valid order object"""
+    """Scenario: check that creating a valid order returns a valid order object
+       and generates a notification"""
+
     mocked_random = "Q"
     id_mock = mocker.patch("app.services.order_services.random.choice")
     id_mock.return_value = mocked_random
+
+    notification_mock = mocker.patch(
+        "app.services.order_services.send_notification"
+    )
 
     test_date = "03-06-2026"
     mocked_date = mocker.patch("app.services.order_services.date")
@@ -166,6 +172,16 @@ def test_place_order_success(mocker, mocked_repo, order_service, test_carts):
                       "delivery_time": 0.0}
 
     assert order.model_dump() == expected_order
+
+    notification_mock.assert_called_once()
+
+    notification_obj = notification_mock.call_args[0][0]
+
+    assert notification_obj.user_id == cart.user_id
+    assert notification_obj.message == (
+        f"Your order {expected_order['id']} "
+        "has been created successfully"
+    )
 
 #get_order_by_user_id Unit Tests
 def test_get_order_by_user_id_success(mocked_repo, order_service, test_orders):

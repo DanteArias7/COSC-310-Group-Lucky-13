@@ -9,6 +9,8 @@ from fastapi import HTTPException
 from app.schemas.cart import Cart
 from app.schemas.order import Order
 from app.schemas.payment import Payment, PaymentResult
+from app.schemas.notification import Notification
+from app.services.notification_services import send_notification
 from app.services.restaurant_services import RestaurantServices
 
 #pylint: disable=too-few-public-methods
@@ -58,6 +60,13 @@ class OrderServices():
                           )
 
         self.repo.save_order(new_order.model_dump())
+
+        send_notification(
+            Notification(
+                user_id=cart.user_id,
+                message=f"Your order {new_id} has been created successfully"
+                )
+                )
 
         return new_order
 
@@ -146,8 +155,6 @@ class OrderServices():
             raise HTTPException(status_code=400,
                                 detail="Payment Rejected: Invalid expiration date") from exc
         return True
-
-
 
 class IOrderRepo(Protocol):
     """Order Repo Interface"""
