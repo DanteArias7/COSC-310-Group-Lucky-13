@@ -1,6 +1,7 @@
 """Integration tests for restaurant endpoints."""
 from datetime import date, time
 import json
+from typing import List
 from fastapi.testclient import TestClient
 import pytest
 from app.main import app
@@ -35,7 +36,26 @@ def test_restaurants():
                 "name": "Vegan Burger", "description": "Plant-based patty with lettuce and tomato",
                 "price": 12.99, "tags": ["vegan"], "status" : "Available"
                 }]
+        },
+        {"id": 101,
+             "user_id" : "00000000-0000-0000-0000-000000000003",
+               "name": "Burger Palace",
+                "hours": { "Monday": "9:00-17:00",
+                            "Tuesday": "9:00-17:00",
+                            "Wednesday": "9:00-17:00",
+                            "Thursday": "9:00-17:00",
+                            "Friday": "9:00-17:00",
+                            "Saturday": "9:00-17:00",
+                            "Sunday": "9:00-17:00"},
+                "phone_number": "9876543210",
+                "address": "123 Red Street",
+                "tags": ["Burgers"],
+                "menu": [{"id": "00000000-0000-0000-0000-0000000000002",
+                "name": "Bacon Burger", "description": "Beef patty with bacon, lettuce, and tomato",
+                "price": 15.99, "tags": ["Bacon"], "status" : "Available"
+                }]
         }]
+
 @pytest.fixture
 def test_restaurant_results(test_restaurants):
     """Initialize Test RestaurantResult data"""
@@ -176,15 +196,10 @@ def test_browse_restaurants_integration_without_search_success(mocker, restauran
     assert response.status_code == 200
     data = response.json()
 
-    assert isinstance(data, list)
+    assert isinstance(data["items"], List)
     assert len(data) > 0
 
-    restaurant = data[0]
-
-    assert test_restaurant_results[0] == data[0]
-
-    assert isinstance(restaurant["todays_hours"], str)
-    assert isinstance(restaurant["tags"], list)
+    assert test_restaurant_results[0] == data["items"][0]
 
 def test_browse_restaurants_integration_filters_closed_restaurants_open(mocker,
                                                                 restaurant_test_client,
@@ -203,7 +218,7 @@ def test_browse_restaurants_integration_filters_closed_restaurants_open(mocker,
     assert response.status_code == 200
     data = response.json()
 
-    assert test_restaurant_results[0] == data[0]
+    assert test_restaurant_results[0] == data["items"][0]
 
 def test_browse_restaurants_integration_filters_closed_restaurants_closed(mocker,
                                                                 restaurant_test_client,
@@ -221,7 +236,7 @@ def test_browse_restaurants_integration_filters_closed_restaurants_closed(mocker
     assert response.status_code == 200
     data = response.json()
 
-    assert data == []
+    assert data["items"] == []
 
 def test_browse_restaurants_with_name_search_success(restaurant_test_client,
                                                     test_restaurant_results,
@@ -238,15 +253,7 @@ def test_browse_restaurants_with_name_search_success(restaurant_test_client,
     assert response.status_code == 200
     data = response.json()
 
-    assert isinstance(data, list)
-    assert len(data) > 0
-
-    restaurant = data[0]
-
-    assert test_restaurant_results[0] == data[0]
-
-    assert isinstance(restaurant["todays_hours"], str)
-    assert isinstance(restaurant["tags"], list)
+    assert test_restaurant_results[0] == data["items"][0]
 
 def test_browse_restaurants_with_name_and_tags_success(restaurant_test_client,
                                                     test_users,
@@ -264,7 +271,7 @@ def test_browse_restaurants_with_name_and_tags_success(restaurant_test_client,
     assert response.status_code == 200
     data = response.json()
 
-    assert test_restaurant_results[0] == data[0]
+    assert test_restaurant_results[0] == data["items"][0]
 
 def test_browse_restaurants_with_not_all_tags(restaurant_test_client,
                                                     test_users):
@@ -279,7 +286,53 @@ def test_browse_restaurants_with_not_all_tags(restaurant_test_client,
     assert response.status_code == 200
     data = response.json()
 
-    assert data == []
+    assert data["items"] == []
+
+def test_browse_restaurants_integration_custom_size_pagination(mocker, restaurant_test_client,
+                                                                test_users,
+                                                                test_restaurant_results):
+    """Spec: Test retrieving all restaurants via GET /restaurants/browse.
+    Input: None
+    Expected Behaviour: A List of RestauntResult objects is returned"""
+
+    mocked_time = mocker.patch("app.services.restaurant_services.datetime")
+    mocked_time.now.return_value.time.return_value = time(10,30)
+
+    response = restaurant_test_client.get("/restaurants/browse?size=1",
+                                          headers={"user-id": test_users[1]["id"]})
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert test_restaurant_results == data["items"]
+    assert data["pages"] == 2
+    assert data["size"] == 1
+    assert data["total"] == 2
+
+def test_browse_restaurants_integration_specified_page_pagination(mocker, restaurant_test_client,
+                                                                test_users):
+    """Spec: Test retrieving all restaurants via GET /restaurants/browse.
+    Input: None
+    Expected Behaviour: A List of RestauntResult objects is returned"""
+
+    mocked_time = mocker.patch("app.services.restaurant_services.datetime")
+    mocked_time.now.return_value.time.return_value = time(10,30)
+
+    response = restaurant_test_client.get("/restaurants/browse?size=1&page=2",
+                                          headers={"user-id": test_users[1]["id"]})
+
+    assert response.status_code == 200
+    data = response.json()
+    expected_restaurant_result = [{"id": 101,
+               "name": "Burger Palace",
+                "todays_hours": "9:00-17:00",
+                "address": "123 Red Street",
+                "tags": ["Burgers"]
+        }]
+    assert expected_restaurant_result == data["items"]
+    assert data["pages"] == 2
+    assert data["size"] == 1
+    assert data["total"] == 2
 
 
 #get_restaurant_by_id Integration Tests
@@ -344,7 +397,7 @@ def test_create_restaurant_integration(restaurant_test_client, temp_restaurant_p
     with open(temp_restaurant_path, "r", encoding="utf-8") as f:
         restaurants = json.load(f)
 
-    assert data == restaurants[1]
+    assert data == restaurants[-1]
 
 def test_create_restaurant_without_menu_integration(restaurant_test_client, test_users):
     """Restaurant cannot be created without menu items"""
@@ -415,15 +468,22 @@ def test_delete_restaurant_successful(test_restaurants, restaurant_test_client,
                                        temp_restaurant_path, test_users):
     """Testing successful deletion of a restaurants information"""
 
-    request = "/restaurants/" + str(test_restaurants[0]["id"])
-    r = restaurant_test_client.delete(request, headers= {"user-id" : test_users[1]["id"]})
-
 
     with open(temp_restaurant_path, "r", encoding="utf-8") as f:
         restaurants = json.load(f)
 
+    length = len(restaurants)
+
+    request = "/restaurants/" + str(test_restaurants[0]["id"])
+    r = restaurant_test_client.delete(request, headers= {"user-id" : test_users[1]["id"]})
+
+    with open(temp_restaurant_path, "r", encoding="utf-8") as f:
+        restaurants = json.load(f)
+
+
     assert r.status_code == 204
-    assert restaurants == []
+    assert len(restaurants) == length - 1
+    assert test_restaurants[0]["id"] not in test_restaurants[0]
 
 def test_delete_nonexistent_restaurant(test_restaurants, restaurant_test_client,
                                         temp_restaurant_path, test_users):
@@ -455,7 +515,7 @@ def test_browse_menu_items_success(test_restaurants, test_users,
         restaurants = json.load(f)
 
     assert response.status_code == 200
-    assert restaurants[0]["menu"][0] == data[0]
+    assert restaurants[0]["menu"][0] == data["items"][0]
 
 def test_browse_menu_items_no_search_match(test_restaurants, test_users,
                                             restaurant_test_client):
@@ -470,7 +530,7 @@ def test_browse_menu_items_no_search_match(test_restaurants, test_users,
 
 
     assert response.status_code == 200
-    assert data == []
+    assert data["items"] == []
 
 def test_browse_menu_items_with_menu_items_in_price_ranges(test_restaurants, test_users,
                                             restaurant_test_client, temp_restaurant_path):
@@ -499,9 +559,9 @@ def test_browse_menu_items_with_menu_items_in_price_ranges(test_restaurants, tes
         restaurants = json.load(f)
 
     assert max_response.status_code == 200
-    assert restaurants[0]["menu"][0] == max_data[0]
-    assert restaurants[0]["menu"][0] == min_data[0]
-    assert restaurants[0]["menu"][0] == min_max_data[0]
+    assert restaurants[0]["menu"][0] == max_data["items"][0]
+    assert restaurants[0]["menu"][0] == min_data["items"][0]
+    assert restaurants[0]["menu"][0] == min_max_data["items"][0]
 
 def test_browse_menu_items_with_menu_items_not_in_price_ranges(test_restaurants, test_users,
                                             restaurant_test_client):
@@ -526,9 +586,9 @@ def test_browse_menu_items_with_menu_items_not_in_price_ranges(test_restaurants,
     min_max_data = max_and_min_response.json()
 
     assert max_response.status_code == 200
-    assert max_data == []
-    assert min_data == []
-    assert min_max_data == []
+    assert max_data["items"] == []
+    assert min_data["items"] == []
+    assert min_max_data["items"] == []
 
 #add_menu_item_to_menu Integration Tests
 
