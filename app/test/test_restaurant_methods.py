@@ -305,6 +305,42 @@ def test_validate_restaurant_is_open_closed_restaurant(mocker, mocked_repo,
     assert exc_info.value.status_code == 409
     assert exc_info.value.detail == "Restaurant is currently closed"
 
+#get_current_operating_times Unit Tests
+def test_get_current_operating_hours_of_a_restaurant(mocker, test_restaurants,
+                                     restaurant_service):
+    """Scenario: Method gets the opening and closing time of a restaurant
+    Input: A valid restaurant object
+    Expected Behvaiour: Returns a dict of two times, matching
+    the open and close times of the restaurant."""
+    mocked_time = mocker.patch("app.services.restaurant_services.date")
+
+    mocked_time.today.return_value.strftime.return_value = "Monday"
+
+    restaurant = Restaurant(**test_restaurants[0])
+    result = restaurant_service.get_current_operating_times(restaurant)
+
+    assert result == {"open":time(9,0), "closed":time(17,0)}
+
+def test_get_current_operating_hours_of_a_restaurant_result(mocker, test_restaurants,
+                                     restaurant_service):
+    """Scenario: Method gets the opening and closing time of a restaurant
+    Input: A valid RestaurantResult object
+    Expected Behvaiour: Returns a dict of two times, matching
+    the open and close times of the restaurant."""
+    mocked_time = mocker.patch("app.services.restaurant_services.date")
+
+    mocked_time.today.return_value.strftime.return_value = "Monday"
+
+    restaurant = RestaurantResult(id=test_restaurants[0]["id"],
+                                  name=test_restaurants[0]["name"],
+                                  address=test_restaurants[0]["address"],
+                                  todays_hours=test_restaurants[0]["hours"]["Monday"],
+                                  tags=test_restaurants[0]["tags"])
+
+    result = restaurant_service.get_current_operating_times(restaurant)
+
+    assert result == {"open":time(9,0), "closed":time(17,0)}
+
 #fetch_name_searched_menu_items Unit Tests
 def test_fetch_name_searched_menu_items_success(test_restaurants, restaurant_service):
     """Spec: A restaurant exists and has menu items matching the search term,
