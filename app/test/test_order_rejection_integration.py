@@ -28,9 +28,13 @@ BASE_ORDER = {
 
 
 def _override(tmp_path, orders=None):
-    path = tmp_path / "orders.csv"  # changed from orders.json
+    path = tmp_path / "orders.csv"
     data = orders if orders is not None else [BASE_ORDER]
-    pandas.DataFrame(data).to_csv(path, index=False)
+    if data:
+        pandas.DataFrame(data).to_csv(path, index=False)
+    else:
+        # Write header-only CSV so read_csv doesn't get an empty file
+        pandas.DataFrame(columns=BASE_ORDER.keys()).to_csv(path, index=False)
 
     def override():
         return OrderRepo(path)

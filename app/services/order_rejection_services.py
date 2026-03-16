@@ -99,4 +99,3 @@ class OrderRejectionServices:
                     f"Current status: '{order['status']}'."
                 ),
             )
-          

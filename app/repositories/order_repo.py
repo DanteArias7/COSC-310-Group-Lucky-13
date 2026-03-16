@@ -22,6 +22,8 @@ class OrderRepo():
         """Loads all orders from csv file
 
         Returns: All orders."""
+        if self.data_path.stat().st_size == 0:
+            return []
         orders = pandas.read_csv(self.data_path, keep_default_na=False)
         records = orders.to_dict(orient="records")
         for record in records:
