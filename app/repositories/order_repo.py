@@ -1,6 +1,9 @@
+# pylint: disable=trailing-whitespace
 """Repository layer for order data."""
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
+import json
+import os
 import pandas
 
 #pylint: disable=too-few-public-methods
@@ -40,3 +43,22 @@ class OrderRepo():
         Returns: Nothing"""
         orderdf = pandas.DataFrame(orders)
         orderdf.to_csv(self.data_path, index=False)
+
+    def get_order_by_id(self, order_id: str) -> Optional[Dict[str, Any]]:
+        """Return a single order dict by ID, or None if not found."""
+        orders = self.load_all_orders()
+        for order in orders:
+            if order["id"] == order_id:
+                return order
+        return None
+    
+    def save_all_orders(self, orders: List[Dict[str, Any]]) -> None:
+        """Overwrite all orders atomically using a temp file."""
+        self._write(orders)
+
+    def _write(self, orders: List[Dict[str, Any]]) -> None:
+        """Write orders list to disk atomically."""
+        temp_path = self.data_path.with_suffix(".tmp")
+        with open(temp_path, "w", encoding="utf-8") as f:
+            json.dump(orders, f, ensure_ascii=False, indent=2)
+        os.replace(temp_path, self.data_path)
