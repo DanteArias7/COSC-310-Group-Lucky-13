@@ -9,7 +9,6 @@ from app.repositories.order_repo import OrderRepo
 from app.repositories.restaurant_repo import RestaurantRepo
 from app.repositories.user_repo import UserRepo
 from app.routers.order import create_order_repo, create_restaurant_repo, create_user_repo
-from app.routers.notification_router import notifications
 
 #pylint: disable=duplicate-code
 #pylint: disable=redefined-outer-name
@@ -232,9 +231,11 @@ def test_add_order_success(mocker, temp_order_path,
     Expected behavior : Order created and notification generated for the customer
     """
 
-    notifications.clear()
-
     payload = test_carts[0]
+
+    notification_mock = mocker.patch(
+        "app.services.order_services.send_notification"
+    )
 
     request = "/orders/"
 
@@ -266,12 +267,12 @@ def test_add_order_success(mocker, temp_order_path,
     assert r.status_code == 201
     assert new_order == expected_order
 
-    user_id = test_users[0]["id"]
+    notification_mock.assert_called_once()
 
-    assert user_id in notifications
-    assert len(notifications[user_id]) == 1
+    notification_obj = notification_mock.call_args[0][0]
 
-    assert notifications[user_id][0].user_id == user_id
+    assert notification_obj.user_id == test_users[0]["id"]
+    assert "has been created successfully" in notification_obj.message
 
 def test_add_order_restaurant_closed(mocker,
                              order_test_client, test_carts,
