@@ -1,4 +1,4 @@
-# pylint: disable=missing-final-newline
+# pylint: disable=missing-final-newline,trailing-whitespace
 # pylint: disable=duplicate-code
 """Unit tests for Issue Order rejection (OrderRejectionServices).
 
