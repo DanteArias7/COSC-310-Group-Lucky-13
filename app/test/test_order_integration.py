@@ -13,6 +13,8 @@ from app.routers.notification_router import notifications
 
 #pylint: disable=duplicate-code
 #pylint: disable=redefined-outer-name
+#pylint: disable=too-many-arguments
+#pylint: disable=too-many-positional-arguments
 
 #Test Setup
 @pytest.fixture
@@ -331,12 +333,15 @@ def test_simulate_payment_success(temp_order_path,
                                   order_test_client,
                                   test_orders,
                                   test_users,
-                                  valid_payment):
+                                  valid_payment,
+                                  mocker):
     """
     Spec: System should simulate payment for an order
     Input: valid order_id and valid payment details
     Expected behavior: Order status updated to Paid and success message returned
     """
+
+    mock_send =  mocker.patch("app.services.order_services.send_notification")
 
     order_id = test_orders[0]["id"]
 
@@ -354,6 +359,15 @@ def test_simulate_payment_success(temp_order_path,
     assert r.status_code == 200
     assert r.json()["message"] == "Payment Accepted"
     assert updated_order["status"] == "Paid"
+
+    mock_send.assert_called_once()
+
+    notification = mock_send.call_args[0][0]
+
+    assert notification.user_id == test_users[0]["id"]
+    assert notification.message == (
+        f"Your order {order_id} has been paid successfully"
+    )
 
 def test_simulate_payment_order_not_found(order_test_client,
                                           test_users, valid_payment):
