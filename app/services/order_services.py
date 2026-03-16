@@ -9,13 +9,15 @@ from fastapi import HTTPException
 from app.schemas.cart import Cart
 from app.schemas.order import Order
 from app.schemas.payment import Payment, PaymentResult
+from app.services.restaurant_services import RestaurantServices
 
 #pylint: disable=too-few-public-methods
 class OrderServices():
     """Order Service Class"""
-    def __init__(self, repo: IOrderRepo):
+    def __init__(self, repo: IOrderRepo, restaurant_service: RestaurantServices = None):
         """Initialize instance with repo object"""
         self.repo = repo
+        self.restaurant_service = restaurant_service
 
     def place_order(self, cart: Cart) -> Order:
         """
@@ -40,6 +42,10 @@ class OrderServices():
             items = items + str(item.model_dump()["item"]["name"])
             if not item == cart.cart_items[-1]:
                 items = items + ', '
+
+        for cart_item in cart.cart_items:
+            self.restaurant_service.validate_menu_item_is_available(cart.restaurant_id,
+                                                                    cart_item.item.id)
 
         new_order = Order(id=new_id,
                           restaurant_id=cart.restaurant_id,
