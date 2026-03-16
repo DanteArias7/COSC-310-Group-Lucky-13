@@ -228,6 +228,8 @@ def test_simulate_payment_success(mocked_repo, order_service, test_order_status,
                         method should return payment result message
     """
 
+    notifications.clear()
+
     mocked_repo.load_all_orders.return_value = test_order_status
     mocked_repo.update_orders.return_value = None
 
@@ -241,6 +243,15 @@ def test_simulate_payment_success(mocked_repo, order_service, test_order_status,
     assert result.message == "Payment Accepted"
     assert test_order_status[0]["status"] == "Paid"
     mocked_repo.update_orders.assert_called_once()
+
+    user_id = test_order_status[0]["customer_id"]
+
+    assert user_id in notifications
+    assert len(notifications[user_id]) == 1
+
+    assert notifications[user_id][0].message == (
+        f"Your order {test_order_status[0]['id']} has been paid successfully"
+    )
 
 def test_simulate_payment_order_not_found(mocked_repo, order_service , valid_payment):
     """
