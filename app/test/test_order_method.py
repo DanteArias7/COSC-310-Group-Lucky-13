@@ -1,10 +1,10 @@
 """Tests for restaurant functionality."""
-from datetime import date
 from fastapi import HTTPException
 import pytest
 from app.schemas.cart import Cart
 from app.schemas.payment import Payment
 from app.services.order_services import OrderServices
+
 
 #pylint: disable=redefined-outer-name
 #pylint: disable=duplicate-code
@@ -17,7 +17,7 @@ def mocked_repo(mocker):
 @pytest.fixture
 def order_service(mocked_repo):
     """Creates a restaurant service object with mocked repo"""
-    return OrderServices(mocked_repo)
+    return OrderServices(mocked_repo, mocked_repo)
 
 @pytest.fixture
 def test_carts():
@@ -30,13 +30,15 @@ def test_carts():
                             "description": "Plant-based patty with lettuce and tomato",
                             "price": 12.50,
                             "tags": ["vegan"]},
-                            "quantity": 2},
+                            "quantity": 2,
+                            "status": "Available"},
                             {"item": {"id": "018f8c10-7b2a-7f21-9a3c-0a1b2c3d4e01",
                             "name": "Bacon Burger",
                             "description": "Burger with bacon",
                             "price": 10.50,
                             "tags": ["vegan"]},
-                            "quantity": 1}],
+                            "quantity": 1,
+                            "status": "Available"}],
                 "subtotal" : 23.00,
                 "tax" : 1.35,
                 "total" : 24.35}]
@@ -143,19 +145,9 @@ def test_place_order_success(mocker, mocked_repo, order_service, test_carts):
     id_mock = mocker.patch("app.services.order_services.random.choice")
     id_mock.return_value = mocked_random
 
-
-    class MockedDate():
-        """Mocked date class"""
-        @classmethod
-        def today(cls):
-            """Mocked date.today method
-            Returns:
-                    test date"""
-            return date(2026, 3, 6)
-
-    mocked_date = "03-06-2026"
-    mocker.patch("app.services.order_services.date", MockedDate)
-
+    test_date = "03-06-2026"
+    mocked_date = mocker.patch("app.services.order_services.date")
+    mocked_date.today.return_value.strftime.return_value = test_date
 
     mocked_repo.save_order.return_value = None
 
@@ -168,7 +160,7 @@ def test_place_order_success(mocker, mocked_repo, order_service, test_carts):
                       "customer_id": "00000000-0000-0000-0000-000000000001",
                       "assigned_driver_id": "",
                       "food_items": "2x Vegan Burger, 1x Bacon Burger",
-                      "order_date": mocked_date,
+                      "order_date": test_date,
                       "order_value": 24.35,
                       "status": "Pending",
                       "delivery_time": 0.0}
