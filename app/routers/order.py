@@ -63,9 +63,9 @@ def add_order(payload: Cart,
         404 Error if requesting user is not found
         403 Error if requesting user does not have the correct access or role
         """
-    order_service = OrderServices(order_repo)
     authorization_service = AuthorizationServices(user_repo)
     restaurant_service = RestaurantServices(restaurant_repo)
+    order_service = OrderServices(order_repo, restaurant_service)
     authorization_service.authorize(user_id, "create_order")
     authorization_service.authorize_access(user_id, payload.user_id)
     restaurant_service.validate_restaurant_is_open(payload.restaurant_id)
