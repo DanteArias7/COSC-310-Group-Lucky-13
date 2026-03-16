@@ -4,7 +4,7 @@ import pytest
 from app.schemas.cart import Cart
 from app.schemas.payment import Payment
 from app.services.order_services import OrderServices
-from app.services.notification_services import notifications
+
 
 
 #pylint: disable=redefined-outer-name
@@ -144,11 +144,13 @@ def test_place_order_success(mocker, mocked_repo, order_service, test_carts):
     """Scenario: check that creating a valid order returns a valid order object
        and generates a notification"""
 
-    notifications.clear()
-
     mocked_random = "Q"
     id_mock = mocker.patch("app.services.order_services.random.choice")
     id_mock.return_value = mocked_random
+
+    notification_mock = mocker.patch(
+        "app.services.order_services.send_notification"
+    )
 
     test_date = "03-06-2026"
     mocked_date = mocker.patch("app.services.order_services.date")
@@ -172,12 +174,12 @@ def test_place_order_success(mocker, mocked_repo, order_service, test_carts):
 
     assert order.model_dump() == expected_order
 
-    assert cart.user_id in notifications
-    assert len(notifications[cart.user_id]) == 1
+    notification_mock.assert_called_once()
 
-    assert notifications[cart.user_id][0].user_id == cart.user_id
+    notification_obj = notification_mock.call_args[0][0]
 
-    assert notifications[cart.user_id][0].message == (
+    assert notification_obj.user_id == cart.user_id
+    assert notification_obj.message == (
         f"Your order {expected_order['id']} "
         "has been created successfully"
     )
