@@ -120,6 +120,14 @@ class OrderServices():
                 # update order status to Paid and save to CSV
                 orders[i]["status"] = "Paid"
                 self.repo.update_orders(orders)
+
+                send_notification(
+                    Notification(
+                        user_id=order["customer_id"],
+                        message=f"Your order {order['id']} has been paid successfully"
+                    )
+                )
+
                 # return payment result
                 return PaymentResult(message="Payment Accepted")
 

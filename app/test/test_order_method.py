@@ -6,6 +6,7 @@ from app.schemas.payment import Payment
 from app.services.order_services import OrderServices
 
 
+
 #pylint: disable=redefined-outer-name
 #pylint: disable=duplicate-code
 #pylint: disable=too-few-public-methods
@@ -213,13 +214,16 @@ def test_get_order_by_user_id_user_with_no_orders(mocked_repo, order_service, te
     assert exc_info.value.detail == "No Orders Found for User"
 
 #simulate_payment Unit Tests
-def test_simulate_payment_success(mocked_repo, order_service, test_order_status, valid_payment):
+def test_simulate_payment_success(mocked_repo, order_service, test_order_status,
+                                  valid_payment, mocker):
     """
-    Spec: Method should simulate payment for an order
+    Spec: Method should simulate payment for an order and update order status to Paid
     Input: valid order_id and valid payment details
     Expected behavior: Order status should update to Paid &&
                         method should return payment result message
     """
+
+    mock_send = mocker.patch("app.services.order_services.send_notification")
 
     mocked_repo.load_all_orders.return_value = test_order_status
     mocked_repo.update_orders.return_value = None
@@ -234,6 +238,16 @@ def test_simulate_payment_success(mocked_repo, order_service, test_order_status,
     assert result.message == "Payment Accepted"
     assert test_order_status[0]["status"] == "Paid"
     mocked_repo.update_orders.assert_called_once()
+
+    mock_send.assert_called_once()
+
+    notification = mock_send.call_args[0][0]
+
+    assert notification.user_id == test_order_status[0]["customer_id"]
+    assert notification.message == (
+        f"Your order {test_order_status[0]['id']} has been paid successfully"
+    )
+
 
 def test_simulate_payment_order_not_found(mocked_repo, order_service , valid_payment):
     """
