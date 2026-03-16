@@ -1,5 +1,6 @@
 # pylint: disable=missing-final-newline
 # pylint: disable=import-error
+# pylint: disable=duplicate-code
 """Integration tests for Restaurant owner order management endpoints."""
 
 import pandas

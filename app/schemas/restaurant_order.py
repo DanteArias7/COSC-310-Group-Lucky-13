@@ -1,3 +1,4 @@
+# pylint: disable=missing-final-newline,trailing-whitespace
 """Pydantic schemas for Restaurant owner order management.
 
 F4 US2: As a restaurant owner/manager, I want to be able to reject orders so that
