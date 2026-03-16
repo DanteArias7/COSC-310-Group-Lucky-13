@@ -220,15 +220,16 @@ def test_get_order_by_user_id_user_with_no_orders(mocked_repo, order_service, te
     assert exc_info.value.detail == "No Orders Found for User"
 
 #simulate_payment Unit Tests
-def test_simulate_payment_success(mocked_repo, order_service, test_order_status, valid_payment):
+def test_simulate_payment_success(mocked_repo, order_service, test_order_status,
+                                  valid_payment, mocker):
     """
-    Spec: Method should simulate payment for an order
+    Spec: Method should simulate payment for an order and update order status to Paid
     Input: valid order_id and valid payment details
     Expected behavior: Order status should update to Paid &&
                         method should return payment result message
     """
 
-    notifications.clear()
+    mock_send = mocker.patch("app.services.order_services.send_notification")
 
     mocked_repo.load_all_orders.return_value = test_order_status
     mocked_repo.update_orders.return_value = None
@@ -244,12 +245,12 @@ def test_simulate_payment_success(mocked_repo, order_service, test_order_status,
     assert test_order_status[0]["status"] == "Paid"
     mocked_repo.update_orders.assert_called_once()
 
-    user_id = test_order_status[0]["customer_id"]
+    mock_send.assert_called_once()
 
-    assert user_id in notifications
-    assert len(notifications[user_id]) == 1
+    notification = mock_send.call_args[0][0]
 
-    assert notifications[user_id][0].message == (
+    assert notification.user_id == test_order_status[0]["customer_id"]
+    assert notification.message == (
         f"Your order {test_order_status[0]['id']} has been paid successfully"
     )
 
