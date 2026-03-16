@@ -4,7 +4,7 @@
 # pylint: disable=import-error
 """Integration tests for – Order rejection endpoints."""
 
-import json
+import pandas
 
 from fastapi.testclient import TestClient
 
@@ -28,9 +28,9 @@ BASE_ORDER = {
 
 
 def _override(tmp_path, orders=None):
-    path = tmp_path / "orders.json"
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(orders if orders is not None else [BASE_ORDER], f, ensure_ascii=False, indent=2)
+    path = tmp_path / "orders.csv"  # changed from orders.json
+    data = orders if orders is not None else [BASE_ORDER]
+    pandas.DataFrame(data).to_csv(path, index=False)
 
     def override():
         return OrderRepo(path)
