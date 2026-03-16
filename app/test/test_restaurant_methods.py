@@ -466,3 +466,50 @@ def test_delete_last_menu_item(test_restaurants, mocked_repo, restaurant_service
 
     assert exc_info.value.status_code == 400
     assert exc_info.value.detail == "Restaurant must have at least one menu item."
+
+#validate_menu_is_available Unit Tests
+def test_validate_menu_is_available_success(mocked_repo, restaurant_service, test_restaurants):
+    """Scenario: The method should validate a currrently
+    available menuItem.
+    Input: The id of an available menu item
+    Expected Behaviour: Method returns True"""
+
+    mocked_repo.load_all_restaurants.return_value = test_restaurants
+
+    result = restaurant_service.validate_menu_item_is_available(
+                                        test_restaurants[0]["id"],
+                                        test_restaurants[0]["menu"][0]["id"])
+    assert result
+
+def test_validate_menu_item_is_available_not_found(mocked_repo,
+                                                   restaurant_service, test_restaurants):
+    """Scenario: The method should reject a non existent menuItem
+    Input: The id of a non-existent menuItem
+    Expected Behaviour: Method raises a 404 HTTPException"""
+
+    mocked_repo.load_all_restaurants.return_value = test_restaurants
+
+    with pytest.raises(HTTPException) as exc_info:
+        restaurant_service.validate_menu_item_is_available(test_restaurants[0]["id"],
+                                                                "fake-menu_item-id")
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Menu Item fake-menu_item-id Not Found."
+
+def test_validate_menu_is_available_not_avaialble(mocked_repo,
+                                                  restaurant_service, test_restaurants):
+    """Scenario: The method should reject menu_items not currently available.
+    Input: The id of an unavailable menu item
+    Expected Behaviour: Method raises a 400 HTTPException"""
+
+    test_restaurants[0]["menu"][0]["status"] = "Sold Out"
+
+    mocked_repo.load_all_restaurants.return_value = test_restaurants
+
+    with pytest.raises(HTTPException) as exc_info:
+        restaurant_service.validate_menu_item_is_available(
+                                                test_restaurants[0]["id"],
+                                                "00000000-0000-0000-0000-0000000000001")
+
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.detail == "Vegan Burger Is Unavailable"
