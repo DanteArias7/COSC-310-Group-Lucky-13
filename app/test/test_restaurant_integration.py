@@ -14,6 +14,7 @@ from app.routers.restaurant import create_cart_repo, create_restaurant_repo, cre
 #pylint: disable=redefined-outer-name
 #pylint: disable=too-many-arguments
 #pylint: disable=too-many-positional-arguments
+#pylint: disable=too-many-lines
 
 #Test Setup
 @pytest.fixture
@@ -582,7 +583,7 @@ def test_browse_menu_items_with_no_matching_tags(test_restaurants, test_users,
     assert response.status_code == 200
     assert data["items"] == []
 
-def test_browse_menu_items_with_search_and_filter(test_restaurants, test_users,
+def test_browse_menu_items_with_search_price_and_filter(test_restaurants, test_users,
                                             restaurant_test_client, temp_restaurant_path):
     """Scenario: A user browsing with a search term and multiple filters, should
     see only menu items matching all specfied criteria.
@@ -590,7 +591,8 @@ def test_browse_menu_items_with_search_and_filter(test_restaurants, test_users,
     a menu_item.
     Exepected Behaviour:A List of menuitems matching all criteria should be returned"""
 
-    request = "/restaurants/" + str(test_restaurants[0]["id"]) + "/menu?tags=vegan&search=vega&price-max=14.00&min-price=5.00"
+    request = "/restaurants/" + str(test_restaurants[0]["id"])
+    request = request + "/menu?tags=vegan&search=vega&price-max=14.00&min-price=5.00"
     response = restaurant_test_client.get(request, headers={"user-id": test_users[0]["id"]})
 
     data = response.json()
