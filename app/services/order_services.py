@@ -128,6 +128,8 @@ class OrderServices():
                     )
                 )
 
+                self.notify_restaurant_owner(order["restaurant_id"], order_id)
+
                 # return payment result
                 return PaymentResult(message="Payment Accepted")
 
@@ -163,6 +165,31 @@ class OrderServices():
             raise HTTPException(status_code=400,
                                 detail="Payment Rejected: Invalid expiration date") from exc
         return True
+
+    def notify_restaurant_owner(self, restaurant_id: int, order_id: str) -> None:
+        """
+        Notifies the restaurant owner of a new order.
+
+        Args:
+            restaurant_id: The ID of the restaurant to notify.
+            order: The Order object containing the order details.
+
+        Returns:
+            None
+        """
+        restaurant = self.restaurant_service.get_restaurant_by_id(restaurant_id)
+
+        if not restaurant:
+            raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
+
+        owner_id = restaurant.user_id
+
+        send_notification(
+            Notification(
+                user_id=owner_id,
+                message=f"You have received a new order {order_id}"
+            )
+        )
 
 class IOrderRepo(Protocol):
     """Order Repo Interface"""
