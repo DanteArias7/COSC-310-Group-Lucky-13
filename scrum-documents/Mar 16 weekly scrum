@@ -1,0 +1,21 @@
+Date: 16 March
+Type of meeting : Weekly Scrum
+
+Attendees : Dante Arias, Varun Garg, Zheng Xue
+
+Key discussion points:
+1. Discussed about assigning remaining tasks and sub-issues.
+2. Discussed ways to do refactoring :
+       - Add Exception handling to methods wherever appropriate especially the ones needing user inputs.
+       - Update docstrings to have more details
+       - Add dependency injections wherever appropriate.
+       - Reduce duplicate code such as add more pytest fixtures that could be reused.
+
+3. Discussed about rejecting order functionality (for both delivery driver and restaurant managers)
+
+4. Discussed about adding Amex cards for payment simulation (15 digit card length)
+
+Action Items:
+- continue working on the assigned features and finalize the code for submission before next week
+- Try refactoring code and generating PR's for that
+- next meeting March 19, Thursday
