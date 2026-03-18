@@ -1,6 +1,7 @@
 [
   {
     "id": 101,
+    "user_id": "3f1c2b9e-8c4d-4b7e-a9f2-1c6d5e8f9abc",
     "name": "Veggie Palace",
     "hours": {
       "Monday": "9:00-17:00",
@@ -26,6 +27,7 @@
   },
   {
     "id": 102,
+    "user_id": "8a7d5c21-6f4e-4b91-9c2d-3e8f7a1b2c9d",
     "name": "Burger Hub",
     "hours": {
       "Monday": "10:00-22:00",
