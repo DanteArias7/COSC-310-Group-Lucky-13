@@ -7,5 +7,23 @@
   "address": "123 Baron Rd, Kelowna, BC, A1B2C3",
   "password": "password",
   "role": "customer"
-  }
+  },
+  {
+  "id": "3f1c2b9e-8c4d-4b7e-a9f2-1c6d5e8f9abc",
+  "name": "Corey",
+  "email": "coreyjohnson@gmail.com",
+  "phone_number": "123-456-7890",
+  "address": "456 Baron Rd, Kelowna, BC, A1B2C3",
+  "password": "password",
+  "role": "restaurant_owner"
+  },
+  {
+  "id": "8a7d5c21-6f4e-4b91-9c2d-3e8f7a1b2c9d",
+  "name": "Alex Turner",
+  "email": "alex.turner@example.com",
+  "phone_number": "123-456-7890",
+  "address": "789 Lakeshore Rd, Kelowna, BC, V1Y3S4",
+  "password": "password",
+  "role": "restaurant_owner"
+}
 ]
