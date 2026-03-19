@@ -90,10 +90,13 @@ def get_all_orders_for_a_user(order_repo: OrderRepo = Depends(create_order_repo)
     authorization_service.authorize(user_id, "view_own_orders")
     return order_service.get_orders_by_user_id(user_id)
 
+#pylint: disable=too-many-arguments
+#pylint: disable=too-many-positional-arguments
 @order_router.post("/{order_id}/simulate-payment", response_model=PaymentResult, status_code=200)
 def simulate_payment(order_id: str,
                      payload: Payment,
                      order_repo: OrderRepo = Depends(create_order_repo),
+                     restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
                      user_repo: UserRepo = Depends(create_user_repo),
                      user_id: str = Header(..., alias="user-id")):
     """Simulates payment processing for an order
@@ -111,7 +114,8 @@ def simulate_payment(order_id: str,
         The payment result of the simulated payment process
     """
 
-    order_service = OrderServices(order_repo)
+    restaurant_service = RestaurantServices(restaurant_repo)
+    order_service = OrderServices(order_repo , restaurant_service)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "make_payment")
     authorization_service.authorize_access(user_id, payload.user_id)
