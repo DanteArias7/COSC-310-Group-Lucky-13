@@ -10,6 +10,8 @@ from app.services.order_services import OrderServices
 #pylint: disable=redefined-outer-name
 #pylint: disable=duplicate-code
 #pylint: disable=too-few-public-methods
+#pylint: disable=too-many-arguments
+#pylint: disable=too-many-positional-arguments
 @pytest.fixture
 def mocked_repo(mocker):
     """Creates a mocked repo object for each test"""
@@ -228,6 +230,13 @@ def test_simulate_payment_success(mocked_repo, order_service, test_order_status,
     mocked_repo.load_all_orders.return_value = test_order_status
     mocked_repo.update_orders.return_value = None
 
+    mock_restaurant_obj = mocker.Mock()
+    mock_restaurant_obj.user_id = "owner-123"
+
+    order_service.restaurant_service.fetch_restaurant = mocker.Mock(
+        return_value=mock_restaurant_obj
+    )
+
     payment = Payment(**valid_payment)
 
     result = order_service.simulate_payment(
@@ -237,16 +246,23 @@ def test_simulate_payment_success(mocked_repo, order_service, test_order_status,
 
     assert result.message == "Payment Accepted"
     assert test_order_status[0]["status"] == "Paid"
-    mocked_repo.update_orders.assert_called_once()
+    assert mock_send.call_count == 2
 
-    mock_send.assert_called_once()
+    calls = mock_send.call_args_list
 
-    notification = mock_send.call_args[0][0]
+    customer_notification = calls[0][0][0]
+    owner_notification = calls[1][0][0]
 
-    assert notification.user_id == test_order_status[0]["customer_id"]
-    assert notification.message == (
+    assert customer_notification.user_id == test_order_status[0]["customer_id"]
+    assert customer_notification.message == (
         f"Your order {test_order_status[0]['id']} has been paid successfully"
     )
+
+    assert owner_notification.user_id == "owner-123"
+    assert owner_notification.message == (
+        f"You have received a new order {test_order_status[0]['id']}"
+    )
+
 
 
 def test_simulate_payment_order_not_found(mocked_repo, order_service , valid_payment):
@@ -352,7 +368,7 @@ def test_retry_payment_after_failure(mocked_repo,
                                      order_service,
                                      test_order_status,
                                      invalid_card_payment,
-                                     valid_payment):
+                                     valid_payment, mocker):
     """
     Spec: Customer should be able to retry payment after failure
     Input: invalid payment first, then valid payment
@@ -371,6 +387,14 @@ def test_retry_payment_after_failure(mocked_repo,
     assert exc_info.value.detail == "Payment Rejected: Invalid card number"
 
     # second attempt succeeds
+
+    mock_restaurant_obj = mocker.Mock()
+    mock_restaurant_obj.user_id = "owner-123"
+
+    order_service.restaurant_service.fetch_restaurant = mocker.Mock(
+        return_value=mock_restaurant_obj
+    )
+
     result = order_service.simulate_payment(
         test_order_status[0]["id"],
         Payment(**valid_payment)
