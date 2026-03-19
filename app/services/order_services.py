@@ -177,7 +177,7 @@ class OrderServices():
         Returns:
             None
         """
-        restaurant = self.restaurant_service.get_restaurant_by_id(restaurant_id)
+        restaurant = self.restaurant_service.fetch_restaurant(restaurant_id)
 
         if not restaurant:
             raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
