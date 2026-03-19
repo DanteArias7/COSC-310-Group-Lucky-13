@@ -1,6 +1,7 @@
 """API Endpoints for Notification functionality"""
 
 import asyncio
+from collections.abc import AsyncIterable
 from fastapi import APIRouter, Header
 from fastapi.sse import EventSourceResponse, ServerSentEvent
 
@@ -29,19 +30,25 @@ async def stream_notifications(
 
     user_queues[user_id] = queue
 
-    for notification in notifications.get(user_id, []):
-        yield ServerSentEvent(
+    async def event_generator() -> AsyncIterable[ServerSentEvent]:
+
+        for notification in notifications.get(user_id, []):
+            yield ServerSentEvent(
                 data=notification,
                 event="notification"
             )
 
-    try:
-        while True:
-            notification = await queue.get()
-            yield ServerSentEvent(
-                data=notification,
-                event="notification"
+        try:
+            while True:
+
+                notification = await queue.get()
+
+                yield ServerSentEvent(
+                    data=notification,
+                    event="notification"
                 )
 
-    finally:
-        user_queues.pop(user_id, None)
+        finally:
+            user_queues.pop(user_id, None)
+
+    return EventSourceResponse(event_generator())
