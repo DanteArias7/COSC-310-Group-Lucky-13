@@ -243,8 +243,14 @@ class RestaurantServices():
             List of restaurants that have all the tags in the tags List.
         """
         filtered_restaurants = []
+        for i, tag in enumerate(tags):
+            tags[i] = tag.lower()
 
         for restaurant in restaurants:
+            restaurant_tags = restaurant.tags
+            for i, tag in enumerate(restaurant_tags):
+                restaurant_tags[i] = tag.lower()
+
             if set(tags).issubset(restaurant.tags):
                 filtered_restaurants.append(restaurant)
 
