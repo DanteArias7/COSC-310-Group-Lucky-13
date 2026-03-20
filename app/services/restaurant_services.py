@@ -343,7 +343,7 @@ class RestaurantServices():
                         current_status = {"status" : item["status"]}
                         new_status = {"status" : item_status}
 
-                        restaurant["menu"][j] = id | updated_menu_item.model_dump()
+                        restaurant["menu"][j] = menu_item_id | updated_menu_item.model_dump()
 
                         if item_status is None:
                             restaurant["menu"][j] = restaurant["menu"][j] | current_status
