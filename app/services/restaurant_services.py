@@ -339,7 +339,7 @@ class RestaurantServices():
             if restaurant["id"] == restaurant_id:
                 for j, item in enumerate(restaurant["menu"]):
                     if item["id"] == menu_item_id:
-                        id = {"id" : menu_item_id}
+                        menu_item_id = {"id" : menu_item_id}
                         current_status = {"status" : item["status"]}
                         new_status = {"status" : item_status}
 
