@@ -384,9 +384,10 @@ def test_filter_menu_items_by_tags_success(restaurant_service, test_restaurants)
 
     assert result == [test_restaurants[0]["menu"][0]]
 
-def test_filter_restaurant_by_tags_not_all_tags(restaurant_service, test_restaurants):
+def test_filter_menu_items_by_tags_not_all_tags(restaurant_service, test_restaurants):
     """Spec: If none of the restaurants contain all the tags specified, nothing should be returned
-    Input: A valid list of RestaurantResults and a list of tags where one does not match any restaurant
+    Input: A valid list of RestaurantResults and a list of tags
+    where one does not match any restaurant
     Expected Behaviour: Method returns an empty list"""
 
     menu_items = test_restaurants[0]["menu"]
@@ -400,7 +401,8 @@ def test_filter_restaurant_by_tags_not_all_tags(restaurant_service, test_restaur
     assert result == []
 
 def test_filter_restaurant_by_tags_no_matching_tags(restaurant_service, test_restaurants):
-    """Spec: If none of the restaurants contain any of the tags specified, nothing should be returned
+    """Spec: If none of the restaurants contain any of the tags specified,
+    nothing should be returned
     Input: A valid list of RestaurantResults and a list of tags that do not match any restaurant
     Expected Behaviour: Method returns an empty list"""
 
