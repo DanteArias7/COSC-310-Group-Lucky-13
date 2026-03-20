@@ -361,7 +361,6 @@ def test_retry_payment_after_failure(mocked_repo,
 
     mocked_repo.load_all_orders.return_value = test_order_status
 
-    # first attempt fails
     with pytest.raises(HTTPException) as exc_info:
         order_service.simulate_payment(
             test_order_status[0]["id"],
@@ -370,7 +369,6 @@ def test_retry_payment_after_failure(mocked_repo,
     assert exc_info.value.status_code == 400
     assert exc_info.value.detail == "Payment Rejected: Invalid card number"
 
-    # second attempt succeeds
     result = order_service.simulate_payment(
         test_order_status[0]["id"],
         Payment(**valid_payment)
