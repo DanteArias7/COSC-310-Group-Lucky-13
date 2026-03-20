@@ -110,7 +110,8 @@ class RestaurantServices():
                 detail="Restaurant not found",
             )
 
-    def update_restaurant(self, restaurant_id: int, updated_restaurant: UpdateRestaurant) -> Restaurant:
+    def update_restaurant(self, restaurant_id: int,
+                          updated_restaurant: UpdateRestaurant) -> Restaurant:
         """Updates a restaurant's identifying information
 
         Args:
