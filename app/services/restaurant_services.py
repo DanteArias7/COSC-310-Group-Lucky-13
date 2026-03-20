@@ -110,24 +110,30 @@ class RestaurantServices():
                 detail="Restaurant not found",
             )
 
-    def update_restaurant(self, restaurant_id: int, payload: UpdateRestaurant) -> Restaurant:
-        """Updates a restaurant's information"""
+    def update_restaurant(self, restaurant_id: int, updated_restaurant: UpdateRestaurant) -> Restaurant:
+        """Updates a restaurant's identifying information
+
+        Args:
+            restaurant_id: The ID of the restaurant being updated
+            updated_restaurant: The UpdateRestaurant object containing
+            the new info
+
+        Returns:
+            The updated Restaurant object
+
+        Raises:
+            A 404 HTTPException if the restaurant is not found"""
 
         restaurants = self.repo.load_all_restaurants()
-
-        updated_restaurant = UpdateRestaurant(
-                        name=payload.name.strip(),
-                        hours=payload.hours,
-                        phone_number=payload.phone_number.strip(),
-                        address=payload.address.strip(),
-                        tags=payload.tags
-                     )
 
         for i, restaurant in enumerate(restaurants):
             if restaurant["id"] == restaurant_id:
                 ids = {"id" : restaurant_id} | {"user_id" : restaurant["user_id"]}
+                menu = restaurant["menu"]
+
                 restaurant = ids | updated_restaurant.model_dump()
-                restaurant = restaurant | {"menu" : restaurants[i]["menu"]}
+                restaurant = restaurant | {"menu" : menu}
+
                 restaurants[i] = restaurant
                 self.repo.save_all_restaurants(restaurants)
                 return Restaurant(**restaurant)
