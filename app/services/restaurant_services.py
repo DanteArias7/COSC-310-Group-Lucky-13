@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Protocol
 import random
 import uuid
 from fastapi import HTTPException
-from app.schemas.menu import MenuItem, UpdateMenuItem
+from app.schemas.menu import CreateMenuItem, MenuItem, UpdateMenuItem
 from app.schemas.restaurant import RestaurantResult, Restaurant, RestaurantCreate, UpdateRestaurant
 
 class RestaurantServices():
@@ -15,7 +15,7 @@ class RestaurantServices():
         """Initialize instance with repo object"""
         self.repo = repo
 
-    def create_new_restaurant(self, user_id: str, payload: RestaurantCreate) -> Restaurant:
+    def create_new_restaurant(self, user_id: str, restaurant: RestaurantCreate) -> Restaurant:
         """
         Create new restaurant profile
         Rules:
@@ -37,12 +37,12 @@ class RestaurantServices():
         restaurant = Restaurant(
             id=random.randint(1, 1_000_000),
             user_id=user_id,
-            name=payload.name,
-            hours=payload.hours,
-            phone_number=payload.phone_number,
-            address=payload.address,
-            tags=payload.tags,
-            menu= payload.menu,
+            name=restaurant.name,
+            hours=restaurant.hours,
+            phone_number=restaurant.phone_number,
+            address=restaurant.address,
+            tags=restaurant.tags,
+            menu= restaurant.menu,
         )
         restaurants = self.repo.load_all_restaurants()
         restaurants.append(restaurant.model_dump())
@@ -98,7 +98,16 @@ class RestaurantServices():
         return results
 
     def fetch_restaurant(self, restaurant_id: int) -> Restaurant:
-        """Return a restaurant by ID or raise 404."""
+        """Return a restaurant that matches a given ID
+
+        Args:
+            restaurant_id: ID of the restaurant being fetched
+
+        Returns:
+            A restaurant object that matches the given id
+
+        Raises:
+            A 404 HTTPException if the restaurant is not found"""
         restaurants = self.repo.load_all_restaurants()
 
         for restaurant in restaurants:
@@ -142,7 +151,16 @@ class RestaurantServices():
         raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
 
     def delete_restaurant(self, restaurant_id: int) -> None:
-        """Deletes restaurant from the data store"""
+        """Deletes a restaurant that matches a given ID
+
+        Args:
+            restaurant_id: ID of the restaurant being deleted
+
+        Returns:
+            Nothing
+
+        Raises:
+            A 404 HTTPException if the restaurant is not found"""
         restaurants = self.repo.load_all_restaurants()
 
         for restaurant in restaurants:
@@ -323,28 +341,43 @@ class RestaurantServices():
         times = {"open":open_time, "closed":closed_time}
         return times
 
-    def add_item_to_menu(self, restaurant_id: int, payload: MenuItem) -> MenuItem:
-        """Add a menu item to a restaurants menu"""
+    def add_item_to_menu(self, restaurant_id: int, new_menu_item: CreateMenuItem) -> MenuItem:
+        """Add a menu item to a restaurants menu
+
+        Args:
+            restaurant_id: The ID of the restaurant having a menu_item added
+            to its menu.
+            menu_item: A MenuItem Object containing the information of the
+            MenuItem
+
+        Returns:
+            The new MenuItem object
+
+        Raises:
+            A 409 HTTPException if menu item has the same name already
+            A 404 HTTPException if the restaurant is not found
+            """
 
         restaurants = self.repo.load_all_restaurants()
 
         new_id = str(uuid.uuid7())
-        new_menu_item = MenuItem(id=new_id,
-                        name=payload.name.strip(),
-                        price=payload.price,
-                        description=payload.description.strip(),
-                        tags=payload.tags
+        created_menu_item = MenuItem(id=new_id,
+                        name=new_menu_item.name.strip(),
+                        price=new_menu_item.price,
+                        description=new_menu_item.description.strip(),
+                        tags=new_menu_item.tags
                      )
+
         for i, restaurant in enumerate(restaurants):
             if restaurant["id"] == restaurant_id:
                 for menu_item in restaurant["menu"]:
-                    if menu_item["name"] == new_menu_item.name:
+                    if menu_item["name"] == created_menu_item.name:
                         raise HTTPException(status_code=409, detail="Menu Item Already exists")
 
-                restaurant["menu"].append(new_menu_item.model_dump())
+                restaurant["menu"].append(created_menu_item.model_dump())
                 restaurants[i] = restaurant
                 self.repo.save_all_restaurants(restaurants)
-                return new_menu_item
+                return created_menu_item
 
         raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
 
@@ -418,13 +451,37 @@ class RestaurantServices():
                             detail=f"Menu Item {menu_item_id} Not Found.")
 
     def validate_menu_existence(self, restaurant: Dict[str, Any]) -> None:
-        """Ensure restaurant always has at least one menu item."""
+        """A validation check to ensure a restaurant always has at
+        least one menu item.
+
+        Args:
+            restaurant: Dict representing a restaurant Object
+
+        Returns:
+            Nothing
+
+        Raises:
+            A 404 HTTPException if the restaurant is not found
+            """
+
         if not restaurant.get("menu") or len(restaurant["menu"]) == 0:
             raise HTTPException(status_code= 400,
                                 detail = "Restaurant must have at least one menu item.")
 
     def delete_menu_item(self, restaurant_id: int, menu_item_id: str) -> None:
-        """Deletes menu item from a restaurant's menu"""
+        """Deletes a menu_item from a restaurants menu
+        that matches a given ID
+
+        Args:
+            restaurant_id: ID of the restaurant containing the menu_item
+            menu_item_id: ID of the menu_item being deleted
+
+        Returns:
+            Nothing
+
+        Raises:
+            A 404 HTTPException if the restaurant or the
+            MenuItem is not found"""
         restaurants = self.repo.load_all_restaurants()
 
         for restaurant in restaurants:
@@ -443,6 +500,6 @@ class RestaurantServices():
 class IRestaurantRepo(Protocol):
     """Restaurant repository interface"""
     def load_all_restaurants(self) -> List[Dict[str, Any]]:
-        """Load all restaurants"""
+        """Load all restaurants from the data store"""
     def save_all_restaurants(self, restaurant: List[Dict[str, Any]]):
-        """Save all resturants"""
+        """Save all resturants to the data store"""
