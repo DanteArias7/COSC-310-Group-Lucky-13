@@ -541,7 +541,7 @@ def test_browse_menu_items_with_tags_success(test_restaurants, test_users,
     at least one menuItem.
     Exepected Behaviour:A List of menuitems whose tags match the given tags"""
 
-    request = "/restaurants/" + str(test_restaurants[0]["id"]) + "/menu?tags=vegan"
+    request = "/restaurants/" + str(test_restaurants[0]["id"]) + "/menu?tags=Vegan"
     response = restaurant_test_client.get(request, headers={"user-id": test_users[0]["id"]})
 
     data = response.json()
