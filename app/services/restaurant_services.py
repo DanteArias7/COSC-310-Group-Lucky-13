@@ -306,7 +306,7 @@ class RestaurantServices():
         times = {"open":open_time, "closed":closed_time}
         return times
 
-    def add_item_to_menu(self, restaurant_id: int, menu_item: CreateMenuItem) -> MenuItem:
+    def add_item_to_menu(self, restaurant_id: int, new_menu_item: CreateMenuItem) -> MenuItem:
         """Add a menu item to a restaurants menu
 
         Args:
@@ -326,23 +326,23 @@ class RestaurantServices():
         restaurants = self.repo.load_all_restaurants()
 
         new_id = str(uuid.uuid4())
-        new_menu_item = MenuItem(id=new_id,
-                        name=menu_item.name.strip(),
-                        price=menu_item.price,
-                        description=menu_item.description.strip(),
-                        tags=menu_item.tags
+        created_menu_item = MenuItem(id=new_id,
+                        name=new_menu_item.name.strip(),
+                        price=new_menu_item.price,
+                        description=new_menu_item.description.strip(),
+                        tags=new_menu_item.tags
                      )
 
         for i, restaurant in enumerate(restaurants):
             if restaurant["id"] == restaurant_id:
                 for menu_item in restaurant["menu"]:
-                    if menu_item["name"] == new_menu_item.name:
+                    if menu_item["name"] == created_menu_item.name:
                         raise HTTPException(status_code=409, detail="Menu Item Already exists")
 
-                restaurant["menu"].append(new_menu_item.model_dump())
+                restaurant["menu"].append(created_menu_item.model_dump())
                 restaurants[i] = restaurant
                 self.repo.save_all_restaurants(restaurants)
-                return new_menu_item
+                return created_menu_item
 
         raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
 
