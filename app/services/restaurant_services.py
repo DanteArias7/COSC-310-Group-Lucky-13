@@ -325,7 +325,7 @@ class RestaurantServices():
 
         restaurants = self.repo.load_all_restaurants()
 
-        new_id = str(uuid.uuid4())
+        new_id = str(uuid.uuid7())
         created_menu_item = MenuItem(id=new_id,
                         name=new_menu_item.name.strip(),
                         price=new_menu_item.price,
