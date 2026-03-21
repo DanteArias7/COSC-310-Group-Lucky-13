@@ -203,8 +203,16 @@ class RestaurantServices():
 
         filtered_menu_items = []
 
+
+        for i, tag in enumerate(tags):
+            tags[i] = tag.lower()
+
         for menu_item in menu_items:
-            if set(tags).issubset(menu_item.tags):
+            menu_item_tags = menu_item.tags
+            for i, menu_item_tag in enumerate(menu_item_tags):
+                menu_item_tags[i] = menu_item_tag.lower()
+
+            if set(tags).issubset(menu_item_tags):
                 filtered_menu_items.append(menu_item)
 
         return filtered_menu_items
