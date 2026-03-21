@@ -400,3 +400,52 @@ def test_retry_payment_after_failure(mocked_repo,
     )
 
     assert result.message == "Payment Accepted"
+
+def test_notify_restaurant_owner_success(order_service, test_order_status_2, mocker):
+    """
+    Spec: Method should send notification to restaurant owner when a new order is placed
+    Input: valid restaurant_id and order_id
+    Expected behavior: send_notification should be called with correct notification object
+    """
+
+    restaurant = test_order_status_2[0]
+
+    mock_send = mocker.patch("app.services.order_services.send_notification")
+
+    order_service.restaurant_service.fetch_restaurant = mocker.Mock(
+        return_value=mocker.Mock(user_id="owner-123")
+    )
+
+    order_service.notify_restaurant_owner(
+        restaurant["restaurant_id"],
+        restaurant["id"]
+    )
+
+    mock_send.assert_called_once()
+
+    notification = mock_send.call_args[0][0]
+
+    assert notification.user_id == "owner-123"
+    assert notification.message == (
+        f"You have received a new order {restaurant['id']}"
+    )
+
+def test_notify_restaurant_owner_restaurant_not_found(mocker, order_service):
+    """
+    Spec: Method should raise exception if restaurant does not exist
+    Input: invalid restaurant_id
+    Expected behavior: HTTPException with status 404
+    """
+
+    restaurant_id = 999
+    order_id = "ORDER123"
+
+    order_service.restaurant_service.fetch_restaurant = mocker.Mock(
+        return_value=None
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        order_service.notify_restaurant_owner(restaurant_id, order_id)
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == f"Restaurant {restaurant_id} Not Found"
