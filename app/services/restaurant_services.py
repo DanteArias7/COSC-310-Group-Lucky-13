@@ -349,31 +349,45 @@ class RestaurantServices():
         raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
 
     def update_menu_item(self, restaurant_id: int,
-                         menu_item_id: str, payload: UpdateMenuItem,
+                         menu_item_id: str, updated_menu_item: UpdateMenuItem,
                          item_status: str | None = None) -> MenuItem:
-        """Update a menu item in a restaurant's menu"""
+        """Update a menu item in a restaurant's menu
+
+        Args:
+            restaurant_id: The ID of the Restaurant that has the menu
+            item
+            menu_item_id: The ID of the MenuItem being updated
+            updated_menu_item: An UpdateMenuItem object that contains
+            the updated information
+            item_status: An optional argument, the new status of the
+            MenuItem
+
+        Returns:
+            The updated MenuItem object
+
+        Raise:
+            A 404 HTTPException if the restaurant"""
 
         restaurants = self.repo.load_all_restaurants()
 
-        updated_menu_item = UpdateMenuItem(
-                        name=payload.name.strip(),
-                        price=payload.price,
-                        description=payload.description.strip(),
-                        tags=payload.tags
-                     )
-
-        for i, restaurant in enumerate(restaurants):
+        for restaurant in restaurants:
             if restaurant["id"] == restaurant_id:
                 for j, item in enumerate(restaurant["menu"]):
                     if item["id"] == menu_item_id:
-                        restaurant["menu"][j]={"id" : menu_item_id} | updated_menu_item.model_dump()
+                        menu_item_id = {"id" : menu_item_id}
+                        current_status = {"status" : item["status"]}
+                        new_status = {"status" : item_status}
+
+                        restaurant["menu"][j] = menu_item_id | updated_menu_item.model_dump()
+
                         if item_status is None:
-                            restaurant["menu"][j]=restaurant["menu"][j]|{"status":item["status"]}
+                            restaurant["menu"][j] = restaurant["menu"][j] | current_status
                         else:
-                            restaurant["menu"][j]=restaurant["menu"][j]|{"status" : item_status}
-                        restaurants[i] = restaurant
+                            restaurant["menu"][j] = restaurant["menu"][j] | new_status
+
                         self.repo.save_all_restaurants(restaurants)
                         return MenuItem(**restaurant["menu"][j])
+
                 raise HTTPException(status_code=404, detail=f"Menu Item {menu_item_id} Not Found")
 
         raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
