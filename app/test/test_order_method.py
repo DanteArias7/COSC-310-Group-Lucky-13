@@ -377,7 +377,6 @@ def test_retry_payment_after_failure(mocked_repo,
 
     mocked_repo.load_all_orders.return_value = test_order_status
 
-    # first attempt fails
     with pytest.raises(HTTPException) as exc_info:
         order_service.simulate_payment(
             test_order_status[0]["id"],

@@ -406,7 +406,6 @@ def test_simulate_payment_invalid_status(temp_order_path,
 
     orders = pandas.read_csv(temp_order_path, keep_default_na=False)
 
-    # change status to Paid to simulate invalid state
     orders.loc[0, "status"] = "Paid"
 
     orders.to_csv(temp_order_path, index=False)
@@ -503,7 +502,7 @@ def test_simulate_payment_unauthorized_user(order_test_client,
 
     r = order_test_client.post(
         request,
-        headers={"user-id": test_users[2]["id"]}, # user with different id than payment user_id
+        headers={"user-id": test_users[2]["id"]},
         json=valid_payment
     )
 

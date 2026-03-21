@@ -109,15 +109,15 @@ class OrderServices():
 
         for i, order in enumerate(orders):
             if order["id"] == order_id:
-                # validation check to ensure order is in pending status before simulating payment
+
                 if order["status"] != "Pending":
                     raise HTTPException(status_code=400,
                                         detail=f"Order {order_id} is not in a payable state")
-                #validate payment details
+
                 self.validate_payment_details(payment)
-                # simulate payment processing delay
+
                 time.sleep(2)
-                # update order status to Paid and save to CSV
+
                 orders[i]["status"] = "Paid"
                 self.repo.update_orders(orders)
 
@@ -148,15 +148,12 @@ class OrderServices():
         Raises:
         HTTPException if validation fails.
     """
-        #validate card number length
         if len(payment.card_number) != 16 or not payment.card_number.isdigit():
             raise HTTPException(status_code=400, detail="Payment Rejected: Invalid card number")
 
-        #validate cvv
         if len(payment.cvv) != 3 or not payment.cvv.isdigit():
             raise HTTPException(status_code=400, detail="Payment Rejected: Invalid CVV")
 
-        #validate expiration date
         try:
             exp = datetime.strptime(payment.expiration_date, "%m/%y")
             if exp < datetime.now():

@@ -368,6 +368,54 @@ def test_fetch_name_searched_menu_items_no_search_match(test_restaurants, restau
 
     assert result == []
 
+#filter_restaurants_by_tags Unit Tests
+def test_filter_menu_items_by_tags_success(restaurant_service, test_restaurants):
+    """Spec: A list of tags is given, matching at least one restaurant
+    Input: A list of RestaurantResults and a List of tags matching a restaurants tags,
+    Expected Behaviour: Method retruns a List of RestaurantResult objects,
+    whose tags include all the given tags"""
+
+    menu_items = test_restaurants[0]["menu"]
+
+    for i, menu_item in enumerate(menu_items):
+        menu_items[i] = MenuItem(**menu_item)
+
+    result = restaurant_service.filter_menu_items_by_tags(menu_items, ["vegan"])
+
+    assert result == [test_restaurants[0]["menu"][0]]
+
+def test_filter_menu_items_by_tags_not_all_tags(restaurant_service, test_restaurants):
+    """Spec: If none of the restaurants contain all the tags specified, nothing should be returned
+    Input: A valid list of RestaurantResults and a list of tags
+    where one does not match any restaurant
+    Expected Behaviour: Method returns an empty list"""
+
+    menu_items = test_restaurants[0]["menu"]
+
+    for i, menu_item in enumerate(menu_items):
+        menu_items[i] = MenuItem(**menu_item)
+
+    result = restaurant_service.filter_menu_items_by_tags(menu_items,
+                                                           ["vegan", "green"])
+
+    assert result == []
+
+def test_filter_restaurant_by_tags_no_matching_tags(restaurant_service, test_restaurants):
+    """Spec: If none of the restaurants contain any of the tags specified,
+    nothing should be returned
+    Input: A valid list of RestaurantResults and a list of tags that do not match any restaurant
+    Expected Behaviour: Method returns an empty list"""
+
+    menu_items = test_restaurants[0]["menu"]
+
+    for i, menu_item in enumerate(menu_items):
+        menu_items[i] = MenuItem(**menu_item)
+
+    result = restaurant_service.filter_menu_items_by_tags(menu_items,
+                                                           ["qqq"])
+
+    assert result == []
+
 #filter_menu_items_by_price Unit Tests
 def test_filter_menu_items_by_price_success(test_restaurants, restaurant_service):
     """Spec: A menu exists and has items within a range
