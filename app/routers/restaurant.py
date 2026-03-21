@@ -143,7 +143,8 @@ def browse_menu_items(restaurant_id: int,
                         user_id: str  = Header(...,alias="user-id"),
                         search: str | None = None,
                         price_max: float = sys.float_info.max,
-                        price_min: float = 0.00) -> Page[MenuItem]:
+                        price_min: float = 0.00,
+                        tags: List[str] | None = Query(None)) -> Page[MenuItem]:
     """API endpoint for a user to browse a given restaurants menu
     Args:
         user_id: The id of the user viewing the restaurants,
@@ -153,10 +154,11 @@ def browse_menu_items(restaurant_id: int,
         search: An optional argument, a string to compare the menu items names to, None by default
         max: An optional argument, the max of the given price range. Max float by default
         min: AN optional argument, the min of the given price range. 0.00 by default
+        tags: An optional argument, a list of strings to match to the menu_items.
 
     Returns:
         A List of MenuItem objects, whose names include the search string and/or
-        are within the price range.
+        are within the price range and/or have tags matching the given tags.
     """
     restaurant_service = RestaurantServices(restaurant_repo)
     authorization_service = AuthorizationServices(user_repo)
@@ -169,8 +171,11 @@ def browse_menu_items(restaurant_id: int,
         menu_items = restaurant_service.get_name_searched_menu_items(restaurant, search)
 
     if(price_max != sys.float_info.max or price_min != 0.00):
-        return paginate(restaurant_service.filter_menu_items_by_price(menu_items,
-                                                                      price_max, price_min))
+        menu_items = restaurant_service.filter_menu_items_by_price(menu_items,
+                                                                      price_max, price_min)
+    if tags is not None:
+        menu_items = restaurant_service.filter_menu_items_by_tags(menu_items,
+                                                                  tags)
 
     return paginate(menu_items)
 

@@ -189,6 +189,34 @@ class RestaurantServices():
 
         return menu_items
 
+    def filter_menu_items_by_tags(self, menu_items: List[MenuItem],
+                                   tags: List[str]) -> List[MenuItem]:
+        """
+        Filter a given list of menuItems based on given list of tags.
+
+        Args:
+            menu_items: list of MenuItem objects to be filtered
+            tags: List of tags to match to the menu_items
+
+        Returns:
+            List of menuItems that have all the specified tags"""
+
+        filtered_menu_items = []
+
+
+        for i, tag in enumerate(tags):
+            tags[i] = tag.lower()
+
+        for menu_item in menu_items:
+            menu_item_tags = menu_item.tags
+            for i, menu_item_tag in enumerate(menu_item_tags):
+                menu_item_tags[i] = menu_item_tag.lower()
+
+            if set(tags).issubset(menu_item_tags):
+                filtered_menu_items.append(menu_item)
+
+        return filtered_menu_items
+
     def filter_menu_items_by_price(self, menu_items: List[MenuItem],
                                    price_max: float, price_min: float):
         """

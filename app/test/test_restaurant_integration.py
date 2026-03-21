@@ -14,6 +14,7 @@ from app.routers.restaurant import create_cart_repo, create_restaurant_repo, cre
 #pylint: disable=redefined-outer-name
 #pylint: disable=too-many-arguments
 #pylint: disable=too-many-positional-arguments
+#pylint: disable=too-many-lines
 
 #Test Setup
 @pytest.fixture
@@ -531,6 +532,76 @@ def test_browse_menu_items_no_search_match(test_restaurants, test_users,
 
     assert response.status_code == 200
     assert data["items"] == []
+
+def test_browse_menu_items_with_tags_success(test_restaurants, test_users,
+                                            restaurant_test_client, temp_restaurant_path):
+    """Scenario: If a menu has an item whose tags matches the given tags,
+    the menuItem should be shown.
+    Input:A valid request with a slist of tags where all tags match
+    at least one menuItem.
+    Exepected Behaviour:A List of menuitems whose tags match the given tags"""
+
+    request = "/restaurants/" + str(test_restaurants[0]["id"]) + "/menu?tags=Vegan"
+    response = restaurant_test_client.get(request, headers={"user-id": test_users[0]["id"]})
+
+    data = response.json()
+
+    with open(temp_restaurant_path, "r", encoding="utf-8") as f:
+        restaurants = json.load(f)
+
+    assert response.status_code == 200
+    assert restaurants[0]["menu"][0] == data["items"][0]
+
+def test_browse_menu_items_with_not_all_tags(test_restaurants, test_users,
+                                            restaurant_test_client):
+    """Spec: If a restaurant has menu items that do not match any tags, none
+    should be shown.
+    Input: A valid request with a list of tags that includes
+    at least one tag that does not match any menu item
+    Exepected Behaviour:An empty list should be returned """
+
+    request = "/restaurants/" + str(test_restaurants[0]["id"]) + "/menu?tags=vegan&tags=healthy"
+    response = restaurant_test_client.get(request, headers={"user-id": test_users[0]["id"]})
+
+    data = response.json()
+
+    assert response.status_code == 200
+    assert data["items"] == []
+
+def test_browse_menu_items_with_no_matching_tags(test_restaurants, test_users,
+                                            restaurant_test_client):
+    """Spec: If a restaurant has menu items that do not match any tags, none
+    should be shown.
+    Input: A valid request with a list of tags that do not match any menu item
+    Exepected Behaviour: An empty list should be returned"""
+
+    request = "/restaurants/" + str(test_restaurants[0]["id"]) + "/menu?tags=qqq"
+    response = restaurant_test_client.get(request, headers={"user-id": test_users[0]["id"]})
+
+    data = response.json()
+
+    assert response.status_code == 200
+    assert data["items"] == []
+
+def test_browse_menu_items_with_search_price_and_filter(test_restaurants, test_users,
+                                            restaurant_test_client, temp_restaurant_path):
+    """Scenario: A user browsing with a search term and multiple filters, should
+    see only menu items matching all specfied criteria.
+    Input:A valid request with a search term, tags, and price range that matches
+    a menu_item.
+    Exepected Behaviour:A List of menuitems matching all criteria should be returned"""
+
+    request = "/restaurants/" + str(test_restaurants[0]["id"])
+    request = request + "/menu?tags=vegan&search=vega&price-max=14.00&min-price=5.00"
+    response = restaurant_test_client.get(request, headers={"user-id": test_users[0]["id"]})
+
+    data = response.json()
+
+    with open(temp_restaurant_path, "r", encoding="utf-8") as f:
+        restaurants = json.load(f)
+
+    assert response.status_code == 200
+    assert restaurants[0]["menu"][0] == data["items"][0]
 
 def test_browse_menu_items_with_menu_items_in_price_ranges(test_restaurants, test_users,
                                             restaurant_test_client, temp_restaurant_path):
