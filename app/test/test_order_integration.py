@@ -416,7 +416,8 @@ def test_simulate_payment_success(temp_order_path,
     """
     Spec: System should simulate payment for an order
     Input: valid order_id and valid payment details
-    Expected behavior: Order status updated to Paid and success message returned
+    Expected behavior: Order status updated to Paid and success message returned,
+    and both customer and restaurant owner receive notifications
     """
 
     mock_send =  mocker.patch("app.services.order_services.send_notification")
@@ -438,13 +439,21 @@ def test_simulate_payment_success(temp_order_path,
     assert r.json()["message"] == "Payment Accepted"
     assert updated_order["status"] == "Paid"
 
-    mock_send.assert_called_once()
+    assert mock_send.call_count == 2
 
-    notification = mock_send.call_args[0][0]
+    calls = mock_send.call_args_list
 
-    assert notification.user_id == test_users[0]["id"]
-    assert notification.message == (
+    customer_notification = calls[0][0][0]
+    owner_notification = calls[1][0][0]
+
+    assert customer_notification.user_id == test_users[0]["id"]
+    assert customer_notification.message == (
         f"Your order {order_id} has been paid successfully"
+    )
+
+    assert owner_notification.user_id == test_users[1]["id"]
+    assert owner_notification.message == (
+        f"You have received a new order {order_id}"
     )
 
 def test_simulate_payment_order_not_found(order_test_client,
