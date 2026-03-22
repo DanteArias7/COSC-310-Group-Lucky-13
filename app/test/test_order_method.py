@@ -121,6 +121,16 @@ def valid_payment_amex():
     }
 
 @pytest.fixture
+def amex_card_invalid_cvv():
+    """Sample Amex payment details with invalid CVV for payment simulation tests"""
+    return {
+        "user_id" : "00000000-0000-0000-0000-000000000001",
+        "card_number": "123456781234567",
+        "cvv": "123",
+        "expiration_date": "12/30"
+    }
+
+@pytest.fixture
 def invalid_card_payment():
     """Invalid card number payment payload"""
     return {
@@ -274,13 +284,20 @@ def test_simulate_payment_success(mocked_repo, order_service, test_order_status,
     )
 
 def test_simulate_payment_amex(mocked_repo, order_service,
-                                           test_order_status, valid_payment_amex):
+                                           test_order_status, valid_payment_amex, mocker):
     """Spec: Method should simulate payment for an order and update order status to Paid
     Input: valid order_id and valid Amex payment details
     Expected behavior: Order status should update to Paid &&
                         method should return payment result message
     """
     mocked_repo.load_all_orders.return_value = test_order_status
+
+    mock_restaurant_obj = mocker.Mock()
+    mock_restaurant_obj.user_id = "owner-123"
+
+    order_service.restaurant_service.fetch_restaurant = mocker.Mock(
+        return_value=mock_restaurant_obj
+    )
 
     payment = Payment(**valid_payment_amex)
 
@@ -292,6 +309,22 @@ def test_simulate_payment_amex(mocked_repo, order_service,
     assert result.message == "Payment Accepted"
     assert test_order_status[0]["status"] == "Paid"
 
+def test_simulate_payment_amex_invalid_cvv(mocked_repo, order_service ,
+                                           test_order_status, amex_card_invalid_cvv):
+    """
+    Spec: Method should reject payment if CVV is invalid
+    Input: valid order_id and invalid Amex CVV
+    Expected behavior: HTTPException with status 400
+    """
+    mocked_repo.load_all_orders.return_value = test_order_status
+
+    payment = Payment(**amex_card_invalid_cvv)
+
+    with pytest.raises(HTTPException) as exc_info:
+        order_service.simulate_payment(test_order_status[0]["id"], payment)
+
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.detail == "Payment Rejected: Invalid CVV"
 
 
 def test_simulate_payment_order_not_found(mocked_repo, order_service , valid_payment):
