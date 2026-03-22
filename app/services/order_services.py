@@ -187,7 +187,7 @@ class OrderServices():
                 message=f"You have received a new order {order_id}"
             )
         )
-        
+    
     def get_all_available_delivery_orders(self) -> List[Order]:
         """
         Rules:
