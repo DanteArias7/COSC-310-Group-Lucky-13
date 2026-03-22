@@ -2,6 +2,8 @@
 import asyncio
 from app.schemas.notification import Notification
 
+STREAM_STOP  = object()
+
 notifications: dict[str, list[Notification]] = {}
 
 user_queues: dict[str, asyncio.Queue] = {}
