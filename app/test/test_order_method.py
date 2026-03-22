@@ -24,7 +24,7 @@ def order_service(mocked_repo):
 
 @pytest.fixture
 def test_carts():
-    """Initilize Test cart data for each test"""
+    """Initialize Test cart data for each test"""
     return [{"id" : "00000000-0000-0000-0000-000000000001",
             "user_id" : "00000000-0000-0000-0000-000000000001",
             "restaurant_id" : 101,
@@ -50,33 +50,33 @@ def test_carts():
 def test_orders():
     """Initialize test order data for each test"""
     return[{"id": "QQQQQQQ",
-                      "restaurant_id": 101,
-                      "customer_id": "00000000-0000-0000-0000-000000000001",
-                      "assigned_driver_id": "",
-                      "food_items": "2x Vegan Burger, 1x Bacon Burger",
-                      "order_date": "03-06-2025",
-                      "order_value": 24.35,
-                      "status": "Pending",
-                      "delivery_time": 0.0},
-                      {"id": "QQQQQQQ",
-                      "restaurant_id": 101,
-                      "customer_id": "00000000-0000-0000-0000-000000000001",
-                      "assigned_driver_id": "",
-                      "food_items": "2x Vegan Burger",
-                      "order_date": "03-06-2025",
-                      "order_value": 24.35,
-                      "status": "Pending",
-                      "delivery_time": 0.0},
-                      {"id": "QQQQQQQ",
-                      "restaurant_id": 101,
-                      "customer_id": "00000000-0000-0000-0000-000000000002",
-                      "assigned_driver_id": "",
-                      "food_items": "1x Hot Dog",
-                      "order_date": "03-06-2025",
-                      "order_value": 24.35,
-                      "status": "Pending",
-                      "delivery_time": 0.0}
-                      ]
+                "restaurant_id": 101,
+                "customer_id": "00000000-0000-0000-0000-000000000001",
+                "assigned_driver_id": "",
+                "food_items": "2x Vegan Burger, 1x Bacon Burger",
+                "order_date": "03-06-2025",
+                "order_value": 24.35,
+                "status": "Pending",
+                "delivery_time": 0.0},
+            {"id": "QQQQQQQ",
+                "restaurant_id": 101,
+                "customer_id": "00000000-0000-0000-0000-000000000001",
+                "assigned_driver_id": "",
+                "food_items": "2x Vegan Burger",
+                "order_date": "03-06-2025",
+                "order_value": 24.35,
+                "status": "Pending",
+                "delivery_time": 0.0},
+            {"id": "QQQQQQQ",
+                "restaurant_id": 101,
+                "customer_id": "00000000-0000-0000-0000-000000000002",
+                "assigned_driver_id": "",
+                "food_items": "1x Hot Dog",
+                "order_date": "03-06-2025",
+                "order_value": 24.35,
+                "status": "Pending",
+                "delivery_time": 0.0}
+            ]
 
 @pytest.fixture
 def test_order_status():
@@ -84,10 +84,12 @@ def test_order_status():
     return[{"id": "AAAAAAA",
          "restaurant_id": 101,
          "customer_id": "00000000-0000-0000-0000-000000000001",
+         "assigned_driver_id": "",
          "food_items": "1x Burger",
          "order_date": "03-06-2026",
          "order_value": 12.50,
-         "status": "Pending"}]
+         "status": "Pending",
+         "delivery_time": 0.0}]
 
 @pytest.fixture
 def test_order_status_2():
@@ -95,10 +97,12 @@ def test_order_status_2():
     return[{"id": "BBBBBBB",
          "restaurant_id": 101,
          "customer_id": "00000000-0000-0000-0000-000000000001",
+         "assigned_driver_id": "",
          "food_items": "1x Burger",
          "order_date": "03-06-2026",
          "order_value": 12.50,
-         "status": "Paid"}]
+         "status": "Paid",
+         "delivery_time": 0.0}]
 
 @pytest.fixture
 def valid_payment():
@@ -160,6 +164,86 @@ def expired_payment():
         "expiration_date": "01/20"
     }
 
+@pytest.fixture
+def test_orders_available():
+    """Orders with correct statuses for available delivery tests"""
+    return [
+        {"id": "AAAAAAA",
+            "restaurant_id": 101,
+            "customer_id": "00000000-0000-0000-0000-000000000001",
+            "assigned_driver_id": "",
+            "food_items": "2x Vegan Burger",
+            "order_date": "03-16-2026",
+            "order_value": 24.35,
+            "status": "Accepted_by_restaurant",
+            "delivery_time": 0.0},
+        {"id": "BBBBBBB",
+            "restaurant_id": 101,
+            "customer_id": "00000000-0000-0000-0000-000000000001",
+            "assigned_driver_id": "",
+            "food_items": "1x Hot Dog",
+            "order_date": "03-16-2026",
+            "order_value": 10.00,
+            "status": "Preparing",
+            "delivery_time": 0.0},
+        {"id": "CCCCCCC",
+            "restaurant_id": 101,
+            "customer_id": "00000000-0000-0000-0000-000000000001",
+            "assigned_driver_id": "00000001-0000-0000-0000-000000000000",
+            "food_items": "1x Salad",
+            "order_date": "03-16-2026",
+            "order_value": 8.00,
+            "status": "Ready_for_pickup",
+            "delivery_time": 0.0}
+    ]
+
+@pytest.fixture
+def test_orders_paid():
+    """Orders in Paid status for pending paid order tests"""
+    return [
+        {"id": "DDDDDDD",
+            "restaurant_id": 101,
+            "customer_id": "00000000-0000-0000-0000-000000000001",
+            "assigned_driver_id": "",
+            "food_items": "2x Vegan Burger",
+            "order_date": "03-16-2026",
+            "order_value": 24.35,
+            "status": "Paid",
+            "delivery_time": 0.0},
+        {"id": "EEEEEEE",
+            "restaurant_id": 101,
+            "customer_id": "00000000-0000-0000-0000-000000000002",
+            "assigned_driver_id": "",
+            "food_items": "1x Hot Dog",
+            "order_date": "03-16-2026",
+            "order_value": 10.00,
+            "status": "Pending",
+            "delivery_time": 0.0}
+    ]
+
+@pytest.fixture
+def test_orders_assigned():
+    """Orders with assigned driver for assigned order tests"""
+    return [
+        {"id": "FFFFFFF",
+            "restaurant_id": 101,
+            "customer_id": "00000000-0000-0000-0000-000000000001",
+            "assigned_driver_id": "00000001-0000-0000-0000-000000000000",
+            "food_items": "2x Vegan Burger",
+            "order_date": "03-16-2026",
+            "order_value": 24.35,
+            "status": "In_transit",
+            "delivery_time": 0.0},
+        {"id": "GGGGGGG",
+            "restaurant_id": 101,
+            "customer_id": "00000000-0000-0000-0000-000000000002",
+            "assigned_driver_id": "00000002-0000-0000-0000-000000000000",
+            "food_items": "1x Hot Dog",
+            "order_date": "03-16-2026",
+            "order_value": 10.00,
+            "status": "In_transit",
+            "delivery_time": 0.0}
+    ]
 
 #place_order Unit Tests
 def test_place_order_success(mocker, mocked_repo, order_service, test_carts):
@@ -511,3 +595,33 @@ def test_notify_restaurant_owner_restaurant_not_found(mocker, order_service):
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == f"Restaurant {restaurant_id} Not Found"
+
+#get_all_available_delivery_orders Unit tests
+def test_get_all_available_delivery_orders_success(mocked_repo,
+                                                   order_service,
+                                                   test_orders_available):
+    """
+    Spec: Method should return orders that are available for pickup
+    Input: orders with correct statuses and no assigned driver
+    Expected behavior: Returns only unassigned orders with valid statuses
+    """
+    mocked_repo.load_all_orders.return_value = test_orders_available
+
+    result = order_service.get_all_available_delivery_orders()
+
+    assert len(result) == 2
+    assert all(order.assigned_driver_id == "" for order in result)
+    assert all(order.status in ("Accepted_by_restaurant", "Preparing", "Ready_for_pickup")
+               for order in result)
+
+def test_get_all_available_delivery_orders_none_found(mocked_repo, order_service):
+    """
+    Spec: Method should return empty list if no available orders exist
+    Input: empty order list
+    Expected behavior: Returns empty list
+    """
+    mocked_repo.load_all_orders.return_value = []
+
+    result = order_service.get_all_available_delivery_orders()
+
+    assert result == []
