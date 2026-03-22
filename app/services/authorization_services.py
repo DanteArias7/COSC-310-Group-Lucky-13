@@ -32,9 +32,9 @@ ROLE_PERMISSIONS: dict = {
     ],
     "delivery_driver": [
         "browse_restaurants",
-        "view_delivery_requests",
-        "accept_delivery",
-        "reject_delivery",
+        "view_available_deliveries",
+        "view_assigned_deliveries",
+        "request_delivery",
         "update_delivery_status",
         "manage_own_account",
     ],
