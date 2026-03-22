@@ -299,6 +299,21 @@ def test_get_order_by_user_id_user_with_no_orders(mocked_repo, order_service, te
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "No Orders Found for User"
 
+#get_order_by_restaurant_id Unit Tests
+def test_get_order_by_restaurant_id_success(mocked_repo, order_service, test_orders):
+    """
+    Spec: Method should return orders for a restaurant
+    Input: valid restaurant ID
+    Expected behavior: Method returns List of order objects
+    """
+    mocked_repo.load_all_orders.return_value = test_orders
+
+    orders = order_service.get_orders_by_restaurant_id(test_orders[0]["restaurant_id"])
+
+    expected_orders = [test_orders[0], test_orders[1], test_orders[2]]
+
+    assert orders == expected_orders
+
 #simulate_payment Unit Tests
 def test_simulate_payment_success(mocked_repo, order_service, test_order_status,
                                   valid_payment, mocker):
