@@ -641,3 +641,45 @@ def test_get_all_pending_paid_orders_unauthorized(order_test_client, test_users)
     r = order_test_client.get("/orders/pending", headers={"user-id": customer["id"]})
 
     assert r.status_code == 403
+
+#get_all_assigned_orders Integration tests
+
+def test_get_all_assigned_orders_success(order_test_client, test_users, test_orders):
+    """
+    Spec:
+    Input:
+    Expected:
+    """
+    driver = test_users[3]
+    expected_orders = [test_orders[5], test_orders[8]]
+
+    r = order_test_client.get("/orders/assigned", headers={"user-id": driver["id"]})
+
+    assert r.status_code == 200
+    assert r.json() == expected_orders
+
+def test_get_all_assigned_orders_success_2(order_test_client, test_users, test_orders):
+    """
+    Spec:
+    Input:
+    Expected:
+    """
+    driver2 = test_users[4]
+    expected_orders = [test_orders[9]]
+
+    r = order_test_client.get("/orders/assigned", headers={"user-id": driver2["id"]})
+
+    assert r.status_code == 200
+    assert r.json() == expected_orders
+
+def test_get_all_assigned_orders_unauthorized(order_test_client, test_users):
+    """
+    Spec:
+    Input:
+    Expected:
+    """
+    customer = test_users[0]
+
+    r = order_test_client.get("/orders/assigned", headers={"user-id": customer["id"]})
+
+    assert r.status_code == 403
