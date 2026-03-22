@@ -160,6 +160,30 @@ class OrderServices():
                                 detail="Payment Rejected: Invalid expiration date") from exc
         return True
 
+    def get_all_available_delivery_orders(self) -> List[Order]:
+        """
+        Rules:
+        - available orders must
+            - be Accepted_by_restaurant or Preparing or Ready_for_pickup
+            - not have an assigned_driver_id
+
+        Args: none
+
+        Returns:
+        A list of Order objects with the matching order status (as specified in rules)
+        """
+        orders = self.repo.load_all_orders()
+        available_orders = []
+
+        for order in orders:
+            if ((order["status"] == "Accepted_by_restaurant" or
+                order["status"] == "Preparing" or
+                order["status"] == "Ready_for_pickup") and
+                not order["assigned_driver_id"]):
+                available_orders.append(Order(**order))
+
+        return available_orders
+
 class IOrderRepo(Protocol):
     """Order Repo Interface"""
     def save_order(self, order: Dict[str, Any]) -> None:

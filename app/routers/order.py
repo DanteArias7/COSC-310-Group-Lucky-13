@@ -116,3 +116,28 @@ def simulate_payment(order_id: str,
     authorization_service.authorize(user_id, "make_payment")
     authorization_service.authorize_access(user_id, payload.user_id)
     return order_service.simulate_payment(order_id, payload)
+
+@order_router.get("/available", response_model=List[Order], status_code=200)
+def get_all_available_delivery_orders(
+        order_repo: OrderRepo = Depends(create_order_repo),
+        user_repo: UserRepo = Depends(create_user_repo),
+        user_id: str = Header(..., alias="user-id")):
+    """Gets all orders available for delivery drivers to pick up.
+
+    Rules:
+    - user must have delivery_driver role
+
+    Args:
+    order_repo: Order repository
+    user_repo: User repository
+    user_id: current user
+
+    Returns: List of available Order objects
+
+    Raises:
+        403 if user does not have delivery_driver role
+    """
+    order_service = OrderServices(order_repo)
+    authorization_service = AuthorizationServices(user_repo)
+    authorization_service.authorize(user_id, "view_available_deliveries")
+    return order_service.get_all_available_delivery_orders()
