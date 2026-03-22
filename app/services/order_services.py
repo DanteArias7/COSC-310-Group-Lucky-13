@@ -227,7 +227,7 @@ class OrderServices():
         pending_paid_orders = []
 
         for order in orders:
-            if (order["status"] == "Paid"):
+            if order["status"] == "Paid":
                 pending_paid_orders.append(Order(**order))
 
         return pending_paid_orders
