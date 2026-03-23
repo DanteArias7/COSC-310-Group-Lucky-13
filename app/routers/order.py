@@ -15,6 +15,7 @@ from app.schemas.payment import Payment, PaymentResult
 from app.services.restaurant_services import RestaurantServices
 
 ORDER_DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "orders.csv"
+PAST_ORDER_DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "past_orders.csv"
 
 order_router = APIRouter(prefix="/orders",
                          tags=["order"])
@@ -25,6 +26,13 @@ def create_order_repo():
     Returns:
             UserRepo object with the order data path attribute"""
     return OrderRepo(ORDER_DATA_PATH)
+
+def create_past_order_repo():
+    """"Initialize repo object with data path to past order data store
+
+    Returns:
+            OrderRepo object with the order data path attribute"""
+    return OrderRepo(PAST_ORDER_DATA_PATH)
 
 def create_restaurant_repo():
     """"Initialize repo object with data path to user data store
@@ -89,6 +97,34 @@ def get_all_orders_for_a_user(order_repo: OrderRepo = Depends(create_order_repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "view_own_orders")
     return order_service.get_orders_by_user_id(user_id)
+
+@order_router.get("/{restaurant_id}/past", response_model=List[Order], status_code=200)
+def get_all_past_orders_for_a_restaurant(restaurant_id: int,
+                order_repo: OrderRepo = Depends(create_order_repo),
+                restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
+                user_repo: UserRepo = Depends(create_user_repo),
+                user_id: str = Header(...,alias="user-id")):
+    """Gets all the previous and current orders for a given user.
+
+    Rules:
+        User must have restaurant_id role
+
+    Args:
+        order_repo: The order repo object to allow order_service to access order data store,
+        user_repo: The user repo object to allow order_service to access user data store,
+        user_id: header sent with request indicating current user
+        restaurant_id: The ID of the restaurant's orders being requested
+
+    Returns:
+        List of order objects pertaining to the given restaurant"""
+
+    order_service = OrderServices(order_repo)
+    restaurant_service = RestaurantServices(restaurant_repo)
+    authorization_service = AuthorizationServices(user_repo)
+    authorization_service.authorize(user_id, "view_past_orders")
+    restaurant_owner_id = restaurant_service.fetch_restaurant(restaurant_id).user_id
+    authorization_service.authorize_access(user_id, restaurant_owner_id)
+    return order_service.get_past_orders_by_restaurant_id(restaurant_id)
 
 #pylint: disable=too-many-arguments
 #pylint: disable=too-many-positional-arguments
