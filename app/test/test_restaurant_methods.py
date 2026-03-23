@@ -122,9 +122,13 @@ def test_fetch_name_searched_restaurant_no_matching_restaurant(test_restaurants,
 #create_restaurant  Unit Tests
 def test_create_new_restaurant(mocker, mocked_repo, restaurant_service):
     """Scenario: check that creating a valid restaurant returns a valid restaurant"""
-    mocked_id = 99
+    mocked_restaurant_id = 99
     id_mock = mocker.patch("app.services.restaurant_services.random.randint")
-    id_mock.return_value = mocked_id
+    id_mock.return_value = mocked_restaurant_id
+
+    mocked_menu_item_id = "00000000-0000-0000-0000-000000000002"
+    id_mock = mocker.patch("app.services.restaurant_services.uuid.uuid4")
+    id_mock.return_value = mocked_menu_item_id
 
     mocked_repo.load_all_restaurants.return_value = []
 
@@ -138,8 +142,7 @@ def test_create_new_restaurant(mocker, mocked_repo, restaurant_service):
         address="123 Taco Lane",
         tags=["mexican"],
         menu=[
-            MenuItem(
-                id="00000000-0000-0000-0000-000000000011",
+            CreateMenuItem(
                 name="Taco",
                 description="Beef taco",
                 price=5.0,
@@ -150,7 +153,7 @@ def test_create_new_restaurant(mocker, mocked_repo, restaurant_service):
 
     result = restaurant_service.create_new_restaurant(user_id, payload)
 
-    assert result.id == mocked_id
+    assert result.id == mocked_restaurant_id
     assert result.user_id == "00000000-0000-0000-0000-000000000001"
     assert result.name == "Taco Town"
     assert result.hours == {"Monday": "10:00-20:00"}
@@ -158,6 +161,10 @@ def test_create_new_restaurant(mocker, mocked_repo, restaurant_service):
     assert result.address == "123 Taco Lane"
     assert result.tags == ["mexican"]
     assert result.menu[0].name == "Taco"
+    assert result.menu[0].id == mocked_menu_item_id
+    assert result.menu[0].price == 5.0
+    assert result.menu[0].description == "Beef taco"
+
     mocked_repo.save_all_restaurants.assert_called_once()
 
 #update_restaurant Unit Tests
@@ -365,6 +372,54 @@ def test_fetch_name_searched_menu_items_no_search_match(test_restaurants, restau
     payload = Restaurant(**test_restaurants[0])
 
     result = restaurant_service.get_name_searched_menu_items(payload, "qqq")
+
+    assert result == []
+
+#filter_restaurants_by_tags Unit Tests
+def test_filter_menu_items_by_tags_success(restaurant_service, test_restaurants):
+    """Spec: A list of tags is given, matching at least one restaurant
+    Input: A list of RestaurantResults and a List of tags matching a restaurants tags,
+    Expected Behaviour: Method retruns a List of RestaurantResult objects,
+    whose tags include all the given tags"""
+
+    menu_items = test_restaurants[0]["menu"]
+
+    for i, menu_item in enumerate(menu_items):
+        menu_items[i] = MenuItem(**menu_item)
+
+    result = restaurant_service.filter_menu_items_by_tags(menu_items, ["vegan"])
+
+    assert result == [test_restaurants[0]["menu"][0]]
+
+def test_filter_menu_items_by_tags_not_all_tags(restaurant_service, test_restaurants):
+    """Spec: If none of the restaurants contain all the tags specified, nothing should be returned
+    Input: A valid list of RestaurantResults and a list of tags
+    where one does not match any restaurant
+    Expected Behaviour: Method returns an empty list"""
+
+    menu_items = test_restaurants[0]["menu"]
+
+    for i, menu_item in enumerate(menu_items):
+        menu_items[i] = MenuItem(**menu_item)
+
+    result = restaurant_service.filter_menu_items_by_tags(menu_items,
+                                                           ["vegan", "green"])
+
+    assert result == []
+
+def test_filter_restaurant_by_tags_no_matching_tags(restaurant_service, test_restaurants):
+    """Spec: If none of the restaurants contain any of the tags specified,
+    nothing should be returned
+    Input: A valid list of RestaurantResults and a list of tags that do not match any restaurant
+    Expected Behaviour: Method returns an empty list"""
+
+    menu_items = test_restaurants[0]["menu"]
+
+    for i, menu_item in enumerate(menu_items):
+        menu_items[i] = MenuItem(**menu_item)
+
+    result = restaurant_service.filter_menu_items_by_tags(menu_items,
+                                                           ["qqq"])
 
     assert result == []
 

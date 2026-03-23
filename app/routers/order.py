@@ -90,10 +90,13 @@ def get_all_orders_for_a_user(order_repo: OrderRepo = Depends(create_order_repo)
     authorization_service.authorize(user_id, "view_own_orders")
     return order_service.get_orders_by_user_id(user_id)
 
+#pylint: disable=too-many-arguments
+#pylint: disable=too-many-positional-arguments
 @order_router.post("/{order_id}/simulate-payment", response_model=PaymentResult, status_code=200)
 def simulate_payment(order_id: str,
                      payload: Payment,
                      order_repo: OrderRepo = Depends(create_order_repo),
+                     restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
                      user_repo: UserRepo = Depends(create_user_repo),
                      user_id: str = Header(..., alias="user-id")):
     """Simulates payment processing for an order
@@ -111,7 +114,8 @@ def simulate_payment(order_id: str,
         The payment result of the simulated payment process
     """
 
-    order_service = OrderServices(order_repo)
+    restaurant_service = RestaurantServices(restaurant_repo)
+    order_service = OrderServices(order_repo , restaurant_service)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "make_payment")
     authorization_service.authorize_access(user_id, payload.user_id)
@@ -172,3 +176,27 @@ def driver_reject_order(
 
     order_service = OrderServices(order_repo)
     return order_service.driver_reject_order(order_id, user_id)
+@order_router.get("/available", response_model=List[Order], status_code=200)
+def get_all_available_delivery_orders(
+        order_repo: OrderRepo = Depends(create_order_repo),
+        user_repo: UserRepo = Depends(create_user_repo),
+        user_id: str = Header(..., alias="user-id")):
+    """Gets all orders available for delivery drivers to pick up.
+
+    Rules:
+    - user must have delivery_driver role
+
+    Args:
+    order_repo: Order repository
+    user_repo: User repository
+    user_id: current user
+
+    Returns: List of available Order objects
+
+    Raises:
+        403 if user does not have delivery_driver role
+    """
+    order_service = OrderServices(order_repo)
+    authorization_service = AuthorizationServices(user_repo)
+    authorization_service.authorize(user_id, "view_available_deliveries")
+    return order_service.get_all_available_delivery_orders()
