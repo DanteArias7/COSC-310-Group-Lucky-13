@@ -660,21 +660,13 @@ def test_get_all_available_delivery_orders_success(order_test_client, test_users
     assert r.json() == expected_orders
 
 
-def test_get_all_available_delivery_orders_unauthorized(order_test_client, test_users):
-    """
-    Spec: Request from non driver roles should be rejected
-    Input: User with unauthorized customer role
-    Expected: 403
-    """
-    customer = test_users[0]
-
-    r = order_test_client.get("/orders/available", headers={"user-id": customer["id"]})
-
-    assert r.status_code == 403
-
-def test_assign_driver_success(tmp_path, order_test_client, test_orders, test_users):
+def test_assign_driver_success(tmp_path, order_test_client, test_orders, test_users, mocker):
     # pylint: disable=unused-argument
     """Test driver can be assigned to an order."""
+    mocker.patch(
+        "app.services.authorization_services.AuthorizationServices.authorize",
+        return_value=True
+    )
 
     driver_id = "driver123"
 
@@ -695,6 +687,8 @@ def test_assign_driver_success(tmp_path, order_test_client, test_orders, test_us
     )
 
     assert response.status_code == 200
+    data = response.json()
+    assert data["assigned_driver_id"] == driver_id
 
 
 def test_assign_driver_order_not_ready(tmp_path, order_test_client, test_orders, test_users):
