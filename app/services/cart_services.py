@@ -89,15 +89,25 @@ class CartServices():
         })
 
     def remove_item_from_cart(self, cart_id: str, menu_item_id: str) -> Cart:
-        """Remove a menu item from a user's cart"""
+        """Remove a menu item from a user's cart
+
+        Args:
+            cart_id: The ID of the cart having an item deleted
+            menu_item_id: The ID of the menu item being deleted
+
+        Returns:
+            The updated cart object
+
+        Raises:
+            A 404 HTTPException if either the menu_item or cart is
+            not found"""
         carts = self.repo.load_all_carts()
 
-        for i, cart in enumerate(carts):
+        for cart in carts:
             if cart["id"] == cart_id:
                 for cart_item in cart["cart_items"]:
                     if cart_item["item"]["id"] == menu_item_id:
                         cart["cart_items"].remove(cart_item)
-                        carts[i] = cart
                         self.repo.save_all_carts(carts)
                         return Cart(**cart)
                 raise HTTPException(status_code=404, detail=f"Menu Item {menu_item_id} Not Found")
