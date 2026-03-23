@@ -683,3 +683,70 @@ def test_get_all_available_delivery_orders_unauthorized(order_test_client, test_
     r = order_test_client.get("/orders/available", headers={"user-id": customer["id"]})
 
     assert r.status_code == 403
+
+def test_assign_driver_success(tmp_path, order_test_client, test_orders, test_users):
+    """Test driver can be assigned to an order."""
+    # Setup order in Ready_for_pickup status
+    test_orders[0]["status"] = "Ready_for_pickup"
+    test_orders[0]["assigned_driver_id"] = ""
+
+    order_path = tmp_path / "orders.csv"
+    pandas.DataFrame(test_orders).to_csv(order_path, index=False)
+
+    def override_order_repo():
+        return OrderRepo(order_path)
+
+    app.dependency_overrides[create_order_repo] = override_order_repo
+
+    # Make request
+    response = order_test_client.put(
+        f"/orders/{test_orders[0]['id']}/assign-driver",
+        headers={"user-id": test_users[0]["id"]}
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["assigned_driver_id"] == test_users[0]["id"]
+    assert data["status"] == "Ready_for_pickup"  # Status unchanged
+
+
+def test_assign_driver_order_not_ready(tmp_path, order_test_client, test_orders, test_users):
+    """Test cannot assign driver to order not ready for pickup."""
+    test_orders[0]["status"] = "Preparing"
+    test_orders[0]["assigned_driver_id"] = ""
+
+    order_path = tmp_path / "orders.csv"
+    pandas.DataFrame(test_orders).to_csv(order_path, index=False)
+
+    def override_order_repo():
+        return OrderRepo(order_path)
+
+    app.dependency_overrides[create_order_repo] = override_order_repo
+
+    response = order_test_client.put(
+        f"/orders/{test_orders[0]['id']}/assign-driver",
+        headers={"user-id": test_users[0]["id"]}
+    )
+
+    assert response.status_code == 422
+
+
+def test_assign_driver_already_assigned(tmp_path, order_test_client, test_orders, test_users):
+    """Test cannot assign driver to already assigned order."""
+    test_orders[0]["status"] = "Ready_for_pickup"
+    test_orders[0]["assigned_driver_id"] = "other_driver"
+
+    order_path = tmp_path / "orders.csv"
+    pandas.DataFrame(test_orders).to_csv(order_path, index=False)
+
+    def override_order_repo():
+        return OrderRepo(order_path)
+
+    app.dependency_overrides[create_order_repo] = override_order_repo
+
+    response = order_test_client.put(
+        f"/orders/{test_orders[0]['id']}/assign-driver",
+        headers={"user-id": test_users[0]["id"]}
+    )
+
+    assert response.status_code == 409

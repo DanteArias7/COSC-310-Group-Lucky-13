@@ -240,7 +240,7 @@ class OrderServices():
         Rules:
         - Order must be in 'Ready_for_pickup' status
         - Order must not have an assigned driver
-        - Assigns driver to order, status changes to 'Assigned_to_driver'
+        - Only assigns driver ID - status remains 'Ready_for_pickup'
         """
         orders = self.repo.load_all_orders()
         order_dict, index = self._find_order(orders, order_id)
@@ -261,9 +261,10 @@ class OrderServices():
                     f"{order_dict['assigned_driver_id']}"
             )
 
-        # Assign driver and update status
+        # ONLY assign driver - status remains unchanged
         orders[index]["assigned_driver_id"] = driver_id
-        orders[index]["status"] = "Assigned_to_driver"
+        # orders[index]["status"] = "Assigned_to_driver"  # REMOVED - don't change status
+
         self.repo.update_orders(orders)
 
         # Notify customer
