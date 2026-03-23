@@ -401,15 +401,15 @@ def test_get_order_by_user_id_success(order_test_client, test_orders,
     assert r.status_code == 200
     assert user_orders == expected_orders
 
-def test_get_order_by_user_id_with_no_orders(order_test_client,
-                             test_users):
+def test_get_order_by_user_id_with_no_orders(order_test_client, test_users):
     """
     Spec: System should return error if user with no orders attempts to get order
     Input: valid user_id that does not have any orders
     Expected behavior: Method raises 404 HTTPException
     """
+    non_existent_user = "user-with-no-orders-12345"
 
-    r = order_test_client.get("/orders", headers={"user-id" : test_users[0]["id"]})
+    r = order_test_client.get("/orders", headers={"user-id": non_existent_user})
 
     assert r.status_code == 404
 
@@ -633,11 +633,13 @@ def test_simulate_payment_unauthorized_user(order_test_client,
 
     order_id = test_orders[0]["id"]
 
+    unauthorized_user = test_users[2]["id"]
+
     request = f"/orders/{order_id}/simulate-payment"
 
     r = order_test_client.post(
         request,
-        headers={"user-id": test_users[0]["id"]},
+        headers={"user-id": unauthorized_user},
         json=valid_payment
     )
 
