@@ -146,8 +146,9 @@ def get_all_available_delivery_orders(
     authorization_service.authorize(user_id, "view_available_deliveries")
     return order_service.get_all_available_delivery_orders()
 
-@order_router.get("/pending", response_model=List[Order], status_code=200)
+@order_router.get("/{restaurant_id}/pending", response_model=List[Order], status_code=200)
 def get_all_pending_paid_orders(
+        restaurant_id: int,
         order_repo: OrderRepo = Depends(create_order_repo),
         user_repo: UserRepo = Depends(create_user_repo),
         restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
@@ -169,7 +170,8 @@ def get_all_pending_paid_orders(
     """
     order_service = OrderServices(order_repo)
     authorization_service = AuthorizationServices(user_repo)
-    authorization_service.authorize(user_id, "view_incoming_orders")
     restaurant_service = RestaurantServices(restaurant_repo)
-    restaurant = restaurant_service.get_restaurant_by_owner(user_id)
-    return order_service.get_all_pending_paid_orders(restaurant.id)
+    authorization_service.authorize(user_id, "view_incoming_orders")
+    authorization_service.authorize_access(user_id,
+                            restaurant_service.fetch_restaurant(restaurant_id).user_id)
+    return order_service.get_all_pending_paid_orders(restaurant_id)

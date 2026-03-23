@@ -695,7 +695,7 @@ def test_get_all_pending_paid_orders_success(order_test_client, test_users, test
     owner = test_users[1]
     expected_orders = [test_orders[6]]
 
-    r = order_test_client.get("/orders/pending", headers={"user-id": owner["id"]})
+    r = order_test_client.get("/orders/101/pending", headers={"user-id": owner["id"]})
 
     assert r.status_code == 200
     assert r.json() == expected_orders
@@ -708,6 +708,6 @@ def test_get_all_pending_paid_orders_unauthorized(order_test_client, test_users)
     """
     customer = test_users[0]
 
-    r = order_test_client.get("/orders/pending", headers={"user-id": customer["id"]})
+    r = order_test_client.get("/orders/101/pending", headers={"user-id": customer["id"]})
 
     assert r.status_code == 403

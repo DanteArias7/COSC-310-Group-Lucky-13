@@ -119,16 +119,6 @@ class RestaurantServices():
                 detail="Restaurant not found",
             )
 
-    def get_restaurant_by_owner(self, user_id: str) -> Restaurant:
-        """Fetches the restaurant by user id"""
-        restaurants = self.repo.load_all_restaurants()
-
-        for restaurant in restaurants:
-            if restaurant["user_id"] == user_id:
-                return Restaurant(**restaurant)
-
-        raise HTTPException(status_code=404, detail="No restaurant found for this owner")
-
     def update_restaurant(self, restaurant_id: int,
                           updated_restaurant: UpdateRestaurant) -> Restaurant:
         """Updates a restaurant's identifying information
