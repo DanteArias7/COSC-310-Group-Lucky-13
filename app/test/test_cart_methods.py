@@ -1,3 +1,5 @@
+# pylint: disable=line-too-long
+
 """Unit tests for cart methods."""
 from fastapi import HTTPException
 import pytest
