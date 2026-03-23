@@ -2,8 +2,6 @@
 """Repository layer for order data."""
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-import json
-import os
 import ast
 import pandas
 
@@ -58,14 +56,3 @@ class OrderRepo():
             if order["id"] == order_id:
                 return order
         return None
-    
-    def save_all_orders(self, orders: List[Dict[str, Any]]) -> None:
-        """Overwrite all orders atomically using a temp file."""
-        self._write(orders)
-
-    def _write(self, orders: List[Dict[str, Any]]) -> None:
-        """Write orders list to disk atomically."""
-        temp_path = self.data_path.with_suffix(".tmp")
-        with open(temp_path, "w", encoding="utf-8") as f:
-            json.dump(orders, f, ensure_ascii=False, indent=2)
-        os.replace(temp_path, self.data_path)

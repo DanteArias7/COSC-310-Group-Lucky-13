@@ -377,3 +377,58 @@ def test_retry_payment_after_failure(mocked_repo,
     )
 
     assert result.message == "Payment Accepted"
+
+
+    # Restaurant rejection tests
+def test_restaurant_reject_pending_order(mocker, mocked_repo, order_service, test_orders):
+    """Test restaurant can reject pending order."""
+    mocked_repo.load_all_orders.return_value = test_orders
+    mock_notification = mocker.patch("app.services.order_services.send_notification")
+
+    result = order_service.restaurant_reject_order(test_orders[0]["id"])
+
+    assert result.status == "Cancelled"
+    assert result.assigned_driver_id == ""
+    mock_notification.assert_called_once()
+
+def test_restaurant_reject_order_wrong_status(mocked_repo, order_service, test_orders):
+    """Test restaurant cannot reject order in wrong status."""
+    test_orders[0]["status"] = "In_transit"
+    mocked_repo.load_all_orders.return_value = test_orders
+
+    with pytest.raises(HTTPException) as exc_info:
+        order_service.restaurant_reject_order(test_orders[0]["id"])
+    assert exc_info.value.status_code == 422
+
+# Driver rejection tests
+def test_driver_reject_assigned_order(mocker, mocked_repo, order_service, test_orders):
+    """Test driver can reject assigned order."""
+    test_orders[1]["assigned_driver_id"] = "driver123"
+    test_orders[1]["status"] = "Preparing"
+    mocked_repo.load_all_orders.return_value = test_orders
+    mock_notification = mocker.patch("app.services.order_services.send_notification")
+
+    result = order_service.driver_reject_order(test_orders[1]["id"], "driver123")
+
+    assert result.assigned_driver_id == ""
+    assert result.status == "Preparing"
+    mock_notification.assert_called_once()
+
+def test_driver_reject_order_not_assigned_to_them(mocked_repo, order_service, test_orders):
+    """Test driver cannot reject order assigned to another driver."""
+    test_orders[1]["assigned_driver_id"] = "other_driver"
+    mocked_repo.load_all_orders.return_value = test_orders
+
+    with pytest.raises(HTTPException) as exc_info:
+        order_service.driver_reject_order(test_orders[1]["id"], "driver123")
+    assert exc_info.value.status_code == 403
+
+def test_driver_reject_order_in_transit(mocked_repo, order_service, test_orders):
+    """Test driver cannot reject order in transit."""
+    test_orders[1]["assigned_driver_id"] = "driver123"
+    test_orders[1]["status"] = "In_transit"
+    mocked_repo.load_all_orders.return_value = test_orders
+
+    with pytest.raises(HTTPException) as exc_info:
+        order_service.driver_reject_order(test_orders[1]["id"], "driver123")
+    assert exc_info.value.status_code == 422

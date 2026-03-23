@@ -1,7 +1,7 @@
 """API Endpoints for Order functionality"""
 from pathlib import Path
 from typing import List
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends, Header, HTTPException
 from app.repositories.order_repo import OrderRepo
 from app.repositories.restaurant_repo import RestaurantRepo
 from app.repositories.user_repo import UserRepo
@@ -116,3 +116,59 @@ def simulate_payment(order_id: str,
     authorization_service.authorize(user_id, "make_payment")
     authorization_service.authorize_access(user_id, payload.user_id)
     return order_service.simulate_payment(order_id, payload)
+
+@order_router.post("/{order_id}/reject/restaurant", response_model=Order, status_code=200)
+def restaurant_reject_order(
+    order_id: str,
+    order_repo: OrderRepo = Depends(create_order_repo),
+    user_repo: UserRepo = Depends(create_user_repo),
+    restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
+    user_id: str = Header(..., alias="user-id")
+):
+    """Restaurant owner rejects an order.
+
+    Rules:
+    - User must have restaurant_owner role
+    - Order must belong to their restaurant
+    - Order must be in Pending or Accepted_by_restaurant status
+    """
+    # Authorize user role
+    auth_service = AuthorizationServices(user_repo)
+    auth_service.authorize(user_id, "manage_restaurant_orders")
+
+    # Get order to verify restaurant ownership
+    order_service = OrderServices(order_repo)
+    orders = order_repo.load_all_orders()
+    order = next((o for o in orders if o["id"] == order_id), None)
+    if not order:
+        raise HTTPException(status_code=404, detail=f"Order {order_id} not found")
+
+    # Verify restaurant ownership
+    restaurant_service = RestaurantServices(restaurant_repo)
+    restaurant = restaurant_service.fetch_restaurant(restaurant_id=order["restaurant_id"])
+    if str(restaurant.user_id) != user_id:
+        raise HTTPException(status_code=403, detail="You don't own this restaurant")
+
+    return order_service.restaurant_reject_order(order_id)
+
+
+@order_router.post("/{order_id}/reject/driver", response_model=Order, status_code=200)
+def driver_reject_order(
+    order_id: str,
+    order_repo: OrderRepo = Depends(create_order_repo),
+    user_repo: UserRepo = Depends(create_user_repo),
+    user_id: str = Header(..., alias="user-id")
+):
+    """Driver rejects an assigned order.
+
+    Rules:
+    - User must have driver role
+    - Order must be assigned to this driver
+    - Order must not be In_transit or Complete
+    """
+    # Authorize user role
+    auth_service = AuthorizationServices(user_repo)
+    auth_service.authorize(user_id, "view_available_orders")
+
+    order_service = OrderServices(order_repo)
+    return order_service.driver_reject_order(order_id, user_id)

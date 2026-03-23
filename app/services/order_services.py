@@ -13,10 +13,14 @@ from app.schemas.notification import Notification
 from app.services.notification_services import send_notification
 from app.services.restaurant_services import RestaurantServices
 
+RESTAURANT_REJECTABLE_STATUSES = ["Pending", "Accepted_by_restaurant"]
+DRIVER_REJECTABLE_STATUSES = ["Accepted_by_restaurant", "Preparing", "Ready_for_pickup"]
+
 #pylint: disable=too-few-public-methods
 class OrderServices():
+
     """Order Service Class"""
-    def __init__(self, repo: IOrderRepo, restaurant_service: RestaurantServices = None):
+    def __init__(self, repo: IOrderRepo, restaurant_service: RestaurantServices = None): # pylint: disable=used-before-assignment
         """Initialize instance with repo object"""
         self.repo = repo
         self.restaurant_service = restaurant_service
@@ -93,6 +97,82 @@ class OrderServices():
             raise HTTPException(status_code=404,
                                 detail="No Orders Found for User")
         return user_orders
+
+    def restaurant_reject_order(self, order_id: str) -> Order:
+        """Restaurant owner rejects an order.
+
+        Sets order status to 'Cancelled' and clears assigned driver.
+        """
+        orders = self.repo.load_all_orders()
+        order, index = self._find_order(orders, order_id)
+
+        # Validate status
+        if order["status"] not in RESTAURANT_REJECTABLE_STATUSES:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Order {order_id} cannot be rejected in current status: {order['status']}"
+            )
+
+        # Update order
+        orders[index]["status"] = "Cancelled"
+        orders[index]["assigned_driver_id"] = ""
+
+        self.repo.update_orders(orders)
+
+        # Send notification
+        send_notification(
+            Notification(
+                user_id=order["customer_id"],
+                message=f"Your order {order_id} has been cancelled by the restaurant"
+            )
+     )
+
+        return Order(**orders[index])
+
+    def driver_reject_order(self, order_id: str, driver_id: str) -> Order:
+        """Driver rejects an assigned order.
+
+        Clears assigned_driver_id - order goes back to available pool.
+        Status remains unchanged.
+        """
+        orders = self.repo.load_all_orders()
+        order, index = self._find_order(orders, order_id)
+
+        # Validate driver assignment
+        if order["assigned_driver_id"] != driver_id:
+            raise HTTPException(
+                status_code=403,
+                detail="You can only reject orders assigned to you"
+            )
+
+        # Validate status (can't reject if in transit or later)
+        if order["status"] not in DRIVER_REJECTABLE_STATUSES:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Order {order_id} cannot be rejected in current status: {order['status']}"
+            )
+
+        # Clear driver - order goes back to available pool
+        orders[index]["assigned_driver_id"] = ""
+
+        self.repo.update_orders(orders)
+
+        # Notify restaurant
+        send_notification(
+            Notification(
+                user_id=order["customer_id"],  # Ideally restaurant owner ID
+                message=f"Driver rejected order {order_id} - available for reassignment"
+            )
+        )
+
+        return Order(**orders[index])
+
+    def _find_order(self, orders: List[Dict[str, Any]], order_id: str):
+        """Helper to find order by ID."""
+        for i, order in enumerate(orders):
+            if order["id"] == order_id:
+                return order, i
+        raise HTTPException(status_code=404, detail=f"Order {order_id} not found")
 
     def simulate_payment(self, order_id: str , payment: Payment) -> PaymentResult:
         """
