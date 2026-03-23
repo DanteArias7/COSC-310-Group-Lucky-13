@@ -331,7 +331,7 @@ def test_add_order_success(mocker, temp_order_path,
     mocked_time = mocker.patch("app.services.restaurant_services.date")
     mocked_time.today.return_value.strftime.return_value = "Monday"
 
-    r =order_test_client.post(request, headers={"user-id" : test_users[2]["id"]},
+    r =order_test_client.post(request, headers={"user-id" : test_users[0]["id"]},
                            json=payload)
 
     orders = pandas.read_csv(temp_order_path, keep_default_na=False)
@@ -375,7 +375,7 @@ def test_add_order_restaurant_closed(mocker,
     mocked_time = mocker.patch("app.services.restaurant_services.date")
     mocked_time.today.return_value.strftime.return_value = "Monday"
 
-    r =order_test_client.post(request, headers={"user-id" : test_users[2]["id"]},
+    r =order_test_client.post(request, headers={"user-id" : test_users[0]["id"]},
                            json=payload)
 
 
@@ -392,7 +392,7 @@ def test_get_order_by_user_id_success(order_test_client, test_orders,
     Expected behavior: Endpoint returns list of user orders
     """
 
-    r = order_test_client.get("/orders", headers={"user-id" : test_users[2]["id"]})
+    r = order_test_client.get("/orders", headers={"user-id" : test_users[0]["id"]})
 
     expected_orders = [test_orders[0], test_orders[1]]
 
@@ -409,7 +409,7 @@ def test_get_order_by_user_id_with_no_orders(order_test_client,
     Expected behavior: Method raises 404 HTTPException
     """
 
-    r = order_test_client.get("/orders", headers={"user-id" : test_users[2]["id"]})
+    r = order_test_client.get("/orders", headers={"user-id" : test_users[0]["id"]})
 
     assert r.status_code == 404
 
@@ -435,7 +435,7 @@ def test_simulate_payment_success(temp_order_path,
 
     r = order_test_client.post(
         request,
-        headers={"user-id": test_users[2]["id"]},
+        headers={"user-id": test_users[0]["id"]},
         json=valid_payment
     )
 
@@ -453,7 +453,7 @@ def test_simulate_payment_success(temp_order_path,
     customer_notification = calls[0][0][0]
     owner_notification = calls[1][0][0]
 
-    assert customer_notification.user_id == test_users[2]["id"]
+    assert customer_notification.user_id == test_users[0]["id"]
     assert customer_notification.message == (
         f"Your order {order_id} has been paid successfully"
     )
@@ -480,7 +480,7 @@ def test_simulate_payment_success_amex(temp_order_path,
 
     r = order_test_client.post(
         request,
-        headers={"user-id": test_users[2]["id"]},
+        headers={"user-id": test_users[0]["id"]},
         json=valid_payment_amex
     )
 
@@ -506,7 +506,7 @@ def test_simulate_payment_amex_invalid_cvv(order_test_client,
 
     r = order_test_client.post(
         request,
-        headers={"user-id": test_users[2]["id"]},
+        headers={"user-id": test_users[0]["id"]},
         json=amex_card_invalid_cvv
     )
 
@@ -525,7 +525,7 @@ def test_simulate_payment_order_not_found(order_test_client,
 
     r = order_test_client.post(request,
                                headers={"user-id": test_users
-                                        [2]["id"]}, json=valid_payment)
+                                        [0]["id"]}, json=valid_payment)
 
     assert r.status_code == 404
 
@@ -551,7 +551,7 @@ def test_simulate_payment_invalid_status(temp_order_path,
 
     r = order_test_client.post(
         request,
-        headers={"user-id": test_users[2]["id"]},
+        headers={"user-id": test_users[0]["id"]},
         json=valid_payment
     )
 
@@ -571,7 +571,7 @@ def test_simulate_payment_invalid_card(order_test_client,
 
     r = order_test_client.post(
         request,
-        headers={"user-id": test_users[2]["id"]},
+        headers={"user-id": test_users[0]["id"]},
         json=invalid_card_payment
     )
 
@@ -593,7 +593,7 @@ def test_simulate_payment_invalid_cvv(order_test_client,
 
     r = order_test_client.post(
         request,
-        headers={"user-id": test_users[2]["id"]},
+        headers={"user-id": test_users[0]["id"]},
         json=invalid_cvv_payment
     )
 
@@ -615,7 +615,7 @@ def test_simulate_payment_expired_card(order_test_client,
 
     r = order_test_client.post(
         request,
-        headers={"user-id": test_users[2]["id"]},
+        headers={"user-id": test_users[0]["id"]},
         json=expired_payment
     )
 
@@ -637,7 +637,7 @@ def test_simulate_payment_unauthorized_user(order_test_client,
 
     r = order_test_client.post(
         request,
-        headers={"user-id": test_users[2]["id"]},
+        headers={"user-id": test_users[0]["id"]},
         json=valid_payment
     )
 
