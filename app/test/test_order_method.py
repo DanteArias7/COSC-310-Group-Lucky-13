@@ -691,3 +691,106 @@ def test_accept_delivery_already_assigned(mocked_repo, order_service, test_order
 
     assert exc_info.value.status_code == 409
     assert "already assigned" in exc_info.value.detail
+
+def test_update_delivery_status_to_in_transit(mocker, mocked_repo, order_service):
+    """Test driver updates status from Assigned_to_driver to In_transit."""
+    mock_notification = mocker.patch(
+        "app.services.order_services.send_notification"
+    )
+
+    test_order = {
+        "id": "order1",
+        "restaurant_id": 101,
+        "customer_id": "customer1",
+        "assigned_driver_id": "driver123",
+        "food_items": "1x Burger",
+        "order_date": "03-23-2026",
+        "order_value": 15.99,
+        "status": "Assigned_to_driver",
+        "delivery_time": 0.0
+    }
+    mocked_repo.load_all_orders.return_value = [test_order]
+
+    result = order_service.update_delivery_status(
+        "order1", "driver123", "In_transit"
+    )
+
+    assert result.status == "In_transit"
+    mock_notification.assert_called_once()
+
+    notification = mock_notification.call_args[0][0]
+    assert "on its way" in notification.message
+
+
+def test_update_delivery_status_to_complete(mocker, mocked_repo, order_service):
+    """Test driver updates status from In_transit to Complete."""
+    mock_notification = mocker.patch(
+        "app.services.order_services.send_notification"
+    )
+
+    test_order = {
+        "id": "order1",
+        "restaurant_id": 101,
+        "customer_id": "customer1",
+        "assigned_driver_id": "driver123",
+        "food_items": "1x Burger",
+        "order_date": "03-23-2026",
+        "order_value": 15.99,
+        "status": "In_transit",
+        "delivery_time": 0.0
+    }
+    mocked_repo.load_all_orders.return_value = [test_order]
+
+    result = order_service.update_delivery_status(
+        "order1", "driver123", "Complete"
+    )
+
+    assert result.status == "Complete"
+    mock_notification.assert_called_once()
+
+    notification = mock_notification.call_args[0][0]
+    assert "delivered" in notification.message
+
+
+def test_update_delivery_status_wrong_driver(mocked_repo, order_service):
+    """Test driver cannot update order assigned to another driver."""
+    test_order = {
+        "id": "order1",
+        "restaurant_id": 101,
+        "customer_id": "customer1",
+        "assigned_driver_id": "other_driver",
+        "food_items": "1x Burger",
+        "order_date": "03-23-2026",
+        "order_value": 15.99,
+        "status": "Assigned_to_driver",
+        "delivery_time": 0.0
+    }
+    mocked_repo.load_all_orders.return_value = [test_order]
+
+    with pytest.raises(HTTPException) as exc_info:
+        order_service.update_delivery_status("order1", "driver123", "In_transit")
+
+    assert exc_info.value.status_code == 403
+    assert "only update status for orders assigned to you" in exc_info.value.detail
+
+
+def test_update_delivery_status_invalid_transition(mocked_repo, order_service):
+    """Test cannot transition to invalid status."""
+    test_order = {
+        "id": "order1",
+        "restaurant_id": 101,
+        "customer_id": "customer1",
+        "assigned_driver_id": "driver123",
+        "food_items": "1x Burger",
+        "order_date": "03-23-2026",
+        "order_value": 15.99,
+        "status": "Assigned_to_driver",
+        "delivery_time": 0.0
+    }
+    mocked_repo.load_all_orders.return_value = [test_order]
+
+    with pytest.raises(HTTPException) as exc_info:
+        order_service.update_delivery_status("order1", "driver123", "Complete")
+
+    assert exc_info.value.status_code == 422
+    assert "Cannot transition" in exc_info.value.detail

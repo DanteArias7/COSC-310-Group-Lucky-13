@@ -184,3 +184,25 @@ def accept_delivery(
 
     order_service = OrderServices(order_repo)
     return order_service.accept_delivery(order_id, user_id)
+
+@order_router.put("/{order_id}/driver-status", response_model=Order, status_code=200)
+def update_delivery_status(
+    order_id: str,
+    new_status: str,
+    order_repo: OrderRepo = Depends(create_order_repo),
+    user_repo: UserRepo = Depends(create_user_repo),
+    user_id: str = Header(..., alias="user-id")
+):
+    """Driver updates delivery status.
+
+    Rules:
+    - User must have driver role
+    - Order must be assigned to this driver
+    - Valid transitions: 'Assigned_to_driver' → 'In_transit' → 'Complete'
+    - Customer receives notification on each status update
+    """
+    authorization_service = AuthorizationServices(user_repo)
+    authorization_service.authorize(user_id, "view_available_orders")
+
+    order_service = OrderServices(order_repo)
+    return order_service.update_delivery_status(order_id, user_id, new_status)

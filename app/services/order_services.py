@@ -13,6 +13,11 @@ from app.schemas.notification import Notification
 from app.services.notification_services import send_notification
 from app.services.restaurant_services import RestaurantServices
 
+DRIVER_STATUS_TRANSITIONS = {
+    "Assigned_to_driver": ["In_transit"],
+    "In_transit": ["Complete"]
+}
+
 #pylint: disable=too-few-public-methods
 class OrderServices():
     """Order Service Class"""
@@ -283,6 +288,65 @@ class OrderServices():
             if order["id"] == order_id:
                 return order, i
         raise HTTPException(status_code=404, detail=f"Order {order_id} not found")
+
+    def update_delivery_status(self, order_id: str, driver_id: str,
+                           new_status: str) -> Order:
+        """Driver updates order delivery status.
+
+        Valid transitions:
+        - Assigned_to_driver → In_transit
+        - In_transit → Complete
+
+        Customer receives notification on each status update.
+        """
+        orders = self.repo.load_all_orders()
+        order_dict, index = self._find_order(orders, order_id)
+
+        # Validate order assigned to this driver
+        if order_dict["assigned_driver_id"] != driver_id:
+            raise HTTPException(
+                status_code=403,
+                detail="You can only update status for orders assigned to you"
+            )
+
+        current_status = order_dict["status"]
+
+        # Validate status transition
+        if current_status not in DRIVER_STATUS_TRANSITIONS:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Cannot update status from {current_status}"
+            )
+
+        if new_status not in DRIVER_STATUS_TRANSITIONS[current_status]:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Cannot transition from {current_status} to {new_status}"
+            )
+
+        # Update status
+        orders[index]["status"] = new_status
+        self.repo.update_orders(orders)
+
+        # Send notification to customer
+        message = self._get_delivery_status_message(order_id, new_status)
+        send_notification(
+            Notification(
+                user_id=order_dict["customer_id"],
+                message=message
+            )
+        )
+
+        return Order(**orders[index])
+
+    def _get_delivery_status_message(self, order_id: str, status: str) -> str:
+        """Generate user-friendly delivery status update message."""
+        messages = {
+            "In_transit": f"Your order {order_id} is on its way!",
+            "Complete": f"Your order {order_id} has been delivered. "
+                        "Thank you for ordering!"
+        }
+        return messages.get(status, f"Your order {order_id} status: {status}")
 
 class IOrderRepo(Protocol):
     """Order Repo Interface"""
