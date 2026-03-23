@@ -662,7 +662,8 @@ def test_accept_delivery_success(mocker, mocked_repo, order_service, test_orders
 
     result = order_service.accept_delivery(test_orders[0]["id"], "driver123")
 
-    assert result.status == "Assigned_to_driver"
+    # Status should remain Ready_for_pickup, not change
+    assert result.status == "Ready_for_pickup"
     assert result.assigned_driver_id == "driver123"
     mock_notification.assert_called_once()
 
