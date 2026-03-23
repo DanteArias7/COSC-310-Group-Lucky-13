@@ -16,6 +16,7 @@ def test_carts():
                             "name": "Vegan Burger",
                             "description": "Plant-based patty with lettuce and tomato",
                             "price": 12.99,
+                            "status": "Available",
                             "tags": ["vegan"]},
                             "quantity": 1}],
                 "subtotal" : 0.00,
@@ -74,6 +75,47 @@ def test_start_cart(mocker, mocked_repo, mocked_cart_service, test_carts):
 
     assert new_cart.model_dump() == test_carts[0]
 #delete_cart_item_from_cart Tests
+def test_remove_cart_item_from_cart_quantity_1(test_carts, mocked_repo, mocked_cart_service):
+    """
+    Spec: If the cart exists, and their is only 1 item it should be removed from the cart.
+    Input: valid cart_id and menu item id.
+    Expected behavior: Cart item with matching menuitem id is removed.
+    """
+    mocked_repo.load_all_carts.return_value = test_carts
+
+    result = mocked_cart_service.remove_item_from_cart(
+         "00000000-0000-0000-0000-000000000001",
+         "018f8c10-7b2a-7f21-9a3c-0a1b2c3d4e01"
+         )
+
+    assert result.cart_items == []
+    mocked_repo.save_all_carts.assert_called_once()
+
+def test_remove_cart_item_from_cart_quantity_more_than_1(
+        test_carts,
+        mocked_repo,
+        mocked_cart_service):
+    """
+    Spec: If the cart exists, and there is more than one item, the quantity should be
+    reduced by one.
+    Input: valid cart_id and menu item id.
+    Expected behavior: Cart item with matching menuitem id has quantity reduced by 1.
+    """
+
+    test_carts[0]["cart_items"][0]["quantity"] = 2
+
+    mocked_repo.load_all_carts.return_value = test_carts
+
+    result = mocked_cart_service.remove_item_from_cart(
+         "00000000-0000-0000-0000-000000000001",
+         "018f8c10-7b2a-7f21-9a3c-0a1b2c3d4e01"
+         )
+
+    test_carts[0]["cart_items"][0]["quantity"] = 1
+
+    result = result.model_dump()
+    assert result["cart_items"] == test_carts[0]["cart_items"]
+    mocked_repo.save_all_carts.assert_called_once()
 
 def test_delete_cart_item_from_nonexistent_cart(test_carts, mocked_repo, mocked_cart_service):
     """Test that remove_item_from_cart raises an exception if the cart id is not found"""

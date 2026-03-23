@@ -148,11 +148,17 @@ class OrderServices():
         Raises:
         HTTPException if validation fails.
     """
-        if len(payment.card_number) != 16 or not payment.card_number.isdigit():
+        card_length = len(payment.card_number)
+        if card_length not in [15,16] or not payment.card_number.isdigit():
             raise HTTPException(status_code=400, detail="Payment Rejected: Invalid card number")
 
-        if len(payment.cvv) != 3 or not payment.cvv.isdigit():
-            raise HTTPException(status_code=400, detail="Payment Rejected: Invalid CVV")
+        if card_length == 15:
+            if len(payment.cvv) != 4 or not payment.cvv.isdigit():
+                raise HTTPException(status_code=400, detail="Payment Rejected: Invalid CVV")
+
+        if card_length == 16:
+            if len(payment.cvv) != 3 or not payment.cvv.isdigit():
+                raise HTTPException(status_code=400, detail="Payment Rejected: Invalid CVV")
 
         try:
             exp = datetime.strptime(payment.expiration_date, "%m/%y")
@@ -212,10 +218,11 @@ class OrderServices():
 
         return available_orders
 
-    def get_all_pending_paid_orders(self) -> List[Order]:
+    def get_all_pending_paid_orders(self, restaurant_id: str) -> List[Order]:
         """
         Rules:
-        - show only pending orders which have been paid successfully,
+        - show only pending orders which have been paid successfully
+        and with a restaurant_id which matches the requesting user's restaurant,
         so the restaurant may choose to accept or decline
 
         Args: none
@@ -227,7 +234,7 @@ class OrderServices():
         pending_paid_orders = []
 
         for order in orders:
-            if order["status"] == "Paid":
+            if order["status"] == "Paid" and order["restaurant_id"] == restaurant_id:
                 pending_paid_orders.append(Order(**order))
 
         return pending_paid_orders

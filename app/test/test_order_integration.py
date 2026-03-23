@@ -268,6 +268,26 @@ def valid_payment(test_users):
         "expiration_date": "12/30"
     }
 
+@pytest.fixture
+def valid_payment_amex(test_users):
+    """Valid Amex payment payload"""
+    return {
+        "user_id": test_users[0]["id"],
+        "card_number": "123456781234567",
+        "cvv": "1234",
+        "expiration_date": "12/30"
+    }
+
+@pytest.fixture
+def amex_card_invalid_cvv(test_users):
+    """Sample Amex payment details with invalid CVV for payment simulation tests"""
+    return {
+        "user_id": test_users[0]["id"],
+        "card_number": "123456781234567",
+        "cvv": "123",
+        "expiration_date": "12/30"
+    }
+
 
 @pytest.fixture
 def invalid_card_payment(test_users):
@@ -456,6 +476,56 @@ def test_simulate_payment_success(temp_order_path,
         f"You have received a new order {order_id}"
     )
 
+def test_simulate_payment_success_amex(temp_order_path,
+                                  order_test_client,
+                                  test_orders,
+                                  test_users,
+                                  valid_payment_amex):
+
+    """Spec: System should simulate payment for an order with Amex card details
+    Input: valid order_id and valid Amex payment details
+    Expected behavior: Order status updated to Paid and success message returned
+    """
+
+    order_id = test_orders[0]["id"]
+
+    request = f"/orders/{order_id}/simulate-payment"
+
+    r = order_test_client.post(
+        request,
+        headers={"user-id": test_users[0]["id"]},
+        json=valid_payment_amex
+    )
+
+    orders = pandas.read_csv(temp_order_path, keep_default_na=False)
+    updated_order = orders.iloc[0].to_dict()
+
+    assert r.status_code == 200
+    assert r.json()["message"] == "Payment Accepted"
+    assert updated_order["status"] == "Paid"
+
+def test_simulate_payment_amex_invalid_cvv(order_test_client,
+                                       test_orders,
+                                       test_users,
+                                       amex_card_invalid_cvv):
+    """Spec: System should reject payment with invalid CVV for Amex card
+    Input: valid order_id and Amex payment details with invalid CVV
+    Expected behavior: Endpoint returns 400 error with appropriate message
+    """
+
+    order_id = test_orders[0]["id"]
+
+    request = f"/orders/{order_id}/simulate-payment"
+
+    r = order_test_client.post(
+        request,
+        headers={"user-id": test_users[0]["id"]},
+        json=amex_card_invalid_cvv
+    )
+
+    assert r.status_code == 400
+    assert r.json()["detail"] == "Payment Rejected: Invalid CVV"
+
 def test_simulate_payment_order_not_found(order_test_client,
                                           test_users, valid_payment):
     """
@@ -625,7 +695,7 @@ def test_get_all_pending_paid_orders_success(order_test_client, test_users, test
     owner = test_users[1]
     expected_orders = [test_orders[6]]
 
-    r = order_test_client.get("/orders/pending", headers={"user-id": owner["id"]})
+    r = order_test_client.get("/orders/101/pending", headers={"user-id": owner["id"]})
 
     assert r.status_code == 200
     assert r.json() == expected_orders
@@ -638,7 +708,7 @@ def test_get_all_pending_paid_orders_unauthorized(order_test_client, test_users)
     """
     customer = test_users[0]
 
-    r = order_test_client.get("/orders/pending", headers={"user-id": customer["id"]})
+    r = order_test_client.get("/orders/101/pending", headers={"user-id": customer["id"]})
 
     assert r.status_code == 403
 
