@@ -64,33 +64,96 @@ def test_restaurants():
 def test_orders():
     """Initialize test order data for each test"""
     return[{"id": "QQQQQQQ",
-                      "restaurant_id": 101,
-                      "customer_id": "00000000-0000-0000-0000-000000000001",
-                      "assigned_driver_id": "",
-                      "food_items": "2x Vegan Burger, 1x Bacon Burger",
-                      "order_date": "03-06-2025",
-                      "order_value": 24.35,
-                      "status": "Pending",
-                      "delivery_time": 0.0},
-                      {"id": "QQQQQQQ",
-                      "restaurant_id": 101,
-                      "customer_id": "00000000-0000-0000-0000-000000000001",
-                      "assigned_driver_id": "",
-                      "food_items": "2x Vegan Burger",
-                      "order_date": "03-06-2025",
-                      "order_value": 24.35,
-                      "status": "Pending",
-                      "delivery_time": 0.0},
-                      {"id": "QQQQQQQ",
-                      "restaurant_id": 101,
-                      "customer_id": "00000000-0000-0000-0000-000000000002",
-                      "assigned_driver_id": "",
-                      "food_items": "1x Hot Dog",
-                      "order_date": "03-06-2025",
-                      "order_value": 24.35,
-                      "status": "Pending",
-                      "delivery_time": 0.0}
-                      ]
+                "restaurant_id": 101,
+                "customer_id": "00000000-0000-0000-0000-000000000001",
+                "assigned_driver_id": "",
+                "food_items": "2x Vegan Burger, 1x Bacon Burger",
+                "order_date": "03-06-2025",
+                "order_value": 24.35,
+                "status": "Pending",
+                "delivery_time": 0.0},
+            {"id": "QQQQQQQ",
+                "restaurant_id": 101,
+                "customer_id": "00000000-0000-0000-0000-000000000001",
+                "assigned_driver_id": "",
+                "food_items": "2x Vegan Burger",
+                "order_date": "03-06-2025",
+                "order_value": 24.35,
+                "status": "Pending",
+                "delivery_time": 0.0},
+            {"id": "QQQQQQQ",
+                "restaurant_id": 101,
+                "customer_id": "00000000-0000-0000-0000-000000000002",
+                "assigned_driver_id": "",
+                "food_items": "1x Hot Dog",
+                "order_date": "03-06-2025",
+                "order_value": 24.35,
+                "status": "Pending",
+                "delivery_time": 0.0},
+            {"id": "AAAAAAA",
+                "restaurant_id": 101,
+                "customer_id": "00000000-0000-0000-0001-000000000001",
+                "assigned_driver_id": "",
+                "food_items": "2x Vegan Burger",
+                "order_date": "03-16-2026",
+                "order_value": 24.35,
+                "status": "Accepted_by_restaurant",
+                "delivery_time": 0.0},
+            {"id": "BBBBBBB",
+                "restaurant_id": 101,
+                "customer_id": "00000000-0000-0000-0001-000000000001",
+                "assigned_driver_id": "",
+                "food_items": "1x Hot Dog",
+                "order_date": "03-16-2026",
+                "order_value": 10.00,
+                "status": "Preparing",
+                "delivery_time": 0.0},
+            {"id": "CCCCCCC",
+                "restaurant_id": 101,
+                "customer_id": "00000000-0000-0000-0001-000000000001",
+                "assigned_driver_id": "00000001-0000-0000-0000-000000000000",
+                "food_items": "1x Salad",
+                "order_date": "03-16-2026",
+                "order_value": 8.00,
+                "status": "Ready_for_pickup",
+                "delivery_time": 0.0},
+            {"id": "DDDDDDD",
+                "restaurant_id": 101,
+                "customer_id": "00000000-0000-0000-0001-000000000001",
+                "assigned_driver_id": "",
+                "food_items": "2x Vegan Burger",
+                "order_date": "03-16-2026",
+                "order_value": 24.35,
+                "status": "Paid",
+                "delivery_time": 0.0},
+            {"id": "EEEEEEE",
+                "restaurant_id": 101,
+                "customer_id": "00000000-0000-0000-0001-000000000002",
+                "assigned_driver_id": "",
+                "food_items": "1x Hot Dog",
+                "order_date": "03-16-2026",
+                "order_value": 10.00,
+                "status": "Pending",
+                "delivery_time": 0.0},
+            {"id": "FFFFFFF",
+                "restaurant_id": 101,
+                "customer_id": "00000000-0000-0000-0001-000000000001",
+                "assigned_driver_id": "00000001-0000-0000-0000-000000000000",
+                "food_items": "2x Vegan Burger",
+                "order_date": "03-16-2026",
+                "order_value": 24.35,
+                "status": "In_transit",
+                "delivery_time": 0.0},
+            {"id": "GGGGGGG",
+                "restaurant_id": 101,
+                "customer_id": "00000000-0000-0000-0001-000000000002",
+                "assigned_driver_id": "00000002-0000-0000-0000-000000000000",
+                "food_items": "1x Hot Dog",
+                "order_date": "03-16-2026",
+                "order_value": 10.00,
+                "status": "In_transit",
+                "delivery_time": 0.0}
+            ]
 
 @pytest.fixture
 def test_users():
@@ -115,8 +178,22 @@ def test_users():
             "phone_number": "123-456-7890",
             "address": "123 Baron Rd, Kelowna, BC, A1B2C3",
             "password": "password",
-            "role": "customer"}]
-
+            "role": "customer"},
+            {"id": "00000001-0000-0000-0000-000000000000",
+            "name": "Barbara",
+            "email": "barbara@gmail.com",
+            "phone_number": "223-456-7890",
+            "address": "567 Innovation Dr, Kelowna, BC, A1B2C3",
+            "password": "password",
+            "role": "delivery_driver"},
+            {"id": "00000002-0000-0000-0000-000000000000",
+            "name": "Cameron",
+            "email": "camcameron@gmail.com",
+            "phone_number": "323-456-7890",
+            "address": "456 Baron Rd, Kelowna, BC, A1B2C3",
+            "password": "password",
+            "role": "delivery_driver"}
+            ]
 
 @pytest.fixture
 def temp_order_path(tmp_path, test_orders):
@@ -187,6 +264,26 @@ def valid_payment(test_users):
     return {
         "user_id": test_users[0]["id"],
         "card_number": "1234567812345678",
+        "cvv": "123",
+        "expiration_date": "12/30"
+    }
+
+@pytest.fixture
+def valid_payment_amex(test_users):
+    """Valid Amex payment payload"""
+    return {
+        "user_id": test_users[0]["id"],
+        "card_number": "123456781234567",
+        "cvv": "1234",
+        "expiration_date": "12/30"
+    }
+
+@pytest.fixture
+def amex_card_invalid_cvv(test_users):
+    """Sample Amex payment details with invalid CVV for payment simulation tests"""
+    return {
+        "user_id": test_users[0]["id"],
+        "card_number": "123456781234567",
         "cvv": "123",
         "expiration_date": "12/30"
     }
@@ -339,7 +436,8 @@ def test_simulate_payment_success(temp_order_path,
     """
     Spec: System should simulate payment for an order
     Input: valid order_id and valid payment details
-    Expected behavior: Order status updated to Paid and success message returned
+    Expected behavior: Order status updated to Paid and success message returned,
+    and both customer and restaurant owner receive notifications
     """
 
     mock_send =  mocker.patch("app.services.order_services.send_notification")
@@ -361,14 +459,72 @@ def test_simulate_payment_success(temp_order_path,
     assert r.json()["message"] == "Payment Accepted"
     assert updated_order["status"] == "Paid"
 
-    mock_send.assert_called_once()
+    assert mock_send.call_count == 2
 
-    notification = mock_send.call_args[0][0]
+    calls = mock_send.call_args_list
 
-    assert notification.user_id == test_users[0]["id"]
-    assert notification.message == (
+    customer_notification = calls[0][0][0]
+    owner_notification = calls[1][0][0]
+
+    assert customer_notification.user_id == test_users[0]["id"]
+    assert customer_notification.message == (
         f"Your order {order_id} has been paid successfully"
     )
+
+    assert owner_notification.user_id == test_users[1]["id"]
+    assert owner_notification.message == (
+        f"You have received a new order {order_id}"
+    )
+
+def test_simulate_payment_success_amex(temp_order_path,
+                                  order_test_client,
+                                  test_orders,
+                                  test_users,
+                                  valid_payment_amex):
+
+    """Spec: System should simulate payment for an order with Amex card details
+    Input: valid order_id and valid Amex payment details
+    Expected behavior: Order status updated to Paid and success message returned
+    """
+
+    order_id = test_orders[0]["id"]
+
+    request = f"/orders/{order_id}/simulate-payment"
+
+    r = order_test_client.post(
+        request,
+        headers={"user-id": test_users[0]["id"]},
+        json=valid_payment_amex
+    )
+
+    orders = pandas.read_csv(temp_order_path, keep_default_na=False)
+    updated_order = orders.iloc[0].to_dict()
+
+    assert r.status_code == 200
+    assert r.json()["message"] == "Payment Accepted"
+    assert updated_order["status"] == "Paid"
+
+def test_simulate_payment_amex_invalid_cvv(order_test_client,
+                                       test_orders,
+                                       test_users,
+                                       amex_card_invalid_cvv):
+    """Spec: System should reject payment with invalid CVV for Amex card
+    Input: valid order_id and Amex payment details with invalid CVV
+    Expected behavior: Endpoint returns 400 error with appropriate message
+    """
+
+    order_id = test_orders[0]["id"]
+
+    request = f"/orders/{order_id}/simulate-payment"
+
+    r = order_test_client.post(
+        request,
+        headers={"user-id": test_users[0]["id"]},
+        json=amex_card_invalid_cvv
+    )
+
+    assert r.status_code == 400
+    assert r.json()["detail"] == "Payment Rejected: Invalid CVV"
 
 def test_simulate_payment_order_not_found(order_test_client,
                                           test_users, valid_payment):
@@ -397,7 +553,6 @@ def test_simulate_payment_invalid_status(temp_order_path,
 
     orders = pandas.read_csv(temp_order_path, keep_default_na=False)
 
-    # change status to Paid to simulate invalid state
     orders.loc[0, "status"] = "Paid"
 
     orders.to_csv(temp_order_path, index=False)
@@ -494,8 +649,37 @@ def test_simulate_payment_unauthorized_user(order_test_client,
 
     r = order_test_client.post(
         request,
-        headers={"user-id": test_users[2]["id"]}, # user with different id than payment user_id
+        headers={"user-id": test_users[2]["id"]},
         json=valid_payment
     )
+
+    assert r.status_code == 403
+
+#get_all_available_delivery_orders Integration tests
+
+def test_get_all_available_delivery_orders_success(order_test_client, test_users, test_orders):
+    """
+    Spec: System should return only unassigned orders with valid pickup statuses
+    Input: User with authorized driver role
+    Expected: Returns only AAAAAAA and BBBBBBB
+    """
+    driver = test_users[3]
+    expected_orders = [test_orders[3], test_orders[4]]
+
+    r = order_test_client.get("/orders/available", headers={"user-id": driver["id"]})
+
+    assert r.status_code == 200
+    assert r.json() == expected_orders
+
+
+def test_get_all_available_delivery_orders_unauthorized(order_test_client, test_users):
+    """
+    Spec: Request from non driver roles should be rejected
+    Input: User with unauthorized customer role
+    Expected: 403
+    """
+    customer = test_users[0]
+
+    r = order_test_client.get("/orders/available", headers={"user-id": customer["id"]})
 
     assert r.status_code == 403

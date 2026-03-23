@@ -10,6 +10,8 @@ from app.services.order_services import OrderServices
 #pylint: disable=redefined-outer-name
 #pylint: disable=duplicate-code
 #pylint: disable=too-few-public-methods
+#pylint: disable=too-many-arguments
+#pylint: disable=too-many-positional-arguments
 @pytest.fixture
 def mocked_repo(mocker):
     """Creates a mocked repo object for each test"""
@@ -22,7 +24,7 @@ def order_service(mocked_repo):
 
 @pytest.fixture
 def test_carts():
-    """Initilize Test cart data for each test"""
+    """Initialize Test cart data for each test"""
     return [{"id" : "00000000-0000-0000-0000-000000000001",
             "user_id" : "00000000-0000-0000-0000-000000000001",
             "restaurant_id" : 101,
@@ -89,10 +91,12 @@ def test_order_status():
     return[{"id": "AAAAAAA",
          "restaurant_id": 101,
          "customer_id": "00000000-0000-0000-0000-000000000001",
+         "assigned_driver_id": "",
          "food_items": "1x Burger",
          "order_date": "03-06-2026",
          "order_value": 12.50,
-         "status": "Pending"}]
+         "status": "Pending",
+         "delivery_time": 0.0}]
 
 @pytest.fixture
 def test_order_status_2():
@@ -100,17 +104,39 @@ def test_order_status_2():
     return[{"id": "BBBBBBB",
          "restaurant_id": 101,
          "customer_id": "00000000-0000-0000-0000-000000000001",
+         "assigned_driver_id": "",
          "food_items": "1x Burger",
          "order_date": "03-06-2026",
          "order_value": 12.50,
-         "status": "Paid"}]
+         "status": "Paid",
+         "delivery_time": 0.0}]
 
 @pytest.fixture
 def valid_payment():
-    """Valid payment payload"""
+    """Valid Visa/Mastercard payment payload"""
     return {
         "user_id" : "00000000-0000-0000-0000-000000000001",
         "card_number": "1234567812345678",
+        "cvv": "123",
+        "expiration_date": "12/30"
+    }
+
+@pytest.fixture
+def valid_payment_amex():
+    """Valid Amex payment payload"""
+    return {
+        "user_id" : "00000000-0000-0000-0000-000000000001",
+        "card_number": "123456781234567",
+        "cvv": "1234",
+        "expiration_date": "12/30"
+    }
+
+@pytest.fixture
+def amex_card_invalid_cvv():
+    """Sample Amex payment details with invalid CVV for payment simulation tests"""
+    return {
+        "user_id" : "00000000-0000-0000-0000-000000000001",
+        "card_number": "123456781234567",
         "cvv": "123",
         "expiration_date": "12/30"
     }
@@ -145,6 +171,86 @@ def expired_payment():
         "expiration_date": "01/20"
     }
 
+@pytest.fixture
+def test_orders_available():
+    """Orders with correct statuses for available delivery tests"""
+    return [
+        {"id": "AAAAAAA",
+            "restaurant_id": 101,
+            "customer_id": "00000000-0000-0000-0000-000000000001",
+            "assigned_driver_id": "",
+            "food_items": "2x Vegan Burger",
+            "order_date": "03-16-2026",
+            "order_value": 24.35,
+            "status": "Accepted_by_restaurant",
+            "delivery_time": 0.0},
+        {"id": "BBBBBBB",
+            "restaurant_id": 101,
+            "customer_id": "00000000-0000-0000-0000-000000000001",
+            "assigned_driver_id": "",
+            "food_items": "1x Hot Dog",
+            "order_date": "03-16-2026",
+            "order_value": 10.00,
+            "status": "Preparing",
+            "delivery_time": 0.0},
+        {"id": "CCCCCCC",
+            "restaurant_id": 101,
+            "customer_id": "00000000-0000-0000-0000-000000000001",
+            "assigned_driver_id": "00000001-0000-0000-0000-000000000000",
+            "food_items": "1x Salad",
+            "order_date": "03-16-2026",
+            "order_value": 8.00,
+            "status": "Ready_for_pickup",
+            "delivery_time": 0.0}
+    ]
+
+@pytest.fixture
+def test_orders_paid():
+    """Orders in Paid status for pending paid order tests"""
+    return [
+        {"id": "DDDDDDD",
+            "restaurant_id": 101,
+            "customer_id": "00000000-0000-0000-0000-000000000001",
+            "assigned_driver_id": "",
+            "food_items": "2x Vegan Burger",
+            "order_date": "03-16-2026",
+            "order_value": 24.35,
+            "status": "Paid",
+            "delivery_time": 0.0},
+        {"id": "EEEEEEE",
+            "restaurant_id": 101,
+            "customer_id": "00000000-0000-0000-0000-000000000002",
+            "assigned_driver_id": "",
+            "food_items": "1x Hot Dog",
+            "order_date": "03-16-2026",
+            "order_value": 10.00,
+            "status": "Pending",
+            "delivery_time": 0.0}
+    ]
+
+@pytest.fixture
+def test_orders_assigned():
+    """Orders with assigned driver for assigned order tests"""
+    return [
+        {"id": "FFFFFFF",
+            "restaurant_id": 101,
+            "customer_id": "00000000-0000-0000-0000-000000000001",
+            "assigned_driver_id": "00000001-0000-0000-0000-000000000000",
+            "food_items": "2x Vegan Burger",
+            "order_date": "03-16-2026",
+            "order_value": 24.35,
+            "status": "In_transit",
+            "delivery_time": 0.0},
+        {"id": "GGGGGGG",
+            "restaurant_id": 101,
+            "customer_id": "00000000-0000-0000-0000-000000000002",
+            "assigned_driver_id": "00000002-0000-0000-0000-000000000000",
+            "food_items": "1x Hot Dog",
+            "order_date": "03-16-2026",
+            "order_value": 10.00,
+            "status": "In_transit",
+            "delivery_time": 0.0}
+    ]
 
 #place_order Unit Tests
 def test_place_order_success(mocker, mocked_repo, order_service, test_carts):
@@ -235,6 +341,13 @@ def test_simulate_payment_success(mocked_repo, order_service, test_order_status,
     mocked_repo.load_all_orders.return_value = test_order_status
     mocked_repo.update_orders.return_value = None
 
+    mock_restaurant_obj = mocker.Mock()
+    mock_restaurant_obj.user_id = "owner-123"
+
+    order_service.restaurant_service.fetch_restaurant = mocker.Mock(
+        return_value=mock_restaurant_obj
+    )
+
     payment = Payment(**valid_payment)
 
     result = order_service.simulate_payment(
@@ -244,16 +357,65 @@ def test_simulate_payment_success(mocked_repo, order_service, test_order_status,
 
     assert result.message == "Payment Accepted"
     assert test_order_status[0]["status"] == "Paid"
-    mocked_repo.update_orders.assert_called_once()
+    assert mock_send.call_count == 2
 
-    mock_send.assert_called_once()
+    calls = mock_send.call_args_list
 
-    notification = mock_send.call_args[0][0]
+    customer_notification = calls[0][0][0]
+    owner_notification = calls[1][0][0]
 
-    assert notification.user_id == test_order_status[0]["customer_id"]
-    assert notification.message == (
+    assert customer_notification.user_id == test_order_status[0]["customer_id"]
+    assert customer_notification.message == (
         f"Your order {test_order_status[0]['id']} has been paid successfully"
     )
+
+    assert owner_notification.user_id == "owner-123"
+    assert owner_notification.message == (
+        f"You have received a new order {test_order_status[0]['id']}"
+    )
+
+def test_simulate_payment_amex(mocked_repo, order_service,
+                                           test_order_status, valid_payment_amex, mocker):
+    """Spec: Method should simulate payment for an order and update order status to Paid
+    Input: valid order_id and valid Amex payment details
+    Expected behavior: Order status should update to Paid &&
+                        method should return payment result message
+    """
+    mocked_repo.load_all_orders.return_value = test_order_status
+
+    mock_restaurant_obj = mocker.Mock()
+    mock_restaurant_obj.user_id = "owner-123"
+
+    order_service.restaurant_service.fetch_restaurant = mocker.Mock(
+        return_value=mock_restaurant_obj
+    )
+
+    payment = Payment(**valid_payment_amex)
+
+    result = order_service.simulate_payment(
+        test_order_status[0]["id"],
+        payment
+    )
+
+    assert result.message == "Payment Accepted"
+    assert test_order_status[0]["status"] == "Paid"
+
+def test_simulate_payment_amex_invalid_cvv(mocked_repo, order_service ,
+                                           test_order_status, amex_card_invalid_cvv):
+    """
+    Spec: Method should reject payment if CVV is invalid
+    Input: valid order_id and invalid Amex CVV
+    Expected behavior: HTTPException with status 400
+    """
+    mocked_repo.load_all_orders.return_value = test_order_status
+
+    payment = Payment(**amex_card_invalid_cvv)
+
+    with pytest.raises(HTTPException) as exc_info:
+        order_service.simulate_payment(test_order_status[0]["id"], payment)
+
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.detail == "Payment Rejected: Invalid CVV"
 
 
 def test_simulate_payment_order_not_found(mocked_repo, order_service , valid_payment):
@@ -359,7 +521,7 @@ def test_retry_payment_after_failure(mocked_repo,
                                      order_service,
                                      test_order_status,
                                      invalid_card_payment,
-                                     valid_payment):
+                                     valid_payment, mocker):
     """
     Spec: Customer should be able to retry payment after failure
     Input: invalid payment first, then valid payment
@@ -368,7 +530,6 @@ def test_retry_payment_after_failure(mocked_repo,
 
     mocked_repo.load_all_orders.return_value = test_order_status
 
-    # first attempt fails
     with pytest.raises(HTTPException) as exc_info:
         order_service.simulate_payment(
             test_order_status[0]["id"],
@@ -378,6 +539,14 @@ def test_retry_payment_after_failure(mocked_repo,
     assert exc_info.value.detail == "Payment Rejected: Invalid card number"
 
     # second attempt succeeds
+
+    mock_restaurant_obj = mocker.Mock()
+    mock_restaurant_obj.user_id = "owner-123"
+
+    order_service.restaurant_service.fetch_restaurant = mocker.Mock(
+        return_value=mock_restaurant_obj
+    )
+
     result = order_service.simulate_payment(
         test_order_status[0]["id"],
         Payment(**valid_payment)
@@ -439,3 +608,81 @@ def test_driver_reject_order_in_transit(mocked_repo, order_service, test_orders)
     with pytest.raises(HTTPException) as exc_info:
         order_service.driver_reject_order(test_orders[1]["id"], "driver123")
     assert exc_info.value.status_code == 422
+def test_notify_restaurant_owner_success(order_service, test_order_status_2, mocker):
+    """
+    Spec: Method should send notification to restaurant owner when a new order is placed
+    Input: valid restaurant_id and order_id
+    Expected behavior: send_notification should be called with correct notification object
+    """
+
+    restaurant = test_order_status_2[0]
+
+    mock_send = mocker.patch("app.services.order_services.send_notification")
+
+    order_service.restaurant_service.fetch_restaurant = mocker.Mock(
+        return_value=mocker.Mock(user_id="owner-123")
+    )
+
+    order_service.notify_restaurant_owner(
+        restaurant["restaurant_id"],
+        restaurant["id"]
+    )
+
+    mock_send.assert_called_once()
+
+    notification = mock_send.call_args[0][0]
+
+    assert notification.user_id == "owner-123"
+    assert notification.message == (
+        f"You have received a new order {restaurant['id']}"
+    )
+
+def test_notify_restaurant_owner_restaurant_not_found(mocker, order_service):
+    """
+    Spec: Method should raise exception if restaurant does not exist
+    Input: invalid restaurant_id
+    Expected behavior: HTTPException with status 404
+    """
+
+    restaurant_id = 999
+    order_id = "ORDER123"
+
+    order_service.restaurant_service.fetch_restaurant = mocker.Mock(
+        return_value=None
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        order_service.notify_restaurant_owner(restaurant_id, order_id)
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == f"Restaurant {restaurant_id} Not Found"
+
+#get_all_available_delivery_orders Unit tests
+def test_get_all_available_delivery_orders_success(mocked_repo,
+                                                   order_service,
+                                                   test_orders_available):
+    """
+    Spec: Method should return orders that are available for pickup
+    Input: orders with correct statuses and no assigned driver
+    Expected behavior: Returns only unassigned orders with valid statuses
+    """
+    mocked_repo.load_all_orders.return_value = test_orders_available
+
+    result = order_service.get_all_available_delivery_orders()
+
+    assert len(result) == 2
+    assert all(order.assigned_driver_id == "" for order in result)
+    assert all(order.status in ("Accepted_by_restaurant", "Preparing", "Ready_for_pickup")
+               for order in result)
+
+def test_get_all_available_delivery_orders_none_found(mocked_repo, order_service):
+    """
+    Spec: Method should return empty list if no available orders exist
+    Input: empty order list
+    Expected behavior: Returns empty list
+    """
+    mocked_repo.load_all_orders.return_value = []
+
+    result = order_service.get_all_available_delivery_orders()
+
+    assert result == []

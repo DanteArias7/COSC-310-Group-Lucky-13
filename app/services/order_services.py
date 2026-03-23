@@ -189,15 +189,15 @@ class OrderServices():
 
         for i, order in enumerate(orders):
             if order["id"] == order_id:
-                # validation check to ensure order is in pending status before simulating payment
+
                 if order["status"] != "Pending":
                     raise HTTPException(status_code=400,
                                         detail=f"Order {order_id} is not in a payable state")
-                #validate payment details
+
                 self.validate_payment_details(payment)
-                # simulate payment processing delay
+
                 time.sleep(2)
-                # update order status to Paid and save to CSV
+
                 orders[i]["status"] = "Paid"
                 self.repo.update_orders(orders)
 
@@ -207,6 +207,8 @@ class OrderServices():
                         message=f"Your order {order['id']} has been paid successfully"
                     )
                 )
+
+                self.notify_restaurant_owner(order["restaurant_id"], order_id)
 
                 # return payment result
                 return PaymentResult(message="Payment Accepted")
@@ -226,15 +228,18 @@ class OrderServices():
         Raises:
         HTTPException if validation fails.
     """
-        #validate card number length
-        if len(payment.card_number) != 16 or not payment.card_number.isdigit():
+        card_length = len(payment.card_number)
+        if card_length not in [15,16] or not payment.card_number.isdigit():
             raise HTTPException(status_code=400, detail="Payment Rejected: Invalid card number")
 
-        #validate cvv
-        if len(payment.cvv) != 3 or not payment.cvv.isdigit():
-            raise HTTPException(status_code=400, detail="Payment Rejected: Invalid CVV")
+        if card_length == 15:
+            if len(payment.cvv) != 4 or not payment.cvv.isdigit():
+                raise HTTPException(status_code=400, detail="Payment Rejected: Invalid CVV")
 
-        #validate expiration date
+        if card_length == 16:
+            if len(payment.cvv) != 3 or not payment.cvv.isdigit():
+                raise HTTPException(status_code=400, detail="Payment Rejected: Invalid CVV")
+
         try:
             exp = datetime.strptime(payment.expiration_date, "%m/%y")
             if exp < datetime.now():
@@ -243,6 +248,55 @@ class OrderServices():
             raise HTTPException(status_code=400,
                                 detail="Payment Rejected: Invalid expiration date") from exc
         return True
+
+    def notify_restaurant_owner(self, restaurant_id: int, order_id: str) -> None:
+        """
+        Notifies the restaurant owner of a new order.
+
+        Args:
+            restaurant_id: The ID of the restaurant to notify.
+            order: The Order object containing the order details.
+
+        Returns:
+            None
+        """
+        restaurant = self.restaurant_service.fetch_restaurant(restaurant_id)
+
+        if not restaurant:
+            raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
+
+        owner_id = restaurant.user_id
+
+        send_notification(
+            Notification(
+                user_id=owner_id,
+                message=f"You have received a new order {order_id}"
+            )
+        )
+
+    def get_all_available_delivery_orders(self) -> List[Order]:
+        """
+        Rules:
+        - available orders must
+            - be Accepted_by_restaurant or Preparing or Ready_for_pickup
+            - not have an assigned_driver_id
+
+        Args: none
+
+        Returns:
+        A list of Order objects with the matching order status (as specified in rules)
+        """
+        orders = self.repo.load_all_orders()
+        available_orders = []
+
+        for order in orders:
+            if ((order["status"] == "Accepted_by_restaurant" or
+                order["status"] == "Preparing" or
+                order["status"] == "Ready_for_pickup") and
+                not order["assigned_driver_id"]):
+                available_orders.append(Order(**order))
+
+        return available_orders
 
 class IOrderRepo(Protocol):
     """Order Repo Interface"""
