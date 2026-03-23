@@ -294,7 +294,7 @@ class OrderServices():
         """Driver updates order delivery status.
 
         Valid transitions:
-        - Assigned_to_driver → In_transit
+        - Ready_for_pickup → In_transit
         - In_transit → Complete
 
         Customer receives notification on each status update.

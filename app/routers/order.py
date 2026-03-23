@@ -1,7 +1,7 @@
 """API Endpoints for Order functionality"""
 from pathlib import Path
 from typing import List
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends, HTTPException, Header
 from app.repositories.order_repo import OrderRepo
 from app.repositories.restaurant_repo import RestaurantRepo
 from app.repositories.user_repo import UserRepo
@@ -191,6 +191,7 @@ def update_delivery_status(
     new_status: str,
     order_repo: OrderRepo = Depends(create_order_repo),
     user_repo: UserRepo = Depends(create_user_repo),
+    restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo), # pylint: disable=unused-argument
     user_id: str = Header(..., alias="user-id")
 ):
     """Driver updates delivery status.
@@ -198,11 +199,20 @@ def update_delivery_status(
     Rules:
     - User must have driver role
     - Order must be assigned to this driver
-    - Valid transitions: 'Assigned_to_driver' → 'In_transit' → 'Complete'
+    - Valid transitions: 'Ready_for_pickup' → 'In_transit' → 'Complete'
     - Customer receives notification on each status update
     """
-    authorization_service = AuthorizationServices(user_repo)
-    authorization_service.authorize(user_id, "view_available_orders")
+    # Authorize user role
+    auth_service = AuthorizationServices(user_repo)
+    auth_service.authorize(user_id, "view_available_orders")
 
     order_service = OrderServices(order_repo)
+
+    orders = order_repo.load_all_orders()
+    order_dict = next((o for o in orders if o["id"] == order_id), None)
+    if not order_dict:
+        raise HTTPException(status_code=404, detail=f"Order {order_id} not found")
+
+    auth_service.authorize_access(user_id, order_dict["assigned_driver_id"])
+
     return order_service.update_delivery_status(order_id, user_id, new_status)
