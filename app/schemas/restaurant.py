@@ -2,7 +2,7 @@
 
 from typing import List
 from pydantic import BaseModel, Field
-from app.schemas.menu import MenuItem
+from app.schemas.menu import CreateMenuItem, MenuItem
 
 class Restaurant(BaseModel):
     """Restaurant entity."""
@@ -22,7 +22,7 @@ class RestaurantCreate(BaseModel):
     phone_number: str
     address: str
     tags: List[str] = []
-    menu: List[MenuItem] = Field(...,min_length = 1)
+    menu: List[CreateMenuItem] = Field(...,min_length = 1)
 
 class UpdateRestaurant(BaseModel):
     """Update restaurant entity."""

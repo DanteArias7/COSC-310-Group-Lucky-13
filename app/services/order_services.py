@@ -148,11 +148,17 @@ class OrderServices():
         Raises:
         HTTPException if validation fails.
     """
-        if len(payment.card_number) != 16 or not payment.card_number.isdigit():
+        card_length = len(payment.card_number)
+        if card_length not in [15,16] or not payment.card_number.isdigit():
             raise HTTPException(status_code=400, detail="Payment Rejected: Invalid card number")
 
-        if len(payment.cvv) != 3 or not payment.cvv.isdigit():
-            raise HTTPException(status_code=400, detail="Payment Rejected: Invalid CVV")
+        if card_length == 15:
+            if len(payment.cvv) != 4 or not payment.cvv.isdigit():
+                raise HTTPException(status_code=400, detail="Payment Rejected: Invalid CVV")
+
+        if card_length == 16:
+            if len(payment.cvv) != 3 or not payment.cvv.isdigit():
+                raise HTTPException(status_code=400, detail="Payment Rejected: Invalid CVV")
 
         try:
             exp = datetime.strptime(payment.expiration_date, "%m/%y")
