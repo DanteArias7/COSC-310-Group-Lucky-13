@@ -47,34 +47,41 @@ def test_carts():
 @pytest.fixture
 def test_orders():
     """Initialize test order data for each test"""
-    return[{"id": "QQQQQQQ",
-                      "restaurant_id": 101,
-                      "customer_id": "00000000-0000-0000-0000-000000000001",
-                      "assigned_driver_id": "",
-                      "food_items": "2x Vegan Burger, 1x Bacon Burger",
-                      "order_date": "03-06-2025",
-                      "order_value": 24.35,
-                      "status": "Pending",
-                      "delivery_time": 0.0},
-                      {"id": "QQQQQQQ",
-                      "restaurant_id": 101,
-                      "customer_id": "00000000-0000-0000-0000-000000000001",
-                      "assigned_driver_id": "",
-                      "food_items": "2x Vegan Burger",
-                      "order_date": "03-06-2025",
-                      "order_value": 24.35,
-                      "status": "Pending",
-                      "delivery_time": 0.0},
-                      {"id": "QQQQQQQ",
-                      "restaurant_id": 101,
-                      "customer_id": "00000000-0000-0000-0000-000000000002",
-                      "assigned_driver_id": "",
-                      "food_items": "1x Hot Dog",
-                      "order_date": "03-06-2025",
-                      "order_value": 24.35,
-                      "status": "Pending",
-                      "delivery_time": 0.0}
-                      ]
+    return [
+        {
+            "id": "order-1",
+            "restaurant_id": 101,
+            "customer_id": "000...001",
+            "assigned_driver_id": "",
+            "food_items": "...",
+            "order_date": "03-06-2025",
+            "order_value": 24.35,
+            "status": "Pending",
+            "delivery_time": 0.0
+        },
+        {
+            "id": "order-2",
+            "restaurant_id": 101,
+            "customer_id": "000...001",
+            "assigned_driver_id": "",
+            "food_items": "...",
+            "order_date": "03-06-2025",
+            "order_value": 24.35,
+            "status": "Pending",
+            "delivery_time": 0.0
+        },
+        {
+            "id": "order-3",
+            "restaurant_id": 101,
+            "customer_id": "000...002",
+            "assigned_driver_id": "",
+            "food_items": "...",
+            "order_date": "03-06-2025",
+            "order_value": 24.35,
+            "status": "Pending",
+            "delivery_time": 0.0
+        }
+    ]
 
 @pytest.fixture
 def test_order_status():
