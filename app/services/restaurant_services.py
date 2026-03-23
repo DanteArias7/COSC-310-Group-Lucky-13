@@ -3,7 +3,6 @@
 from datetime import date, datetime, time
 import re
 from typing import Any, Dict, List, Protocol
-import random
 import uuid
 from fastapi import HTTPException
 from app.schemas.menu import CreateMenuItem, MenuItem, UpdateMenuItem
