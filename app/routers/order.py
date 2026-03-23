@@ -124,7 +124,7 @@ def get_all_past_orders_for_a_restaurant(restaurant_id: int,
     authorization_service.authorize(user_id, "view_past_orders")
     restaurant_owner_id = restaurant_service.fetch_restaurant(restaurant_id).user_id
     authorization_service.authorize_access(user_id, restaurant_owner_id)
-    return order_service.get_orders_by_restaurant_id(restaurant_id)
+    return order_service.get_past_orders_by_restaurant_id(restaurant_id)
 
 #pylint: disable=too-many-arguments
 #pylint: disable=too-many-positional-arguments
