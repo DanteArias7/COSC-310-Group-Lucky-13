@@ -379,7 +379,6 @@ def test_create_restaurant_integration(restaurant_test_client, temp_restaurant_p
         "tags": ["mexican"],
         "menu": [
             {
-                "id": "00000000-0000-0000-0000-000000000011",
                 "name": "Taco",
                 "description": "Beef taco",
                 "price": 5.0,

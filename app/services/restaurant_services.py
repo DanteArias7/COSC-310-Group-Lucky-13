@@ -34,6 +34,13 @@ class RestaurantServices():
         Returns:
             new Restaurant object
         """
+
+        new_menu = []
+
+        for menu_item in restaurant.menu:
+            menu_item_id = str(uuid.uuid4())
+            new_menu.append(MenuItem(id=menu_item_id, **menu_item.model_dump()))
+
         restaurant = Restaurant(
             id=random.randint(1, 1_000_000),
             user_id=user_id,
@@ -42,8 +49,9 @@ class RestaurantServices():
             phone_number=restaurant.phone_number,
             address=restaurant.address,
             tags=restaurant.tags,
-            menu= restaurant.menu,
+            menu=new_menu,
         )
+
         restaurants = self.repo.load_all_restaurants()
         restaurants.append(restaurant.model_dump())
         self.repo.save_all_restaurants(restaurants)
