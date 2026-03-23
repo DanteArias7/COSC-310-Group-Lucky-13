@@ -212,10 +212,11 @@ class OrderServices():
 
         return available_orders
 
-    def get_all_pending_paid_orders(self) -> List[Order]:
+    def get_all_pending_paid_orders(self, restaurant_id: str) -> List[Order]:
         """
         Rules:
-        - show only pending orders which have been paid successfully,
+        - show only pending orders which have been paid successfully
+        and with a restaurant_id which matches the requesting user's restaurant,
         so the restaurant may choose to accept or decline
 
         Args: none
@@ -227,7 +228,7 @@ class OrderServices():
         pending_paid_orders = []
 
         for order in orders:
-            if order["status"] == "Paid":
+            if order["status"] == "Paid" and order["restaurant_id"] == restaurant_id:
                 pending_paid_orders.append(Order(**order))
 
         return pending_paid_orders

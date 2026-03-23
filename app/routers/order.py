@@ -48,7 +48,7 @@ def add_order(payload: Cart,
                  user_id: str = Header(...,alias="user-id")):
     """Adds a user created order to the data store
 
-    Rules: User must have customer role, Restayrant must be open
+    Rules: User must have customer role, Restaurant must be open
 
     Args:
         payload: Cart object to get information from to create cart object,
@@ -150,6 +150,7 @@ def get_all_available_delivery_orders(
 def get_all_pending_paid_orders(
         order_repo: OrderRepo = Depends(create_order_repo),
         user_repo: UserRepo = Depends(create_user_repo),
+        restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
         user_id: str = Header(..., alias="user-id")):
     """Gets all orders available for restaurant owners to accept/reject.
 
@@ -169,4 +170,6 @@ def get_all_pending_paid_orders(
     order_service = OrderServices(order_repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "view_incoming_orders")
-    return order_service.get_all_pending_paid_orders()
+    restaurant_service = RestaurantServices(restaurant_repo)
+    restaurant = restaurant_service.get_restaurant_by_owner(user_id)
+    return order_service.get_all_pending_paid_orders(restaurant.id)
