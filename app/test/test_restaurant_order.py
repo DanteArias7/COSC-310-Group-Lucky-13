@@ -93,38 +93,34 @@ def test_get_restaurant_order_wrong_restaurant(restaurant_order_service):
     assert exc_info.value.status_code == 403
 
 
-def test_accept_order_success(mocker, restaurant_order_service, mock_order_repo):
+def test_accept_order_success(mocker, restaurant_order_service):
     """Test accepting an order."""
     # pylint: disable=unused-argument
     mock_notification = mocker.patch(
         "app.services.restaurant_order_services.send_notification"
     )
-    mock_restaurant_repo = mocker.Mock()
 
-    result = restaurant_order_service.accept_order(
-        "order1", "owner1", mock_restaurant_repo
-    )
+    # accept_order now only takes order_id and owner_id
+    result = restaurant_order_service.accept_order("order1", "owner1")
 
     assert result.status == "Accepted_by_restaurant"
     mock_notification.assert_called_once()
 
 
-def test_accept_order_wrong_status(mocker, restaurant_order_service):
+def test_accept_order_wrong_status(restaurant_order_service):
     """Test accepting order that's not in Paid status."""
-    mock_restaurant_repo = mocker.Mock()
-
     with pytest.raises(HTTPException) as exc_info:
-        restaurant_order_service.accept_order(
-            "order2", "owner1", mock_restaurant_repo
-        )
+        # order2 has status "Accepted_by_restaurant", not "Paid"
+        restaurant_order_service.accept_order("order2", "owner1")
 
     assert exc_info.value.status_code == 422
 
 
 def test_update_status_to_preparing(restaurant_order_service):
     """Test updating from Accepted to Preparing."""
+    # update_order_status now only takes order_id and new_status
     result = restaurant_order_service.update_order_status(
-        "order2", "Preparing", "owner1", None
+        "order2", "Preparing"
     )
 
     assert result.status == "Preparing"
@@ -132,13 +128,17 @@ def test_update_status_to_preparing(restaurant_order_service):
 
 def test_update_status_to_ready(restaurant_order_service, mock_order_repo):
     """Test updating from Preparing to Ready_for_pickup."""
-    # First update to Preparing
+    # First update order2 to Preparing status
     orders = mock_order_repo.load_all_orders()
-    orders[1]["status"] = "Preparing"
+    for order in orders:
+        if order["id"] == "order2":
+            order["status"] = "Preparing"
+            break
     mock_order_repo.load_all_orders.return_value = orders
 
+    # Now update to Ready_for_pickup
     result = restaurant_order_service.update_order_status(
-        "order2", "Ready_for_pickup", "owner1", None
+        "order2", "Ready_for_pickup"
     )
 
     assert result.status == "Ready_for_pickup"
@@ -147,8 +147,9 @@ def test_update_status_to_ready(restaurant_order_service, mock_order_repo):
 def test_update_status_invalid_transition(restaurant_order_service):
     """Test invalid status transition."""
     with pytest.raises(HTTPException) as exc_info:
+        # Cannot go from "Paid" directly to "Ready_for_pickup"
         restaurant_order_service.update_order_status(
-            "order1", "Ready_for_pickup", "owner1", None
+            "order1", "Ready_for_pickup"
         )
 
     assert exc_info.value.status_code == 422
