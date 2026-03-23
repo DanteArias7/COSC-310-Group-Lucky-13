@@ -402,6 +402,7 @@ def test_get_order_by_user_id_success(order_test_client, test_orders,
     assert user_orders == expected_orders
 
 def test_get_order_by_user_id_with_no_orders(order_test_client, test_users):
+    #pylint: disable=unused-argument
     """
     Spec: System should return error if user with no orders attempts to get order
     Input: valid user_id that does not have any orders
