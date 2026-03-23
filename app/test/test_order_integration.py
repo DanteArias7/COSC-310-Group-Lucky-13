@@ -158,42 +158,29 @@ def test_orders():
 @pytest.fixture
 def test_users():
     """Initialize test user data for each test"""
-    return [{"id": "00000000-0000-0000-0000-000000000001",
-            "name": "Alex",
-            "email": "alexsmith@gmail.com",
-            "phone_number": "123-456-7890",
-            "address": "123 Baron Rd, Kelowna, BC, A1B2C3",
-            "password": "password",
-            "role": "customer"},
-            {"id": "00000000-0000-0000-0000-000000000002",
-            "name": "Alex",
-            "email": "alexsmith@gmail.com",
-            "phone_number": "123-456-7890",
-            "address": "123 Baron Rd, Kelowna, BC, A1B2C3",
-            "password": "password",
-            "role": "restaurant_owner"},
-            {"id": "00000000-0000-0000-0000-000000000003",
-            "name": "Alex",
-            "email": "alexsmith@gmail.com",
-            "phone_number": "123-456-7890",
-            "address": "123 Baron Rd, Kelowna, BC, A1B2C3",
-            "password": "password",
-            "role": "customer"},
-            {"id": "00000001-0000-0000-0000-000000000000",
-            "name": "Barbara",
-            "email": "barbara@gmail.com",
-            "phone_number": "223-456-7890",
-            "address": "567 Innovation Dr, Kelowna, BC, A1B2C3",
-            "password": "password",
-            "role": "delivery_driver"},
-            {"id": "00000002-0000-0000-0000-000000000000",
-            "name": "Cameron",
-            "email": "camcameron@gmail.com",
-            "phone_number": "323-456-7890",
-            "address": "456 Baron Rd, Kelowna, BC, A1B2C3",
-            "password": "password",
-            "role": "delivery_driver"}
-            ]
+    return [
+        {"id": "00000000-0000-0000-0000-000000000001",
+         "name": "Alex",
+         "email": "alexsmith@gmail.com",
+         "phone_number": "123-456-7890",
+         "address": "123 Baron Rd, Kelowna, BC, A1B2C3",
+         "password": "password",
+         "role": "delivery_driver"},
+        {"id": "00000000-0000-0000-0000-000000000002",
+         "name": "Alex",
+         "email": "alexsmith@gmail.com",
+         "phone_number": "123-456-7890",
+         "address": "123 Baron Rd, Kelowna, BC, A1B2C3",
+         "password": "password",
+         "role": "restaurant_owner"},
+        {"id": "00000000-0000-0000-0000-000000000003",
+         "name": "Alex",
+         "email": "alexsmith@gmail.com",
+         "phone_number": "123-456-7890",
+         "address": "123 Baron Rd, Kelowna, BC, A1B2C3",
+         "password": "password",
+         "role": "customer"}
+    ]
 
 @pytest.fixture
 def temp_order_path(tmp_path, test_orders):
@@ -344,7 +331,7 @@ def test_add_order_success(mocker, temp_order_path,
     mocked_time = mocker.patch("app.services.restaurant_services.date")
     mocked_time.today.return_value.strftime.return_value = "Monday"
 
-    r =order_test_client.post(request, headers={"user-id" : test_users[0]["id"]},
+    r =order_test_client.post(request, headers={"user-id" : test_users[2]["id"]},
                            json=payload)
 
     orders = pandas.read_csv(temp_order_path, keep_default_na=False)
@@ -388,7 +375,7 @@ def test_add_order_restaurant_closed(mocker,
     mocked_time = mocker.patch("app.services.restaurant_services.date")
     mocked_time.today.return_value.strftime.return_value = "Monday"
 
-    r =order_test_client.post(request, headers={"user-id" : test_users[0]["id"]},
+    r =order_test_client.post(request, headers={"user-id" : test_users[2]["id"]},
                            json=payload)
 
 
@@ -405,7 +392,7 @@ def test_get_order_by_user_id_success(order_test_client, test_orders,
     Expected behavior: Endpoint returns list of user orders
     """
 
-    r = order_test_client.get("/orders", headers={"user-id" : test_users[0]["id"]})
+    r = order_test_client.get("/orders", headers={"user-id" : test_users[2]["id"]})
 
     expected_orders = [test_orders[0], test_orders[1]]
 
@@ -448,7 +435,7 @@ def test_simulate_payment_success(temp_order_path,
 
     r = order_test_client.post(
         request,
-        headers={"user-id": test_users[0]["id"]},
+        headers={"user-id": test_users[2]["id"]},
         json=valid_payment
     )
 
@@ -466,7 +453,7 @@ def test_simulate_payment_success(temp_order_path,
     customer_notification = calls[0][0][0]
     owner_notification = calls[1][0][0]
 
-    assert customer_notification.user_id == test_users[0]["id"]
+    assert customer_notification.user_id == test_users[2]["id"]
     assert customer_notification.message == (
         f"Your order {order_id} has been paid successfully"
     )
@@ -493,7 +480,7 @@ def test_simulate_payment_success_amex(temp_order_path,
 
     r = order_test_client.post(
         request,
-        headers={"user-id": test_users[0]["id"]},
+        headers={"user-id": test_users[2]["id"]},
         json=valid_payment_amex
     )
 
@@ -519,7 +506,7 @@ def test_simulate_payment_amex_invalid_cvv(order_test_client,
 
     r = order_test_client.post(
         request,
-        headers={"user-id": test_users[0]["id"]},
+        headers={"user-id": test_users[2]["id"]},
         json=amex_card_invalid_cvv
     )
 
@@ -537,7 +524,8 @@ def test_simulate_payment_order_not_found(order_test_client,
     request = "/orders/INVALIDID/simulate-payment"
 
     r = order_test_client.post(request,
-                               headers={"user-id": test_users[0]["id"]}, json=valid_payment)
+                               headers={"user-id": test_users
+                                        [2]["id"]}, json=valid_payment)
 
     assert r.status_code == 404
 
@@ -563,7 +551,7 @@ def test_simulate_payment_invalid_status(temp_order_path,
 
     r = order_test_client.post(
         request,
-        headers={"user-id": test_users[0]["id"]},
+        headers={"user-id": test_users[2]["id"]},
         json=valid_payment
     )
 
@@ -583,7 +571,7 @@ def test_simulate_payment_invalid_card(order_test_client,
 
     r = order_test_client.post(
         request,
-        headers={"user-id": test_users[0]["id"]},
+        headers={"user-id": test_users[2]["id"]},
         json=invalid_card_payment
     )
 
@@ -605,7 +593,7 @@ def test_simulate_payment_invalid_cvv(order_test_client,
 
     r = order_test_client.post(
         request,
-        headers={"user-id": test_users[0]["id"]},
+        headers={"user-id": test_users[2]["id"]},
         json=invalid_cvv_payment
     )
 
@@ -627,7 +615,7 @@ def test_simulate_payment_expired_card(order_test_client,
 
     r = order_test_client.post(
         request,
-        headers={"user-id": test_users[0]["id"]},
+        headers={"user-id": test_users[2]["id"]},
         json=expired_payment
     )
 
@@ -663,7 +651,7 @@ def test_get_all_available_delivery_orders_success(order_test_client, test_users
     Input: User with authorized driver role
     Expected: Returns only AAAAAAA and BBBBBBB
     """
-    driver = test_users[3]
+    driver = test_users[0]
     expected_orders = [test_orders[3], test_orders[4]]
 
     r = order_test_client.get("/orders/available", headers={"user-id": driver["id"]})
@@ -683,3 +671,70 @@ def test_get_all_available_delivery_orders_unauthorized(order_test_client, test_
     r = order_test_client.get("/orders/available", headers={"user-id": customer["id"]})
 
     assert r.status_code == 403
+
+def test_assign_driver_success(tmp_path, order_test_client, test_orders, test_users):
+    """Test driver can be assigned to an order."""
+    # Setup order in Ready_for_pickup status
+    test_orders[0]["status"] = "Ready_for_pickup"
+    test_orders[0]["assigned_driver_id"] = ""
+
+    order_path = tmp_path / "orders.csv"
+    pandas.DataFrame(test_orders).to_csv(order_path, index=False)
+
+    def override_order_repo():
+        return OrderRepo(order_path)
+
+    app.dependency_overrides[create_order_repo] = override_order_repo
+
+    # Make request
+    response = order_test_client.put(
+        f"/orders/{test_orders[0]['id']}/assign-driver",
+        headers={"user-id": test_users[0]["id"]}
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["assigned_driver_id"] == test_users[0]["id"]
+    assert data["status"] == "Ready_for_pickup"  # Status unchanged
+
+
+def test_assign_driver_order_not_ready(tmp_path, order_test_client, test_orders, test_users):
+    """Test cannot assign driver to order not ready for pickup."""
+    test_orders[0]["status"] = "Preparing"
+    test_orders[0]["assigned_driver_id"] = ""
+
+    order_path = tmp_path / "orders.csv"
+    pandas.DataFrame(test_orders).to_csv(order_path, index=False)
+
+    def override_order_repo():
+        return OrderRepo(order_path)
+
+    app.dependency_overrides[create_order_repo] = override_order_repo
+
+    response = order_test_client.put(
+        f"/orders/{test_orders[0]['id']}/assign-driver",
+        headers={"user-id": test_users[0]["id"]}
+    )
+
+    assert response.status_code == 422
+
+
+def test_assign_driver_already_assigned(tmp_path, order_test_client, test_orders, test_users):
+    """Test cannot assign driver to already assigned order."""
+    test_orders[0]["status"] = "Ready_for_pickup"
+    test_orders[0]["assigned_driver_id"] = "other_driver"
+
+    order_path = tmp_path / "orders.csv"
+    pandas.DataFrame(test_orders).to_csv(order_path, index=False)
+
+    def override_order_repo():
+        return OrderRepo(order_path)
+
+    app.dependency_overrides[create_order_repo] = override_order_repo
+
+    response = order_test_client.put(
+        f"/orders/{test_orders[0]['id']}/assign-driver",
+        headers={"user-id": test_users[0]["id"]}
+    )
+
+    assert response.status_code == 409
