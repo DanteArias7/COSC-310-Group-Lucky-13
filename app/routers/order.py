@@ -161,7 +161,6 @@ def assign_driver(
     - Order must not have an assigned driver
     - Assigns driver ID, status remains unchanged
     """
-    # Authorize user role
     auth_service = AuthorizationServices(user_repo)
     auth_service.authorize(user_id, "request_delivery")
 

@@ -227,7 +227,6 @@ class OrderServices():
         available_orders = []
 
         for order_dict in all_orders:
-            # Order must be ready for pickup AND no driver assigned
             if (order_dict["status"] == "Ready_for_pickup" and
                 not order_dict["assigned_driver_id"]):
                 available_orders.append(Order(**order_dict))
@@ -245,7 +244,6 @@ class OrderServices():
         orders = self.repo.load_all_orders()
         order_dict, index = self._find_order(orders, order_id)
 
-        # Validate order is ready for pickup
         if order_dict["status"] != "Ready_for_pickup":
             raise HTTPException(
                 status_code=422,
@@ -253,7 +251,6 @@ class OrderServices():
                     f"Current status: {order_dict['status']}"
             )
 
-        # Validate no driver assigned
         if order_dict["assigned_driver_id"]:
             raise HTTPException(
                 status_code=409,
@@ -261,13 +258,10 @@ class OrderServices():
                     f"{order_dict['assigned_driver_id']}"
             )
 
-        # ONLY assign driver - status remains unchanged
         orders[index]["assigned_driver_id"] = driver_id
-        # orders[index]["status"] = "Assigned_to_driver"  # REMOVED - don't change status
 
         self.repo.update_orders(orders)
 
-        # Notify customer
         send_notification(
             Notification(
                 user_id=order_dict["customer_id"],

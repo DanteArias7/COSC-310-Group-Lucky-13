@@ -628,7 +628,6 @@ def test_get_all_available_delivery_orders_none_found(mocked_repo, order_service
 
 def test_get_available_orders_success(mocked_repo, order_service, test_orders):
     """Test driver can see available orders."""
-    # Create test orders with Ready_for_pickup status
     test_orders[0]["status"] = "Ready_for_pickup"
     test_orders[0]["assigned_driver_id"] = ""
     mocked_repo.load_all_orders.return_value = test_orders
@@ -649,7 +648,6 @@ def test_get_available_orders_empty(mocked_repo, order_service, test_orders):
     assert result == []
 
 
-# Driver accept delivery tests
 def test_accept_delivery_success(mocker, mocked_repo, order_service, test_orders):
     """Test driver successfully accepts an order."""
     mock_notification = mocker.patch(
@@ -662,7 +660,6 @@ def test_accept_delivery_success(mocker, mocked_repo, order_service, test_orders
 
     result = order_service.accept_delivery(test_orders[0]["id"], "driver123")
 
-    # Status should remain Ready_for_pickup, not change
     assert result.status == "Ready_for_pickup"
     assert result.assigned_driver_id == "driver123"
     mock_notification.assert_called_once()
