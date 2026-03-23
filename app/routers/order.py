@@ -163,7 +163,7 @@ def assign_driver(
     """
     # Authorize user role
     auth_service = AuthorizationServices(user_repo)
-    auth_service.authorize(user_id, "view_available_orders")
+    auth_service.authorize(user_id, "request_delivery")
 
     order_service = OrderServices(order_repo)
     return order_service.accept_delivery(order_id, user_id)

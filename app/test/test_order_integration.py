@@ -165,7 +165,7 @@ def test_users():
          "phone_number": "123-456-7890",
          "address": "123 Baron Rd, Kelowna, BC, A1B2C3",
          "password": "password",
-         "role": "driver"},
+         "role": "delivery_driver"},
         {"id": "00000000-0000-0000-0000-000000000002",
          "name": "Alex",
          "email": "alexsmith@gmail.com",
