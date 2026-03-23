@@ -409,8 +409,10 @@ def test_get_order_by_user_id_with_no_orders(order_test_client,
     Expected behavior: Method raises 404 HTTPException
     """
 
-    r = order_test_client.get("/orders", headers={"user-id" : test_users[0]["id"]})
-
+    non_existent_user = "user-with-no-orders-12345"
+    
+    r = order_test_client.get("/orders", headers={"user-id": non_existent_user})
+    
     assert r.status_code == 404
 
 #simulate_payment Tests
@@ -633,14 +635,16 @@ def test_simulate_payment_unauthorized_user(order_test_client,
 
     order_id = test_orders[0]["id"]
 
+    unauthorized_user = test_users[2]["id"]
+    
     request = f"/orders/{order_id}/simulate-payment"
-
+    
     r = order_test_client.post(
         request,
-        headers={"user-id": test_users[0]["id"]},
+        headers={"user-id": unauthorized_user},
         json=valid_payment
     )
-
+    
     assert r.status_code == 403
 
 def test_get_available_orders_unauthorized(order_test_client, test_users):
