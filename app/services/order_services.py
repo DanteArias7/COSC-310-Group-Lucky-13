@@ -138,18 +138,18 @@ class OrderServices():
         orders = self.repo.load_all_orders()
         order, index = self._find_order(orders, order_id)
 
-        # Validate driver assignment
-        if order["assigned_driver_id"] != driver_id:
-            raise HTTPException(
-                status_code=403,
-                detail="You can only reject orders assigned to you"
-            )
-
         # Validate status (can't reject if in transit or later)
         if order["status"] not in DRIVER_REJECTABLE_STATUSES:
             raise HTTPException(
                 status_code=422,
                 detail=f"Order {order_id} cannot be rejected in current status: {order['status']}"
+            )
+
+        # Validate driver assignment
+        if order["assigned_driver_id"] != driver_id:
+            raise HTTPException(
+                status_code=403,
+                detail="You can only reject orders assigned to you"
             )
 
         # Clear driver - order goes back to available pool
