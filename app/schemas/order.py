@@ -8,6 +8,7 @@ OrderStatus = Literal[
     "Accepted_by_restaurant",
     "Preparing",
     "Ready_for_pickup",
+    "Assigned_to_driver",
     "In_transit",
     "Complete",
     "Cancelled",
