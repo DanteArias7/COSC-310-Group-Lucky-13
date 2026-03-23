@@ -60,7 +60,7 @@ def test_get_nonexistent_user(mocker):
 def test_create_user(mocker):
     """Unit Test for creating a user method"""
     mocked_uuid = '00000000-0000-0000-0000-000000000001'
-    uuid_mock = mocker.patch("app.services.user_services.uuid.uuid7")
+    uuid_mock = mocker.patch("app.services.user_services.uuid.uuid4")
     uuid_mock.return_value = mocked_uuid
 
     mocked_repo = mocker.Mock()
