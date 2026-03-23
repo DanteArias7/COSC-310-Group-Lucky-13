@@ -6,7 +6,7 @@ from app.routers.user import user_router
 from app.routers.restaurant import restaurant_router
 from app.routers.order import order_router
 from app.routers.notification_router import notification_router
-from app.routers.restaurant_order_router import restaurant_order_router
+from app.routers.restaurant_orders import restaurant_order_router
 app = FastAPI()
 
 app.include_router(user_router)

@@ -1,143 +1,154 @@
-# pylint: disable=missing-final-newline
-# pylint: disable=import-error
-# pylint: disable=duplicate-code
-"""Unit tests for Restaurant owner order management (RestaurantOrderServices)."""
+# pylint: disable=redefined-outer-name
 
+"""Tests for restaurant order management."""
 import pytest
 from fastapi import HTTPException
-
-from app.repositories.order_repo import OrderRepo
 from app.services.restaurant_order_services import RestaurantOrderServices
 
-PENDING_ORDER = {
-    "id": "order-1",
-    "customer_id": "user-1",
-    "restaurant_id": "rest-1",
-    "items": [],
-    "delivery_address": "123 Main St",
-    "status": "pending",
-    "payment_status": None,
-    "assigned_driver_id": None,
-    "refund_issued": False,
-}
+
+@pytest.fixture
+def sample_orders_data():
+    """Sample orders for testing."""
+    return [
+        {
+            "id": "order1",
+            "restaurant_id": 101,
+            "customer_id": "customer1",
+            "assigned_driver_id": "",
+            "food_items": "1x Burger",
+            "order_date": "03-17-2026",
+            "order_value": 15.99,
+            "status": "Paid",
+            "delivery_time": 0.0
+        },
+        {
+            "id": "order2",
+            "restaurant_id": 101,
+            "customer_id": "customer2",
+            "assigned_driver_id": "",
+            "food_items": "2x Pizza",
+            "order_date": "03-17-2026",
+            "order_value": 25.99,
+            "status": "Accepted_by_restaurant",
+            "delivery_time": 0.0
+        },
+        {
+            "id": "order3",
+            "restaurant_id": 102,
+            "customer_id": "customer3",
+            "assigned_driver_id": "",
+            "food_items": "1x Salad",
+            "order_date": "03-17-2026",
+            "order_value": 12.50,
+            "status": "Paid",
+            "delivery_time": 0.0
+        }
+    ]
 
 
-def _make_service(mocker, orders):
-    mock_repo = mocker.Mock(spec=OrderRepo)
-    mock_repo.get_order_by_id.side_effect = lambda oid: next(
-        (o for o in orders if o["id"] == oid), None
+@pytest.fixture
+def mock_order_repo(mocker, sample_orders_data):
+    """Mock order repository."""
+    repo = mocker.Mock()
+    repo.load_all_orders.return_value = sample_orders_data.copy()
+    repo.update_orders.return_value = None
+    return repo
+
+
+@pytest.fixture
+def restaurant_order_service(mock_order_repo):
+    """Restaurant order service with mock repo."""
+    return RestaurantOrderServices(mock_order_repo)
+
+
+def test_get_restaurant_orders_success(restaurant_order_service):
+    """Test getting all orders for a restaurant."""
+    orders = restaurant_order_service.get_restaurant_orders(101)
+
+    assert len(orders) == 2
+    assert all(order.restaurant_id == 101 for order in orders)
+
+
+def test_get_restaurant_orders_not_found(restaurant_order_service):
+    """Test getting orders for restaurant with no orders."""
+    with pytest.raises(HTTPException) as exc_info:
+        restaurant_order_service.get_restaurant_orders(999)
+
+    assert exc_info.value.status_code == 404
+
+
+def test_get_restaurant_order_success(restaurant_order_service):
+    """Test getting a specific order."""
+    order = restaurant_order_service.get_restaurant_order(101, "order1")
+
+    assert order.id == "order1"
+    assert order.restaurant_id == 101
+
+
+def test_get_restaurant_order_wrong_restaurant(restaurant_order_service):
+    """Test getting order that belongs to different restaurant."""
+    with pytest.raises(HTTPException) as exc_info:
+        restaurant_order_service.get_restaurant_order(101, "order3")
+
+    assert exc_info.value.status_code == 403
+
+
+def test_accept_order_success(mocker, restaurant_order_service, mock_order_repo):
+    """Test accepting an order."""
+    # pylint: disable=unused-argument
+    mock_notification = mocker.patch(
+        "app.services.restaurant_order_services.send_notification"
     )
-    mock_repo.load_all_orders.return_value = [dict(o) for o in orders]
-    mock_repo.save_all_orders.return_value = None
-    return RestaurantOrderServices(mock_repo)
+    mock_restaurant_repo = mocker.Mock()
 
-# get_pending_order – popup display
+    result = restaurant_order_service.accept_order(
+        "order1", "owner1", mock_restaurant_repo
+    )
 
-def test_get_pending_order_returns_all_fields(mocker):
-    """get_pending_order returns full order details for the popup."""
-    service = _make_service(mocker, [dict(PENDING_ORDER)])
-    result = service.get_pending_order("order-1")
-    assert result.id == "order-1"
-    assert result.customer_id == "user-1"
-    assert result.restaurant_id == "rest-1"
-    assert result.delivery_address == "123 Main St"
-    assert result.status == "pending"
+    assert result.status == "Accepted_by_restaurant"
+    mock_notification.assert_called_once()
 
 
-def test_get_pending_order_not_found_raises_404(mocker):
-    """get_pending_order raises 404 for unknown order."""
-    service = _make_service(mocker, [])
+def test_accept_order_wrong_status(mocker, restaurant_order_service):
+    """Test accepting order that's not in Paid status."""
+    mock_restaurant_repo = mocker.Mock()
+
     with pytest.raises(HTTPException) as exc_info:
-        service.get_pending_order("ghost")
-    assert exc_info.value.status_code == 404
+        restaurant_order_service.accept_order(
+            "order2", "owner1", mock_restaurant_repo
+        )
 
-# accept_order
-
-def test_accept_order_sets_status_to_accepted(mocker):
-    """accept_order sets the order status to 'accepted'."""
-    service = _make_service(mocker, [dict(PENDING_ORDER)])
-    result = service.accept_order("order-1", "owner-1")
-    assert result.new_status == "accepted"
-    assert result.action == "accepted"
-
-
-def test_accept_order_refund_is_false(mocker):
-    """accept_order does not issue a refund."""
-    service = _make_service(mocker, [dict(PENDING_ORDER)])
-    result = service.accept_order("order-1", "owner-1")
-    assert result.refund_issued is False
-
-
-def test_accept_order_returns_confirmation_message(mocker):
-    """accept_order response contains a non-empty confirmation message."""
-    service = _make_service(mocker, [dict(PENDING_ORDER)])
-    result = service.accept_order("order-1", "owner-1")
-    assert result.message != ""
-
-
-def test_accept_nonexistent_order_raises_404(mocker):
-    """accept_order raises 404 for unknown order."""
-    service = _make_service(mocker, [])
-    with pytest.raises(HTTPException) as exc_info:
-        service.accept_order("ghost", "owner-1")
-    assert exc_info.value.status_code == 404
-
-
-def test_accept_already_accepted_order_raises_422(mocker):
-    """Accepting an already-accepted order raises 422."""
-    accepted = {**PENDING_ORDER, "status": "accepted"}
-    service = _make_service(mocker, [accepted])
-    with pytest.raises(HTTPException) as exc_info:
-        service.accept_order("order-1", "owner-1")
-    assert exc_info.value.status_code == 422
-
-# reject_order – US2 + Sub-124
-
-def test_reject_order_sets_status_to_cancelled(mocker):
-    """US2: reject_order sets the order status to 'cancelled'."""
-    service = _make_service(mocker, [dict(PENDING_ORDER)])
-    result = service.reject_order("order-1", "owner-1")
-    assert result.new_status == "cancelled"
-    assert result.action == "rejected"
-
-
-def test_reject_order_issues_refund(mocker):
-    """Sub-124: reject_order sets refund_issued to True."""
-    service = _make_service(mocker, [dict(PENDING_ORDER)])
-    result = service.reject_order("order-1", "owner-1")
-    assert result.refund_issued is True
-
-
-def test_reject_order_returns_confirmation_message(mocker):
-    """US2: reject_order response contains a non-empty message."""
-    service = _make_service(mocker, [dict(PENDING_ORDER)])
-    result = service.reject_order("order-1", "owner-1")
-    assert result.message != ""
-    assert "refund" in result.message.lower() or "rejected" in result.message.lower()
-
-
-def test_reject_nonexistent_order_raises_404(mocker):
-    """reject_order raises 404 for unknown order."""
-    service = _make_service(mocker, [])
-    with pytest.raises(HTTPException) as exc_info:
-        service.reject_order("ghost", "owner-1")
-    assert exc_info.value.status_code == 404
-
-
-def test_reject_cancelled_order_raises_422(mocker):
-    """Rejecting an already-cancelled order raises 422."""
-    cancelled = {**PENDING_ORDER, "status": "cancelled"}
-    service = _make_service(mocker, [cancelled])
-    with pytest.raises(HTTPException) as exc_info:
-        service.reject_order("order-1", "owner-1")
     assert exc_info.value.status_code == 422
 
 
-def test_reject_fulfilled_order_raises_422(mocker):
-    """Rejecting a fulfilled order raises 422."""
-    fulfilled = {**PENDING_ORDER, "status": "fulfilled"}
-    service = _make_service(mocker, [fulfilled])
+def test_update_status_to_preparing(restaurant_order_service):
+    """Test updating from Accepted to Preparing."""
+    result = restaurant_order_service.update_order_status(
+        "order2", "Preparing", "owner1", None
+    )
+
+    assert result.status == "Preparing"
+
+
+def test_update_status_to_ready(restaurant_order_service, mock_order_repo):
+    """Test updating from Preparing to Ready_for_pickup."""
+    # First update to Preparing
+    orders = mock_order_repo.load_all_orders()
+    orders[1]["status"] = "Preparing"
+    mock_order_repo.load_all_orders.return_value = orders
+
+    result = restaurant_order_service.update_order_status(
+        "order2", "Ready_for_pickup", "owner1", None
+    )
+
+    assert result.status == "Ready_for_pickup"
+
+
+def test_update_status_invalid_transition(restaurant_order_service):
+    """Test invalid status transition."""
     with pytest.raises(HTTPException) as exc_info:
-        service.reject_order("order-1", "owner-1")
+        restaurant_order_service.update_order_status(
+            "order1", "Ready_for_pickup", "owner1", None
+        )
+
     assert exc_info.value.status_code == 422
-  
