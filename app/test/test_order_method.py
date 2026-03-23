@@ -625,3 +625,69 @@ def test_get_all_available_delivery_orders_none_found(mocked_repo, order_service
     result = order_service.get_all_available_delivery_orders()
 
     assert result == []
+
+def test_get_available_orders_success(mocked_repo, order_service, test_orders):
+    """Test driver can see available orders."""
+    # Create test orders with Ready_for_pickup status
+    test_orders[0]["status"] = "Ready_for_pickup"
+    test_orders[0]["assigned_driver_id"] = ""
+    mocked_repo.load_all_orders.return_value = test_orders
+
+    result = order_service.get_available_orders()
+
+    assert len(result) == 1
+    assert result[0].status == "Ready_for_pickup"
+    assert not result[0].assigned_driver_id
+
+
+def test_get_available_orders_empty(mocked_repo, order_service, test_orders):
+    """Test when no orders are available."""
+    test_orders[0]["status"] = "Preparing"
+    mocked_repo.load_all_orders.return_value = test_orders
+
+    result = order_service.get_available_orders()
+    assert result == []
+
+
+# Driver accept delivery tests
+def test_accept_delivery_success(mocker, mocked_repo, order_service, test_orders):
+    """Test driver successfully accepts an order."""
+    mock_notification = mocker.patch(
+        "app.services.order_services.send_notification"
+    )
+
+    test_orders[0]["status"] = "Ready_for_pickup"
+    test_orders[0]["assigned_driver_id"] = ""
+    mocked_repo.load_all_orders.return_value = test_orders
+
+    result = order_service.accept_delivery(test_orders[0]["id"], "driver123")
+
+    assert result.status == "Assigned_to_driver"
+    assert result.assigned_driver_id == "driver123"
+    mock_notification.assert_called_once()
+
+
+def test_accept_delivery_not_ready(mocked_repo, order_service, test_orders):
+    """Test cannot accept order not in Ready_for_pickup status."""
+    test_orders[0]["status"] = "Preparing"
+    test_orders[0]["assigned_driver_id"] = ""
+    mocked_repo.load_all_orders.return_value = test_orders
+
+    with pytest.raises(HTTPException) as exc_info:
+        order_service.accept_delivery(test_orders[0]["id"], "driver123")
+
+    assert exc_info.value.status_code == 422
+    assert "not ready for pickup" in exc_info.value.detail
+
+
+def test_accept_delivery_already_assigned(mocked_repo, order_service, test_orders):
+    """Test cannot accept order already assigned."""
+    test_orders[0]["status"] = "Ready_for_pickup"
+    test_orders[0]["assigned_driver_id"] = "other_driver"
+    mocked_repo.load_all_orders.return_value = test_orders
+
+    with pytest.raises(HTTPException) as exc_info:
+        order_service.accept_delivery(test_orders[0]["id"], "driver123")
+
+    assert exc_info.value.status_code == 409
+    assert "already assigned" in exc_info.value.detail

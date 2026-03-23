@@ -16,7 +16,7 @@ from app.services.restaurant_services import RestaurantServices
 #pylint: disable=too-few-public-methods
 class OrderServices():
     """Order Service Class"""
-    def __init__(self, repo: IOrderRepo, restaurant_service: RestaurantServices = None):
+    def __init__(self, repo: IOrderRepo, restaurant_service: RestaurantServices = None): # pylint: disable=used-before-assignment
         """Initialize instance with repo object"""
         self.repo = repo
         self.restaurant_service = restaurant_service
@@ -217,6 +217,72 @@ class OrderServices():
                 available_orders.append(Order(**order))
 
         return available_orders
+
+    def get_available_orders(self) -> List[Order]:
+        """Get all orders ready for pickup with no driver assigned.
+
+        Used by drivers to see available deliveries.
+        """
+        all_orders = self.repo.load_all_orders()
+        available_orders = []
+
+        for order_dict in all_orders:
+            # Order must be ready for pickup AND no driver assigned
+            if (order_dict["status"] == "Ready_for_pickup" and
+                not order_dict["assigned_driver_id"]):
+                available_orders.append(Order(**order_dict))
+
+        return available_orders
+
+    def accept_delivery(self, order_id: str, driver_id: str) -> Order:
+        """Driver accepts an order to deliver.
+
+        Rules:
+        - Order must be in 'Ready_for_pickup' status
+        - Order must not have an assigned driver
+        - Assigns driver to order, status changes to 'Assigned_to_driver'
+        """
+        orders = self.repo.load_all_orders()
+        order_dict, index = self._find_order(orders, order_id)
+
+        # Validate order is ready for pickup
+        if order_dict["status"] != "Ready_for_pickup":
+            raise HTTPException(
+                status_code=422,
+                detail=f"Order {order_id} is not ready for pickup. "
+                    f"Current status: {order_dict['status']}"
+            )
+
+        # Validate no driver assigned
+        if order_dict["assigned_driver_id"]:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Order {order_id} already assigned to driver "
+                    f"{order_dict['assigned_driver_id']}"
+            )
+
+        # Assign driver and update status
+        orders[index]["assigned_driver_id"] = driver_id
+        orders[index]["status"] = "Assigned_to_driver"
+        self.repo.update_orders(orders)
+
+        # Notify customer
+        send_notification(
+            Notification(
+                user_id=order_dict["customer_id"],
+                message=f"Your order {order_id} has been assigned to a driver "
+                        "for delivery"
+            )
+        )
+
+        return Order(**orders[index])
+
+    def _find_order(self, orders: List[Dict[str, Any]], order_id: str):
+        """Helper to find order by ID."""
+        for i, order in enumerate(orders):
+            if order["id"] == order_id:
+                return order, i
+        raise HTTPException(status_code=404, detail=f"Order {order_id} not found")
 
 class IOrderRepo(Protocol):
     """Order Repo Interface"""

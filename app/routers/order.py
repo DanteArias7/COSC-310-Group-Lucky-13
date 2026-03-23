@@ -145,3 +145,42 @@ def get_all_available_delivery_orders(
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "view_available_deliveries")
     return order_service.get_all_available_delivery_orders()
+
+@order_router.get("/available", response_model=List[Order], status_code=200)
+def get_available_orders(
+    order_repo: OrderRepo = Depends(create_order_repo),
+    user_repo: UserRepo = Depends(create_user_repo),
+    user_id: str = Header(..., alias="user-id")
+):
+    """Get all orders ready for pickup that are not yet assigned.
+
+    Rules: User must have driver role
+
+    Returns orders with status 'Ready_for_pickup' and no assigned driver
+    """
+    authorization_service = AuthorizationServices(user_repo)
+    authorization_service.authorize(user_id, "view_available_orders")
+
+    order_service = OrderServices(order_repo)
+    return order_service.get_available_orders()
+
+
+@order_router.post("/{order_id}/accept-driver", response_model=Order, status_code=200)
+def accept_delivery(
+    order_id: str,
+    order_repo: OrderRepo = Depends(create_order_repo),
+    user_repo: UserRepo = Depends(create_user_repo),
+    user_id: str = Header(..., alias="user-id")
+):
+    """Driver accepts an order to deliver.
+
+    Rules:
+    - User must have driver role
+    - Order must be in 'Ready_for_pickup' status
+    - Order must not have an assigned driver
+    """
+    authorization_service = AuthorizationServices(user_repo)
+    authorization_service.authorize(user_id, "view_available_orders")
+
+    order_service = OrderServices(order_repo)
+    return order_service.accept_delivery(order_id, user_id)
