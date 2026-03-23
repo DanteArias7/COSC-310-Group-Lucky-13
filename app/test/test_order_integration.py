@@ -403,13 +403,12 @@ def test_get_order_by_user_id_success(order_test_client, test_orders,
     assert r.status_code == 200
     assert user_orders == expected_orders
 
-def test_get_order_by_user_id_with_no_orders(order_test_client, test_users): pylint: disable=unused-argument
+def test_get_order_by_user_id_with_no_orders(order_test_client):
     """
     Spec: System should return error if user with no orders attempts to get order
     Input: valid user_id that does not have any orders
     Expected behavior: Method raises 404 HTTPException
     """
-
     non_existent_user = "user-with-no-orders-12345"
     
     r = order_test_client.get("/orders", headers={"user-id": non_existent_user})
