@@ -4,7 +4,7 @@ import asyncio
 from fastapi import APIRouter, Header
 from fastapi.sse import EventSourceResponse, ServerSentEvent
 
-from app.services.notification_services import STREAM_STOP, notifications, user_queues
+from app.services.notification_services import notifications, user_queues
 
 notification_router = APIRouter(prefix="/notifications",
                                 tags=["notification"])
@@ -38,8 +38,6 @@ async def stream_notifications(
     try:
         while True:
             notification = await queue.get()
-            if notification is STREAM_STOP:
-                break
             yield ServerSentEvent(
                 data=notification,
                 event="notification"
