@@ -256,7 +256,7 @@ def test_get_order_by_id_success(mocked_repo, test_orders_available, order_servi
     orders = pandas.DataFrame(test_orders_available)
     mocked_repo.load_all_orders_df.return_value = orders
 
-    order = order_service._get_order_by_id("AAAAAAA")
+    order = order_service.get_order_by_id("AAAAAAA")
 
     assert order == test_orders_available[0]
 
@@ -269,7 +269,7 @@ def test_get_order_by_id_invalid_id(mocked_repo, test_orders_available, order_se
     mocked_repo.load_all_orders_df.return_value = orders
 
     with pytest.raises(HTTPException) as exc_info:
-        order_service._get_order_by_id("fake")
+        order_service.get_order_by_id("fake")
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Order fake Not Found."
