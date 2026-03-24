@@ -640,3 +640,45 @@ def test_get_all_available_delivery_orders_none_found(mocked_repo, order_service
     result = order_service.get_all_available_delivery_orders()
 
     assert result == []
+
+#get_all_pending_paid_orders Unit tests
+
+def test_get_all_pending_paid_orders_success(mocked_repo, order_service, test_orders_paid):
+    """
+    Spec: Method should return only orders with Paid status
+    Input: mix of Paid and non-Paid orders
+    Expected behavior: Returns only Paid orders
+    """
+    mocked_repo.load_all_orders.return_value = test_orders_paid
+
+    result = order_service.get_all_pending_paid_orders(101)
+
+    assert len(result) == 1
+    assert all(order.status == "Paid" for order in result)
+
+def test_get_all_pending_paid_orders_none_found(mocked_repo, order_service):
+    """
+    Spec: Method should return empty list if no paid orders exist
+    Input: empty order list
+    Expected behavior: Returns empty list
+    """
+    mocked_repo.load_all_orders.return_value = []
+
+    result = order_service.get_all_pending_paid_orders(101)
+
+    assert result == []
+
+def test_get_all_pending_paid_orders_filters_by_restaurant(
+        mocked_repo,
+        order_service,
+        test_orders_paid):
+    """
+    Spec: Method should only return Paid orders belonging to the requesting restaurant
+    Input: mix of Paid orders from different restaurants
+    Expected behavior: Returns only Paid orders matching the given restaurant_id
+    """
+    mocked_repo.load_all_orders.return_value = test_orders_paid
+
+    result = order_service.get_all_pending_paid_orders(999)
+
+    assert result == []

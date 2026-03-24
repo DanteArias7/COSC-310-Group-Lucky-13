@@ -239,6 +239,27 @@ class OrderServices():
 
         return available_orders
 
+    def get_all_pending_paid_orders(self, restaurant_id: str) -> List[Order]:
+        """
+        Rules:
+        - show only pending orders which have been paid successfully
+        and with a restaurant_id which matches the requesting user's restaurant,
+        so the restaurant may choose to accept or decline
+
+        Args: none
+
+        Returns:
+        A list of Order objects with the matching order status (as specified in rules)
+        """
+        orders = self.repo.load_all_orders()
+        pending_paid_orders = []
+
+        for order in orders:
+            if order["status"] == "Paid" and order["restaurant_id"] == restaurant_id:
+                pending_paid_orders.append(Order(**order))
+
+        return pending_paid_orders
+
 class IOrderRepo(Protocol):
     """Order Repo Interface"""
     def save_order(self, order: Dict[str, Any]) -> None:

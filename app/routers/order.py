@@ -56,7 +56,7 @@ def add_order(payload: Cart,
                  user_id: str = Header(...,alias="user-id")):
     """Adds a user created order to the data store
 
-    Rules: User must have customer role, Restayrant must be open
+    Rules: User must have customer role, Restaurant must be open
 
     Args:
         payload: Cart object to get information from to create cart object,
@@ -181,3 +181,33 @@ def get_all_available_delivery_orders(
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "view_available_deliveries")
     return order_service.get_all_available_delivery_orders()
+
+@order_router.get("/{restaurant_id}/pending", response_model=List[Order], status_code=200)
+def get_all_pending_paid_orders(
+        restaurant_id: int,
+        order_repo: OrderRepo = Depends(create_order_repo),
+        user_repo: UserRepo = Depends(create_user_repo),
+        restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
+        user_id: str = Header(..., alias="user-id")):
+    """Gets all orders available for restaurant owners to accept/reject.
+
+    Rules:
+    - user must have restaurant_owner role
+
+    Args:
+    order_repo: Order repository
+    user_repo: User repository
+    user_id: current user
+
+    Returns: List of available Order objects
+
+    Raises:
+        403 if user does not have restaurant_owner role
+    """
+    order_service = OrderServices(order_repo)
+    authorization_service = AuthorizationServices(user_repo)
+    restaurant_service = RestaurantServices(restaurant_repo)
+    authorization_service.authorize(user_id, "view_incoming_orders")
+    authorization_service.authorize_access(user_id,
+                            restaurant_service.fetch_restaurant(restaurant_id).user_id)
+    return order_service.get_all_pending_paid_orders(restaurant_id)
