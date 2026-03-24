@@ -91,10 +91,15 @@ def test_remove_cart_item_from_cart_quantity_1(test_carts, mocked_repo, mocked_c
     assert result.cart_items == []
     mocked_repo.save_all_carts.assert_called_once()
 
+<<<<<<< features/feat5/delivery-management-pending
 def test_remove_cart_item_from_cart_quantity_more_than_1(
         test_carts,
         mocked_repo,
         mocked_cart_service):
+=======
+def test_remove_cart_item_from_cart_quantity_more_than_1(test_carts,
+                                                         mocked_repo, mocked_cart_service):
+>>>>>>> main
     """
     Spec: If the cart exists, and there is more than one item, the quantity should be
     reduced by one.
