@@ -247,7 +247,7 @@ class OrderServices():
         assigned_orders = []
 
         for order in orders:
-            if (order["assigned_driver_id"] == user_id):
+            if order["assigned_driver_id"] == user_id:
                 assigned_orders.append(Order(**order))
 
         return assigned_orders
