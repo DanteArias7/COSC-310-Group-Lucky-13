@@ -152,6 +152,15 @@ def test_orders():
                 "order_date": "03-16-2026",
                 "order_value": 10.00,
                 "status": "In_transit",
+                "delivery_time": 0.0},
+            {"id": "HHHHHHH",
+                "restaurant_id": 101,
+                "customer_id": "00000000-0000-0000-0001-000000000002",
+                "assigned_driver_id": "00000001-0000-0000-0000-000000000000",
+                "food_items": "1x Hot Dog",
+                "order_date": "03-16-2026",
+                "order_value": 10.00,
+                "status": "Pending",
                 "delivery_time": 0.0}
             ]
 
@@ -467,7 +476,7 @@ def test_update_order_delivery_status_invalid_status(order_test_client, test_ord
     status that is not in_transit, complete, or cancelled.
     Input: A request with a valid order id and a invalid status.
     Expected Behaviour: A 422 HTTPException is raised"""
-    request = "/orders/" + test_orders[5]["id"] + "/fake-status"
+    request = "/orders/" + test_orders[5]["id"] + "/Paid"
     r = order_test_client.put(request, headers={"user-id" : test_users[3]["id"]})
 
     data = r.json()
@@ -481,13 +490,14 @@ def test_update_order_delivery_status_order_not_ready(order_test_client, test_or
     if it is not already ready or in transit
     Input: A request with an valid order id of an unready order and a valid status
     Expected Behaviour: A 409 HTTPException is raised"""
-    request = "/orders/" + test_orders[0]["id"] + "/In_transit"
+    request = "/orders/" + test_orders[10]["id"] + "/In_transit"
     r = order_test_client.put(request, headers={"user-id" : test_users[3]["id"]})
 
     data = r.json()
 
-    assert data["detail"] == f"Order {test_orders[0]["id"]} Not Ready Yet or Cancelled."
     assert r.status_code == 409
+    assert data["detail"] == f"Order {test_orders[10]["id"]} Not Ready Yet or Cancelled."
+
 
 def test_update_order_delivery_status_order_not_found(order_test_client,
                                               test_users):
