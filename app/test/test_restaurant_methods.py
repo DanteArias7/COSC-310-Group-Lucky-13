@@ -120,17 +120,14 @@ def test_fetch_name_searched_restaurant_no_matching_restaurant(test_restaurants,
     assert result == []
 
 #create_restaurant  Unit Tests
-def test_create_new_restaurant(mocker, mocked_repo, restaurant_service):
+def test_create_new_restaurant(mocker, mocked_repo, restaurant_service, test_restaurants):
     """Scenario: check that creating a valid restaurant returns a valid restaurant"""
-    mocked_restaurant_id = 99
-    id_mock = mocker.patch("app.services.restaurant_services.random.randint")
-    id_mock.return_value = mocked_restaurant_id
 
     mocked_menu_item_id = "00000000-0000-0000-0000-000000000002"
-    id_mock = mocker.patch("app.services.restaurant_services.uuid.uuid4")
-    id_mock.return_value = mocked_menu_item_id
+    menu_item_id_mock = mocker.patch("app.services.restaurant_services.uuid.uuid4")
+    menu_item_id_mock.return_value = mocked_menu_item_id
 
-    mocked_repo.load_all_restaurants.return_value = []
+    mocked_repo.load_all_restaurants.return_value = test_restaurants
 
     user_id= "00000000-0000-0000-0000-000000000001"
 
@@ -153,7 +150,7 @@ def test_create_new_restaurant(mocker, mocked_repo, restaurant_service):
 
     result = restaurant_service.create_new_restaurant(user_id, payload)
 
-    assert result.id == mocked_restaurant_id
+    assert result.id == test_restaurants[0]["id"] + 1
     assert result.user_id == "00000000-0000-0000-0000-000000000001"
     assert result.name == "Taco Town"
     assert result.hours == {"Monday": "10:00-20:00"}

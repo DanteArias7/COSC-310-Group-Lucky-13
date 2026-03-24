@@ -94,6 +94,27 @@ class OrderServices():
                                 detail="No Orders Found for User")
         return user_orders
 
+    def get_past_orders_by_restaurant_id(self, restaurant_id: int) -> List[Order]:
+        """
+        Gets all past orders related to a restaurant.
+
+        Args:
+            restaurant_id: The ID of the requested restaurants's orders.
+
+        Returns:
+            List of Order objects.
+        """
+        orders = self.repo.load_all_orders()
+
+        user_orders = []
+
+        for order in orders:
+            if order["restaurant_id"] == restaurant_id:
+                Order(**order)
+                user_orders.append(order)
+
+        return user_orders
+
     def simulate_payment(self, order_id: str , payment: Payment) -> PaymentResult:
         """
         Simulates the payment process for an order.

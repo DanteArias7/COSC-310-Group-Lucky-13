@@ -415,6 +415,23 @@ def test_get_order_by_user_id_with_no_orders(order_test_client):
     
     assert r.status_code == 404
 
+def test_get_order_by_restaurant_id_success(order_test_client, test_orders,
+                             test_users):
+    """
+    Spec: System should allow restaurant owner to retrieve orders for their restaurant
+    Input: valid restaurant_id
+    Expected behavior: Returns list of past orders for a restaurant
+    """
+
+    r = order_test_client.get("/orders/101/past", headers={"user-id" : test_users[1]["id"]})
+
+    expected_orders = test_orders
+
+    restaurant_orders = r.json()
+
+    assert r.status_code == 200
+    assert restaurant_orders == expected_orders
+
 #simulate_payment Tests
 def test_simulate_payment_success(temp_order_path,
                                   order_test_client,
