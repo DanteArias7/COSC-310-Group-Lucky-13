@@ -148,18 +148,18 @@ class CartServices():
         """
         carts = self.repo.load_all_carts()
 
-        for i, cart in enumerate(carts):
+        for cart in carts:
             if cart["id"] == cart_id:
-                # Ensure all items in cart are from the same restaurant:
                 restaurant_id = cart["restaurant_id"]
                 self.validate_cart_from_same_restaurant(cart, restaurant_id)
+
                 for cart_item in cart["cart_items"]:
                     if cart_item["item"]["id"] == payload.id:
                         cart_item["quantity"] += 1
                         break
                 else:
                     cart["cart_items"].append({"item": payload.model_dump(), "quantity": 1})
-                carts[i] = cart
+
                 self.repo.save_all_carts(carts)
                 return Cart(**cart)
         raise HTTPException(status_code=404, detail=f"Cart {cart_id} Not Found")
