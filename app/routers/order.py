@@ -152,6 +152,8 @@ def update_order_delivery_status(order_id: str, delivery_status: OrderStatus,
     order_service = OrderServices(order_repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "update_delivery_status")
+    authorization_service.authorize_access(user_id,
+                                    order_service.get_order_by_id(order_id)["assigned_driver_id"])
     return order_service.update_order_delivery_status(order_id, delivery_status)
 
 @order_router.post("/{order_id}/simulate-payment", response_model=PaymentResult, status_code=200)
