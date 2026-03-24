@@ -443,7 +443,7 @@ def test_get_order_by_restaurant_id_success(order_test_client, test_orders,
     assert r.status_code == 200
     assert restaurant_orders == expected_orders
 
-def test_update_order_restaurant_status_success(order_test_client, test_orders,
+def test_update_order_delivery_status_success(order_test_client, test_orders,
                                               test_users, temp_order_path):
     """Scenario: A restaurant_owner should be able to update an order,
     if it is Paid, Accepted_by_restaurant or Preparing
@@ -461,7 +461,7 @@ def test_update_order_restaurant_status_success(order_test_client, test_orders,
     assert data == orders[3]
     assert r.status_code == 200
 
-def test_update_order_restaurant_status_order_not_ready(order_test_client, test_orders,
+def test_update_order_delivery_status_order_not_ready(order_test_client, test_orders,
                                               test_users):
     """Scenario: A restaurant_owner should not be able to update an order,
     if it is not already Paid, Accepted_by_restaurant or Preparing
@@ -476,7 +476,7 @@ def test_update_order_restaurant_status_order_not_ready(order_test_client, test_
  and Cannot have status updated."
     assert r.status_code == 409
 
-def test_update_order_restaurant_status_order_invalid_status(order_test_client,
+def test_update_order_delivery_status_order_invalid_status(order_test_client,
                                               test_users, test_orders):
     """Scenario: A restaurant_owner should not be able to update an order
     to a status that is not Accepted_by_restaurant, Preparing, or
@@ -491,7 +491,7 @@ def test_update_order_restaurant_status_order_invalid_status(order_test_client,
     assert data["detail"] == "Invalid status."
     assert r.status_code == 422
 
-def test_update_order_restaurant_status_order_not_found(order_test_client,
+def test_update_order_delivery_status_order_not_found(order_test_client,
                                               test_users):
     """Scenario: A restaurant_owner should not be able to update an order,
     if it does not exist

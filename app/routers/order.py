@@ -129,7 +129,7 @@ def get_all_past_orders_for_a_restaurant(restaurant_id: int,
     return order_service.get_past_orders_by_restaurant_id(restaurant_id)
 
 @order_router.put("/{order_id}/restaurant/{status}", response_model=Order, status_code=200)
-def update_order_restaurant_status(order_id: str, status: OrderStatus,
+def update_order_delivery_status(order_id: str, status: OrderStatus,
                 order_repo: OrderRepo = Depends(create_order_repo),
                 restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
                 user_repo: UserRepo = Depends(create_user_repo),
