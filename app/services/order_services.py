@@ -335,20 +335,11 @@ class IOrderRepo(Protocol):
         """Loads all orders from data store
 
         Returns: A list of dicts representing orders """
-<<<<<<< HEAD
     def load_all_orders_df(self) -> pandas.DataFrame:
         """Loads all orders from csv file
 
         Returns: All orders in as  List of Dicts."""
-<<<<<<< HEAD
-=======
-=======
->>>>>>> c4aebab (Added update_order_delivery_status to update order status)
     def update_orders(self)-> None:
         """Saves all orders with updates to the data store
 
         Returns: Nothing """
-<<<<<<< HEAD
-=======
->>>>>>> 6e34d82 (Added update_order_delivery_status to update order status)
->>>>>>> c4aebab (Added update_order_delivery_status to update order status)
