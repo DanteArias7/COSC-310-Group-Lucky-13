@@ -8,7 +8,12 @@ from app.schemas.notification import Notification
 
 @pytest.mark.anyio
 async def test_send_notification_reaches_queue():
-    """Test that sending a notification puts it in the user's queue."""
+    """
+    Spec: Sending a notification should put it in the user's queue.
+    Input: A notification sent to a user with an existing queue.
+    Expected behavior: The notification should be in the user's queue.
+    """
+
     user_queues["test-user"] = asyncio.Queue()
 
     send_notification(Notification(user_id="test-user", message="hello"))
