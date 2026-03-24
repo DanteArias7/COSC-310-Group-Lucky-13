@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Protocol
 import time
 
 from fastapi import HTTPException
+import pandas
 from app.schemas.cart import Cart
 from app.schemas.order import Order
 from app.schemas.payment import Payment, PaymentResult
@@ -20,6 +21,27 @@ class OrderServices():
         """Initialize instance with repo object"""
         self.repo = repo
         self.restaurant_service = restaurant_service
+
+    def _get_order_by_id(self, order_id: str) -> Dict[str, Any]:
+        """Gets an order by an ID
+
+        Args:
+            order_id: ID of the order being requested
+
+        Returns:
+            The order as a JSON object
+        """
+        orders = self.repo.load_all_orders_df()
+        orders = orders.set_index("id", drop=False)
+
+        try:
+            order = orders.loc[order_id].to_dict()
+
+        except KeyError as exc:
+            raise HTTPException(status_code=404,
+                                detail=f"Order {order_id} Not Found.") from exc
+
+        return order
 
     def place_order(self, cart: Cart) -> Order:
         """
@@ -274,3 +296,7 @@ class IOrderRepo(Protocol):
         """Loads all orders from data store
 
         Returns: A list of dicts representing orders """
+    def load_all_orders_df(self) -> pandas.DataFrame:
+        """Loads all orders from csv file
+
+        Returns: All orders in as  List of Dicts."""
