@@ -137,6 +137,46 @@ class OrderServices():
 
         return user_orders
 
+    def update_order_restaurant_status(self, order_id: str, status: str):
+        """
+        Updates the restaurannt status of an order.
+
+        Rules:
+            Status must be in the OrderStatus Literal class
+
+        Args:
+            order_id: The ID of the order being updated.
+            status: The status to update the order to
+
+        Returns:
+            The Updated order object
+        """
+        orders = self.repo.load_all_orders_df()
+        orders = orders.set_index("id", drop=False)
+        available_statuses = ["Accepted_by_restaurant",
+                            "Preparing",
+                            "Ready_for_pickup",
+                            "Cancelled"]
+
+        if status not in available_statuses:
+            raise HTTPException(status_code=422,
+                             detail="Invalid status.")
+
+        order = self.get_order_by_id(order_id)
+
+        if order["status"] == "Paid" or \
+            order["status"] == "Accepted_by_restaurant" or \
+            order["status"] == "Preparing":
+            order["status"] = status
+            orders.loc[order_id] = order
+            self.repo.update_orders(orders)
+
+            return Order(**order)
+
+        raise HTTPException(status_code=409,
+                            detail=f"Order {order_id} is {order["status"]}"
+                            " and Cannot have status updated.")
+
     def simulate_payment(self, order_id: str , payment: Payment) -> PaymentResult:
         """
         Simulates the payment process for an order.
