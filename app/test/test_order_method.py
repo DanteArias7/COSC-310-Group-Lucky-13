@@ -13,7 +13,6 @@ from app.services.order_services import OrderServices
 #pylint: disable=too-few-public-methods
 #pylint: disable=too-many-arguments
 #pylint: disable=too-many-positional-arguments
-#pylint: disable=protected-access
 
 @pytest.fixture
 def mocked_repo(mocker):
