@@ -1,5 +1,6 @@
 """Tests for restaurant functionality."""
 from fastapi import HTTPException
+import pandas
 import pytest
 from app.schemas.cart import Cart
 from app.schemas.payment import Payment
@@ -12,6 +13,8 @@ from app.services.order_services import OrderServices
 #pylint: disable=too-few-public-methods
 #pylint: disable=too-many-arguments
 #pylint: disable=too-many-positional-arguments
+#pylint: disable=protected-access
+
 @pytest.fixture
 def mocked_repo(mocker):
     """Creates a mocked repo object for each test"""
@@ -244,6 +247,33 @@ def test_orders_assigned():
             "status": "In_transit",
             "delivery_time": 0.0}
     ]
+
+#get_order_id Unit Tests
+def test_get_order_by_id_success(mocked_repo, test_orders_available, order_service):
+    """Scenario: Method should get an order matching a given valid id
+    Input: A valid order ID
+    Expected Behaviour: Returns an order in dictionary form"""
+
+    orders = pandas.DataFrame(test_orders_available)
+    mocked_repo.load_all_orders_df.return_value = orders
+
+    order = order_service._get_order_by_id("AAAAAAA")
+
+    assert order == test_orders_available[0]
+
+def test_get_order_by_id_invalid_id(mocked_repo, test_orders_available, order_service):
+    """Scenario: Method should not accept invalid or nonmatching id's
+    Input: An invalid ID or ID that does not match any order
+    Expected Behaviour: Returns an order in dictionary form"""
+
+    orders = pandas.DataFrame(test_orders_available)
+    mocked_repo.load_all_orders_df.return_value = orders
+
+    with pytest.raises(HTTPException) as exc_info:
+        order_service._get_order_by_id("fake")
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Order fake Not Found."
 
 #place_order Unit Tests
 def test_place_order_success(mocker, mocked_repo, order_service, test_carts):
