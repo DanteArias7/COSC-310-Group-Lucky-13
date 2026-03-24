@@ -319,6 +319,21 @@ def test_get_order_by_user_id_user_with_no_orders(mocked_repo, order_service, te
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "No Orders Found for User"
 
+#get_order_by_restaurant_id Unit Tests
+def test_get_order_by_restaurant_id_success(mocked_repo, order_service, test_orders):
+    """
+    Spec: Method should return orders for a restaurant
+    Input: valid restaurant ID
+    Expected behavior: Method returns List of order objects
+    """
+    mocked_repo.load_all_orders.return_value = test_orders
+
+    orders = order_service.get_past_orders_by_restaurant_id(test_orders[0]["restaurant_id"])
+
+    expected_orders = [test_orders[0], test_orders[1], test_orders[2]]
+
+    assert orders == expected_orders
+
 #simulate_payment Unit Tests
 def test_simulate_payment_success(mocked_repo, order_service, test_order_status,
                                   valid_payment, mocker):
@@ -628,7 +643,6 @@ def test_get_all_available_delivery_orders_none_found(mocked_repo, order_service
 
 def test_get_available_orders_success(mocked_repo, order_service, test_orders):
     """Test driver can see available orders."""
-    # Create test orders with Ready_for_pickup status
     test_orders[0]["status"] = "Ready_for_pickup"
     test_orders[0]["assigned_driver_id"] = ""
     mocked_repo.load_all_orders.return_value = test_orders
@@ -649,7 +663,6 @@ def test_get_available_orders_empty(mocked_repo, order_service, test_orders):
     assert result == []
 
 
-# Driver accept delivery tests
 def test_accept_delivery_success(mocker, mocked_repo, order_service, test_orders):
     """Test driver successfully accepts an order."""
     mock_notification = mocker.patch(
@@ -662,7 +675,6 @@ def test_accept_delivery_success(mocker, mocked_repo, order_service, test_orders
 
     result = order_service.accept_delivery(test_orders[0]["id"], "driver123")
 
-    # Status should remain Ready_for_pickup, not change
     assert result.status == "Ready_for_pickup"
     assert result.assigned_driver_id == "driver123"
     mock_notification.assert_called_once()

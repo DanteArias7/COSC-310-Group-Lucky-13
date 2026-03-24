@@ -1,3 +1,5 @@
+# pylint: disable=trailing-whitespace
+
 """Integration tests for order endpoints."""
 from datetime import date, time
 import json
@@ -401,18 +403,34 @@ def test_get_order_by_user_id_success(order_test_client, test_orders,
     assert r.status_code == 200
     assert user_orders == expected_orders
 
-def test_get_order_by_user_id_with_no_orders(order_test_client, test_users):
-    #pylint: disable=unused-argument
+def test_get_order_by_user_id_with_no_orders(order_test_client):
     """
     Spec: System should return error if user with no orders attempts to get order
     Input: valid user_id that does not have any orders
     Expected behavior: Method raises 404 HTTPException
     """
     non_existent_user = "user-with-no-orders-12345"
-
+    
     r = order_test_client.get("/orders", headers={"user-id": non_existent_user})
-
+    
     assert r.status_code == 404
+
+def test_get_order_by_restaurant_id_success(order_test_client, test_orders,
+                             test_users):
+    """
+    Spec: System should allow restaurant owner to retrieve orders for their restaurant
+    Input: valid restaurant_id
+    Expected behavior: Returns list of past orders for a restaurant
+    """
+
+    r = order_test_client.get("/orders/101/past", headers={"user-id" : test_users[1]["id"]})
+
+    expected_orders = test_orders
+
+    restaurant_orders = r.json()
+
+    assert r.status_code == 200
+    assert restaurant_orders == expected_orders
 
 #simulate_payment Tests
 def test_simulate_payment_success(temp_order_path,
@@ -635,13 +653,107 @@ def test_simulate_payment_unauthorized_user(order_test_client,
     order_id = test_orders[0]["id"]
 
     unauthorized_user = test_users[2]["id"]
-
+    
     request = f"/orders/{order_id}/simulate-payment"
-
+    
     r = order_test_client.post(
         request,
         headers={"user-id": unauthorized_user},
         json=valid_payment
     )
-
+    
     assert r.status_code == 403
+
+def test_get_available_orders_unauthorized(order_test_client, test_users):
+    """Test that non-driver cannot access available orders."""
+    customer = test_users[0]
+
+    response = order_test_client.get(
+        "/orders/available",
+        headers={"user-id": customer["id"]}
+    )
+
+    assert response.status_code == 403
+
+
+def test_assign_driver_success(tmp_path, order_test_client, test_orders, mocker):
+    """Test driver can be assigned to an order."""
+    mocker.patch(
+        "app.services.authorization_services.AuthorizationServices.authorize",
+        return_value=True
+    )
+
+    driver_id = "driver123"
+
+    test_orders[0]["status"] = "Ready_for_pickup"
+    test_orders[0]["assigned_driver_id"] = ""
+
+    order_path = tmp_path / "orders.csv"
+    pandas.DataFrame(test_orders).to_csv(order_path, index=False)
+
+    def override_order_repo():
+        return OrderRepo(order_path)
+
+    app.dependency_overrides[create_order_repo] = override_order_repo
+
+    response = order_test_client.put(
+        f"/orders/{test_orders[0]['id']}/assign-driver",
+        headers={"user-id": driver_id}
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["assigned_driver_id"] == driver_id
+    assert data["status"] == "Ready_for_pickup"
+
+
+def test_assign_driver_order_not_ready(tmp_path, order_test_client, test_orders, mocker):
+    """Test cannot assign driver to order not ready."""
+    mocker.patch(
+        "app.services.authorization_services.AuthorizationServices.authorize",
+        return_value=True
+    )
+
+    test_orders[0]["status"] = "Preparing"
+    test_orders[0]["assigned_driver_id"] = ""
+
+    order_path = tmp_path / "orders.csv"
+    pandas.DataFrame(test_orders).to_csv(order_path, index=False)
+
+    def override_order_repo():
+        return OrderRepo(order_path)
+
+    app.dependency_overrides[create_order_repo] = override_order_repo
+
+    response = order_test_client.put(
+        f"/orders/{test_orders[0]['id']}/assign-driver",
+        headers={"user-id": "driver123"}
+    )
+
+    assert response.status_code == 422
+
+
+def test_assign_driver_already_assigned(tmp_path, order_test_client, test_orders, mocker):
+    """Test cannot assign driver to already assigned order."""
+    mocker.patch(
+        "app.services.authorization_services.AuthorizationServices.authorize",
+        return_value=True
+    )
+
+    test_orders[0]["status"] = "Ready_for_pickup"
+    test_orders[0]["assigned_driver_id"] = "other_driver"
+
+    order_path = tmp_path / "orders.csv"
+    pandas.DataFrame(test_orders).to_csv(order_path, index=False)
+
+    def override_order_repo():
+        return OrderRepo(order_path)
+
+    app.dependency_overrides[create_order_repo] = override_order_repo
+
+    response = order_test_client.put(
+        f"/orders/{test_orders[0]['id']}/assign-driver",
+        headers={"user-id": "driver123"}
+    )
+
+    assert response.status_code == 409

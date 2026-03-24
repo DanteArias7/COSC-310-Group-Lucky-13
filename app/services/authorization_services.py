@@ -29,6 +29,7 @@ ROLE_PERMISSIONS: dict = {
         "reject_order",
         "update_order_status",
         "manage_own_account",
+        "view_past_orders"
     ],
     "delivery_driver": [
         "browse_restaurants",

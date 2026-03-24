@@ -3,7 +3,6 @@
 from datetime import date, datetime, time
 import re
 from typing import Any, Dict, List, Protocol
-import random
 import uuid
 from fastapi import HTTPException
 from app.schemas.menu import CreateMenuItem, MenuItem, UpdateMenuItem
@@ -35,14 +34,17 @@ class RestaurantServices():
             new Restaurant object
         """
 
+        restaurants = self.repo.load_all_restaurants()
         new_menu = []
+
+        new_restaurant_id = restaurants[-1]["id"] + 1
 
         for menu_item in restaurant.menu:
             menu_item_id = str(uuid.uuid4())
             new_menu.append(MenuItem(id=menu_item_id, **menu_item.model_dump()))
 
         restaurant = Restaurant(
-            id=random.randint(1, 1_000_000),
+            id=new_restaurant_id,
             user_id=user_id,
             name=restaurant.name,
             hours=restaurant.hours,
@@ -52,7 +54,6 @@ class RestaurantServices():
             menu=new_menu,
         )
 
-        restaurants = self.repo.load_all_restaurants()
         restaurants.append(restaurant.model_dump())
         self.repo.save_all_restaurants(restaurants)
         return restaurant
