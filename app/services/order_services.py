@@ -22,7 +22,7 @@ class OrderServices():
         self.repo = repo
         self.restaurant_service = restaurant_service
 
-    def _get_order_by_id(self, order_id: str) -> Dict[str, Any]:
+    def get_order_by_id(self, order_id: str) -> Dict[str, Any]:
         """Gets an order by an ID
 
         Args:
@@ -283,6 +283,7 @@ class OrderServices():
         return pending_paid_orders
 
 class IOrderRepo(Protocol):
+
     """Order Repo Interface"""
     def save_order(self, order: Dict[str, Any]) -> None:
         """Saves an order to the data store
@@ -300,3 +301,7 @@ class IOrderRepo(Protocol):
         """Loads all orders from csv file
 
         Returns: All orders in as  List of Dicts."""
+    def update_orders(self)-> None:
+        """Saves all orders with updates to the data store
+
+        Returns: Nothing """
