@@ -106,7 +106,8 @@ class OrderServices():
         Returns:
             The Updated order object
         """
-        orders = self.repo.load_all_orders()
+        orders = self.repo.load_all_orders_df()
+        orders = orders.set_index("id", drop = False)
         available_statuses = ["In_transit",
                             "Complete",
                             "Cancelled"]
@@ -115,20 +116,21 @@ class OrderServices():
             raise HTTPException(status_code=422,
                              detail="Invalid status.")
 
-        for order in orders:
-            if order["id"] == order_id:
-                if order["status"] == "Ready_for_pickup" or \
-                    order["status"] == "In_transit":
-                    order["status"] = status
-                    self.repo.update_orders(orders)
+        order = self.get_order_by_id(order_id)
 
-                    return Order(**order)
+        if order["status"] == "Ready_for_pickup" or \
+            order["status"] == "In_transit":
+            order["status"] = status
 
-                raise HTTPException(status_code=409,
-                                        detail=f"Order {order_id} Not Ready Yet or Cancelled.")
+            orders.loc[order_id] = order
 
-        raise HTTPException(status_code=404,
-                            detail=f"Order {order_id} Not Found.")
+            self.repo.update_orders(orders.to_dict(orient="records"))
+
+            return Order(**order)
+
+        raise HTTPException(status_code=409,
+                            detail=f"Order {order_id} Not Ready Yet or Cancelled.")
+
 
     def get_orders_by_user_id(self, user_id: str) -> List[Order]:
         """
