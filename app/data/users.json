@@ -25,5 +25,23 @@
   "address": "789 Lakeshore Rd, Kelowna, BC, V1Y3S4",
   "password": "password",
   "role": "restaurant_owner"
-}
+  },
+  {
+    "id": "019ce8b0-0b61-7610-b8c6-1ff66e6ebd4e",
+    "name": "Jim",
+    "email": "JimJones@shaw.ca",
+    "phone_number": "987-654-3210",
+    "address": "787 Red Sky Place, Kelowna, BC, V2W 7h5",
+    "password": "pass",
+    "role": "restaurant_owner"
+  },
+  {
+    "id": "019ce8b7-4146-72e9-8d2f-ef26f0feb57c",
+    "name": "Jack",
+    "email": "JackJones@shaw.ca",
+    "phone_number": "888-654-8880",
+    "address": "222 Tree way, Kelowna, BC, V2W 4kL",
+    "password": "pass",
+    "role": "restaurant_owner"
+  }
 ]

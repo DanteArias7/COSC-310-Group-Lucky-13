@@ -7,21 +7,26 @@
       "Monday": "9:00-17:00",
       "Tuesday": "9:00-17:00",
       "Wednesday": "9:00-17:00",
-      "Thursday": "9:00-17:00",
+      "Thursday": "9:00-16:00",
       "Friday": "9:00-17:00",
       "Saturday": "10:00-16:00",
       "Sunday": "Closed"
     },
     "phone_number": "1234567890",
     "address": "123 Green Street",
-    "tags": ["vegan", "brunch"],
-     "menu": [
+    "tags": [
+      "Vegan",
+      "brunch"
+    ],
+    "menu": [
       {
         "id": "018f8c10-7b2a-7f21-9a3c-0a1b2c3d4e01",
         "name": "Vegan Burger",
         "description": "Plant-based patty with lettuce and tomato",
         "price": 12.99,
-        "tags": ["vegan"]
+        "tags": [
+          "Vegan"
+        ]
       }
     ]
   },
@@ -40,14 +45,118 @@
     },
     "phone_number": "9876543210",
     "address": "456 Burger Avenue",
-    "tags": ["fastfood"],
-     "menu": [
+    "tags": [
+      "fastfood"
+    ],
+    "menu": [
       {
         "id": "018f8c10-8a4b-7f22-a12d-0b2c3d4e5f02",
         "name": "Classic Burger",
         "description": "Cheeseburger",
-        "price": 10.50,
-        "tags": ["burger"]
+        "price": 10.5,
+        "tags": [
+          "burger"
+        ]
+      }
+    ]
+  },
+  {
+    "id": 269435,
+    "user_id": "019ce8b0-0b61-7610-b8c6-1ff66e6ebd4e",
+    "name": "Salad Bar",
+    "hours": {
+      "Monday": "10:00-16:00",
+      "Tuesday": "10:00-16:00",
+      "Wednesday": "10:00-16:00",
+      "Thursday": "10:00-16:00",
+      "Friday": "10:00-16:00",
+      "Saturday": "10:00-18:00",
+      "Sunday": "Closed"
+    },
+    "phone_number": "982-345-1237",
+    "address": "867 Bluff Lane",
+    "tags": [
+      "Vegan",
+      "Healthy"
+    ],
+    "menu": [
+      {
+        "id": "019c7875-8f41-767d-ac6d-820361f3f1dd",
+        "name": "Beet Salad",
+        "price": 15.99,
+        "description": "Healthy beet salad with orange vinaigrette",
+        "tags": [
+          "Vegan"
+        ]
+      },
+      {
+        "id": "3f36ffa9-b2cb-4fc6-8ff2-124bb695d207",
+        "name": "Greek Salad",
+        "price": 12.99,
+        "description": "Greek salad with feta",
+        "tags": [
+          "Vegan",
+          "Greek"
+        ]
+      },
+      {
+        "id": "f98733ef-cc3d-4bd9-96d9-3388f31364c1",
+        "name": "Caesar Salad",
+        "price": 15.99,
+        "description": "Caesar salad with chicken and croutons",
+        "tags": [
+          "Chicken"
+        ]
+      }
+    ]
+  },
+  {
+    "id": 87895,
+    "user_id": "019ce8b7-4146-72e9-8d2f-ef26f0feb57c",
+    "name": "Pizza Palace",
+    "hours": {
+      "Monday": "12:00-00:00",
+      "Tuesday": "12:00-00:00",
+      "Wednesday": "12:00-00:00",
+      "Thursday": "12:00-00:00",
+      "Friday": "12:00-00:00",
+      "Saturday": "12:00-2:00",
+      "Sunday": "12:00-00:00"
+    },
+    "phone_number": "982-345-1237",
+    "address": "867 Shark Lane",
+    "tags": [
+      "Pizza",
+      "Fast-Food"
+    ],
+    "menu": [
+      {
+        "id": "019c7875-8f41-767d-ac6d-820361f3f1dd",
+        "name": "Cheese Pizza",
+        "price": 14.99,
+        "description": "4-cheese pizza",
+        "tags": [
+          "Cheese"
+        ]
+      },
+      {
+        "id": "3f36ffa9-b2cb-4fc6-8ff2-124bb695d207",
+        "name": "Pepperoni Pizza",
+        "price": 16.99,
+        "description": "Pepperoni pizza",
+        "tags": [
+          "Pepperoni"
+        ]
+      },
+      {
+        "id": "f98733ef-cc3d-4bd9-96d9-3388f31364c1",
+        "name": "Hawaiian Pizza",
+        "price": 16.99,
+        "description": "Ham and Pineapple Pizza",
+        "tags": [
+          "Ham",
+          "Pineapple"
+        ]
       }
     ]
   }
