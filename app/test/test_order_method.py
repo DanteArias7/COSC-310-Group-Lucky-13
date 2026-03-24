@@ -363,6 +363,65 @@ def test_get_order_by_restaurant_id_success(mocked_repo, order_service, test_ord
 
     assert orders == expected_orders
 
+#update_order_status method
+def test_update_order_restaurant_status_success(mocker, mocked_repo, order_service,
+                                                test_orders_available):
+    """Scenario: A valid existing order with the proper
+    status of Paid, Accepted_by_restaurant, or Preparing should have its status
+    updated properly
+    Input: A valid order ID and and valid status
+    Expected Behaviour: Updated Order object is returned"""
+    mocked_repo.load_all_orders_df.return_value = pandas.DataFrame(test_orders_available)
+    mocked_repo.update_orders.return_value = None
+
+    mocker.patch.object(order_service, "get_order_by_id",
+                        return_value=test_orders_available[0])
+
+    updated_order = order_service.update_order_restaurant_status(test_orders_available[0]["id"],
+                                                                 "Preparing")
+    test_orders_available[0]["status"] = "Preparing"
+
+    assert updated_order.model_dump() == test_orders_available[0]
+
+def test_update_order_restaurant_status_order_not_ready(mocker, mocked_repo,
+                                                      order_service, test_orders):
+    """Scenario: A valid existing order that does not have a proper
+    status of Paid, Accepted_by_restaurant, or Preparing should not be
+    updayed
+    Input: A valid order ID of an order not able to be updated
+    and a valid status
+    Expected Behaviour: HTTPException 409 is raised"""
+    mocked_repo.load_all_orders_df.return_value = pandas.DataFrame(test_orders)
+    mocked_repo.update_orders.return_value = None
+
+    mocker.patch.object(order_service, "get_order_by_id",
+                        return_value=test_orders[0])
+
+    with pytest.raises(HTTPException) as exc_info:
+        order_service.update_order_restaurant_status(test_orders[0]["id"], "Preparing")
+
+    assert exc_info.value.status_code == 409
+    assert exc_info.value.detail == f"Order {test_orders[0]["id"]} is {test_orders[0]["status"]}" \
+    " and Cannot have status updated."
+
+def test_update_order_restaurant_status_invalid_status(mocker, mocked_repo, order_service,
+                                                     test_orders_available):
+    """Scenario: Updating an order with an invalid status should
+    raise an error
+    Input: A valid order ID of a ready order and and an invalid status
+    Expected Behaviour: HTTPException 422 is raised"""
+    mocked_repo.load_all_orders_df.return_value = pandas.DataFrame(test_orders_available)
+    mocked_repo.update_orders.return_value = None
+
+    mocker.patch.object(order_service, "get_order_by_id",
+                        return_value=test_orders_available[0])
+
+    with pytest.raises(HTTPException) as exc_info:
+        order_service.update_order_restaurant_status(test_orders_available[2]["id"], "fake-status")
+
+    assert exc_info.value.status_code == 422
+    assert exc_info.value.detail == "Invalid status."
+
 #simulate_payment Unit Tests
 def test_simulate_payment_success(mocked_repo, order_service, test_order_status,
                                   valid_payment, mocker):
