@@ -9,9 +9,13 @@ user_queues: dict[str, asyncio.Queue] = {}
 
 def send_notification(notification: Notification):
     """
-    Sends notification to user.
-    If user is connected, pushes notification to their queue.
-    Also stores notification for offline users.
+    Sends a notification to the specified user.
+
+    Args:
+        notification: The Notification object containing the user_id and message.
+
+    Returns:
+        None
     """
 
     user_id = notification.user_id
