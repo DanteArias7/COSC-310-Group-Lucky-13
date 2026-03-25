@@ -858,7 +858,7 @@ def test_get_all_assigned_orders_success(order_test_client, test_users, test_ord
     Expected: Returns only CCCCCCC and FFFFFFF (both assigned to Barbara)
     """
     driver = test_users[3]
-    expected_orders = [test_orders[5], test_orders[8]]
+    expected_orders = [test_orders[5], test_orders[8], test_orders[10]]
 
     r = order_test_client.get("/orders/assigned", headers={"user-id": driver["id"]})
 
