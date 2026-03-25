@@ -515,12 +515,15 @@ def test_update_order_restaurant_status_order_not_found(order_test_client,
     assert r.status_code == 404
 
 def test_update_order_delivery_status_success(order_test_client, test_orders,
-                                              test_users, temp_order_path):
+                                              test_users, temp_order_path, mocker):
     """Scenario: A delivery_driver should be able to update an order,
     if it is ready or in transit
     Input: A request with a valid order id of a ready order and a valid status
     Expected Behaviour: The status is updated and the updated order
     object is returned"""
+
+    mock_send = mocker.patch("app.services.order_services.send_notification")
+
     request = "/orders/" + test_orders[5]["id"] + "/In_transit"
     r = order_test_client.put(request, headers={"user-id" : test_users[3]["id"]})
 
@@ -531,6 +534,11 @@ def test_update_order_delivery_status_success(order_test_client, test_orders,
 
     assert data == orders[5]
     assert r.status_code == 200
+
+    mock_send.assert_called_once()
+    calls = mock_send.call_args[0][0]
+
+    assert calls.message == f"Your order {test_orders[5]['id']} is now In_transit"
 
 def test_update_order_delivery_status_invalid_status(order_test_client, test_orders,
                                               test_users):
