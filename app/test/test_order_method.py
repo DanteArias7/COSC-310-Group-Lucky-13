@@ -481,18 +481,28 @@ def test_update_order_restaurant_status_success(mocker, mocked_repo, order_servi
     status of Paid, Accepted_by_restaurant, or Preparing should have its status
     updated properly
     Input: A valid order ID and and valid status
-    Expected Behaviour: Updated Order object is returned"""
+    Expected Behaviour: Updated Order object is returned
+                        Notification is send to the customer
+    """
     mocked_repo.load_all_orders_df.return_value = pandas.DataFrame(test_orders_available)
     mocked_repo.update_orders.return_value = None
 
     mocker.patch.object(order_service, "get_order_by_id",
                         return_value=test_orders_available[0])
 
+    mock_send = mocker.patch("app.services.order_services.send_notification")
+
     updated_order = order_service.update_order_restaurant_status(test_orders_available[0]["id"],
                                                                  "Preparing")
     test_orders_available[0]["status"] = "Preparing"
 
     assert updated_order.model_dump() == test_orders_available[0]
+
+    mock_send.assert_called_once()
+
+    calls = mock_send.call_args[0][0]
+
+    assert calls.message == f"Your order {test_orders_available[0]['id']} is now Preparing"
 
 def test_update_order_restaurant_status_order_not_ready(mocker, mocked_repo,
                                                       order_service, test_orders):
