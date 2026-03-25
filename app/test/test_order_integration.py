@@ -153,15 +153,6 @@ def test_orders():
                 "order_value": 10.00,
                 "status": "In_transit",
                 "delivery_time": 0.0},
-            {"id": "HHHHHHH",
-                "restaurant_id": 101,
-                "customer_id": "00000000-0000-0000-0001-000000000002",
-                "assigned_driver_id": "00000001-0000-0000-0000-000000000000",
-                "food_items": "1x Hot Dog",
-                "order_date": "03-16-2026",
-                "order_value": 10.00,
-                "status": "Pending",
-                "delivery_time": 0.0}
             ]
 
 @pytest.fixture
@@ -434,6 +425,55 @@ def test_get_order_by_user_id_with_no_orders(order_test_client,
     r = order_test_client.get("/orders", headers={"user-id" : test_users[2]["id"]})
 
     assert r.status_code == 404
+
+#accept_delivery Integration Tests
+def test_accept_delivery_success(order_test_client, test_users, test_orders, temp_order_path):
+    """Scenario: A delivery driver should be able to accept a delivery
+    that has been accepted by a restaurant
+    Input: A valid order ID and valid driver ID
+    Expected Behaviour: Order object has driver's id assigned"""
+
+    request = "/orders/" + str(test_orders[3]["id"]) + "/accept"
+    r = order_test_client.put(request, headers={"user-id" : test_users[3]["id"]})
+
+    data = r.json()
+    orders = pandas.read_csv(temp_order_path)
+
+    orders = orders.to_dict(orient="records")
+
+    assert r.status_code == 200
+    assert data == orders[3]
+    assert data["assigned_driver_id"] == test_users[3]["id"]
+
+def test_accept_delivery_not_ready_to_accept(order_test_client, test_users, test_orders):
+    """Scenario: A delivery driver should not be able to accept a delivery
+    that has not been accpeted by a restaurant.
+    Input: A valid order ID and valid driver ID
+    Expected Behaviour: Order object has driver's id assigned"""
+
+    request = "/orders/" + str(test_orders[7]["id"]) + "/accept"
+    r = order_test_client.put(request, headers={"user-id" : test_users[3]["id"]})
+
+    data = r.json()
+
+    assert r.status_code == 409
+    assert data["detail"] == f"Order {test_orders[7]["id"]} is {test_orders[7]["status"]}" \
+    " and Cannot have driver assigned."
+
+def test_accept_delivery_already_assigned(order_test_client, test_users, test_orders):
+    """Scenario: A delivery driver should not be able to accept a delivery
+    that has already been accepted.
+    Input: A valid order ID of a order that already
+    has a driver and valid driver ID
+    Expected Behaviour: Order object has driver's id assigned"""
+
+    request = "/orders/" + str(test_orders[9]["id"]) + "/accept"
+    r = order_test_client.put(request, headers={"user-id" : test_users[3]["id"]})
+
+    data = r.json()
+
+    assert r.status_code == 409
+    assert data["detail"] == f"Order {test_orders[9]["id"]} already assigned."
 
 def test_get_order_by_restaurant_id_success(order_test_client, test_orders,
                              test_users):
