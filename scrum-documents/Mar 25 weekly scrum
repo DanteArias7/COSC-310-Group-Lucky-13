@@ -1,0 +1,14 @@
+Date: March 25
+Type of meeting : Weekly Scrum
+
+Attendees : Dante Arias, Varun Garg, Zheng Xue, Gurkirn Kaur
+
+Key discussion points:
+1. Containerize on docker on everyone's laptops
+2. Test API endpoints
+3. Edit and update traceability matrix
+4. Merge all remaining pull requests
+
+Action Items:
+- finish M3 document
+- fix small errors in restaurant for API endpoint to work properly
