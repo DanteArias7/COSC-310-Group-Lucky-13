@@ -20,6 +20,8 @@ PAST_ORDER_DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "past_orde
 order_router = APIRouter(prefix="/orders",
                          tags=["order"])
 
+# pylint: disable=too-many-arguments
+# pylint: disable=too-many-positional-arguments
 def create_order_repo():
     """"Initialize repo object with data path to user data store
 
@@ -125,6 +127,39 @@ def get_all_past_orders_for_a_restaurant(restaurant_id: int,
     restaurant_owner_id = restaurant_service.fetch_restaurant(restaurant_id).user_id
     authorization_service.authorize_access(user_id, restaurant_owner_id)
     return order_service.get_past_orders_by_restaurant_id(restaurant_id)
+
+@order_router.put("/{order_id}/restaurant/{status}", response_model=Order, status_code=200)
+def update_order_restaurant_status(order_id: str, status: OrderStatus,
+                order_repo: OrderRepo = Depends(create_order_repo),
+                restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
+                user_repo: UserRepo = Depends(create_user_repo),
+                user_id: str = Header(...,alias="user-id")):
+    """API endpoint for a restaurant owner to update order status
+
+    Rules:
+        User must have restaurant_owner role
+        Restaurant owner must own the restaurant the order belongs to
+        Order must have a status of Paid, Accepted_by_restaurant
+        or Preparing
+
+    Args:
+        order_id: the id of the order having its status updated.
+        status: The updated status, must be Accepted_by_restaurant, Preparing, or
+        Ready_for_pickup
+        order_repo: The order repo object to allow order_service to access order data store,
+        user_repo: The user repo object to allow order_service to access user data store,
+        user_id: header sent with request indicating current user
+
+    Returns:
+        The new updated order object"""
+    order_service = OrderServices(order_repo)
+    restaurant_services = RestaurantServices(restaurant_repo)
+    authorization_service = AuthorizationServices(user_repo)
+    authorization_service.authorize(user_id, "update_order_status")
+    restaurant_id = order_service.get_order_by_id(order_id)["restaurant_id"]
+    restaurant_owner_id = restaurant_services.fetch_restaurant(restaurant_id).user_id
+    authorization_service.authorize_access(user_id, restaurant_owner_id)
+    return order_service.update_order_restaurant_status(order_id, status)
 
 #pylint: disable=too-many-arguments
 #pylint: disable=too-many-positional-arguments
