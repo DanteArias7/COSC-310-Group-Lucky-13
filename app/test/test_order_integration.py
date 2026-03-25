@@ -152,6 +152,15 @@ def test_orders():
                 "order_date": "03-16-2026",
                 "order_value": 10.00,
                 "status": "In_transit",
+                "delivery_time": 0.0},
+            {"id": "HHHHHHH",
+                "restaurant_id": 101,
+                "customer_id": "00000000-0000-0000-0001-000000000002",
+                "assigned_driver_id": "00000001-0000-0000-0000-000000000000",
+                "food_items": "1x Hot Dog",
+                "order_date": "03-16-2026",
+                "order_value": 10.00,
+                "status": "Pending",
                 "delivery_time": 0.0}
             ]
 
@@ -442,6 +451,68 @@ def test_get_order_by_restaurant_id_success(order_test_client, test_orders,
 
     assert r.status_code == 200
     assert restaurant_orders == expected_orders
+
+def test_update_order_delivery_status_success(order_test_client, test_orders,
+                                              test_users, temp_order_path):
+    """Scenario: A delivery_driver should be able to update an order,
+    if it is ready or in transit
+    Input: A request with a valid order id of a ready order and a valid status
+    Expected Behaviour: The status is updated and the updated order
+    object is returned"""
+    request = "/orders/" + test_orders[5]["id"] + "/In_transit"
+    r = order_test_client.put(request, headers={"user-id" : test_users[3]["id"]})
+
+    data = r.json()
+    orders = pandas.read_csv(temp_order_path)
+
+    orders = orders.to_dict(orient="records")
+
+    assert data == orders[5]
+    assert r.status_code == 200
+
+def test_update_order_delivery_status_invalid_status(order_test_client, test_orders,
+                                              test_users):
+    """Scenario: A delivery_driver should not be able to update an order to a
+    status that is not in_transit, complete, or cancelled.
+    Input: A request with a valid order id and a invalid status.
+    Expected Behaviour: A 422 HTTPException is raised"""
+    request = "/orders/" + test_orders[5]["id"] + "/Paid"
+    r = order_test_client.put(request, headers={"user-id" : test_users[3]["id"]})
+
+    data = r.json()
+
+    assert data["detail"] == "Invalid status."
+    assert r.status_code == 422
+
+def test_update_order_delivery_status_order_not_ready(order_test_client, test_orders,
+                                              test_users):
+    """Scenario: A delivery_driver should not be able to update an order,
+    if it is not already ready or in transit
+    Input: A request with an valid order id of an unready order and a valid status
+    Expected Behaviour: A 409 HTTPException is raised"""
+    request = "/orders/" + test_orders[10]["id"] + "/In_transit"
+    r = order_test_client.put(request, headers={"user-id" : test_users[3]["id"]})
+
+    data = r.json()
+
+    assert r.status_code == 409
+    assert data["detail"] == f"Order {test_orders[10]["id"]} Not Ready Yet or Cancelled."
+
+
+def test_update_order_delivery_status_order_not_found(order_test_client,
+                                              test_users):
+    """Scenario: A delivery_driver should not be able to update an order,
+    if it does not exist
+    Input: A request with an invalid order id and a valid status
+    Expected Behaviour: A 404 HTTPException is raised"""
+    request = "/orders/fake-order/In_transit"
+    r = order_test_client.put(request, headers={"user-id" : test_users[3]["id"]})
+
+    data = r.json()
+
+    assert data["detail"] == "Order fake-order Not Found."
+    assert r.status_code == 404
+
 
 #simulate_payment Tests
 def test_simulate_payment_success(temp_order_path,
