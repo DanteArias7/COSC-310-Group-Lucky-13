@@ -453,12 +453,15 @@ def test_get_order_by_restaurant_id_success(order_test_client, test_orders,
     assert restaurant_orders == expected_orders
 
 def test_update_order_restaurant_status_success(order_test_client, test_orders,
-                                              test_users, temp_order_path):
+                                              test_users, temp_order_path, mocker):
     """Scenario: A restaurant_owner should be able to update an order,
     if it is Paid, Accepted_by_restaurant or Preparing
     Input: A request with a valid order id of a ready order and a valid status
     Expected Behaviour: The status is updated and the updated order
-    object is returned"""
+    object is returned, and notification is sent to the customer"""
+
+    mock_send =  mocker.patch("app.services.order_services.send_notification")
+
     request = "/orders/" + test_orders[3]["id"] + "/restaurant/Preparing"
     r = order_test_client.put(request, headers={"user-id" : test_users[1]["id"]})
 
@@ -469,6 +472,12 @@ def test_update_order_restaurant_status_success(order_test_client, test_orders,
 
     assert data == orders[3]
     assert r.status_code == 200
+
+    mock_send.assert_called_once()
+
+    calls = mock_send.call_args[0][0]
+
+    assert calls.message == f"Your order {test_orders[3]['id']} is now Preparing"
 
 def test_update_order_restaurant_status_order_not_ready(order_test_client, test_orders,
                                               test_users):
