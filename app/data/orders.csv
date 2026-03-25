@@ -1,2 +1,8 @@
 id,restaurant_id,customer_id,assigned_driver_id,food_items,order_date,order_value,status,delivery_time
-X2fCzJx,101,019c7875-8f41-767d-ac6d-820361f3f1dd,"","2x Classic Burger, ",2026-03-06,12.,Pending,0.0
+X2fCzJx,101,019c7875-8f41-767d-ac6d-820361f3f1dd,,"2x Classic Burger, ",2026-03-06,12.0,Pending,0.0
+x06ttzs,102,019c7875-8f41-767d-ac6d-820361f3f1dd,,1x Vegan Burger,03-25-2026,15.0,Paid,0.0
+x06ttys,102,019c7875-8f41-767d-ac6d-820361f3f1dd,,1x Vegan Burger,03-25-2026,15.0,Pending,0.0
+x0y3ddyd,102,019c7875-8f41-767d-ac6d-820361f3f1dd,e38ca513-b0ce-4428-a52e-c32c30bed946,1x Vegan Burger,03-25-2026,15.0,Ready_for_pickup,0.0
+x0y5dnz,102,019c7875-8f41-767d-ac6d-820361f3f1dd,,1x Vegan Burger,03-25-2026,15.0,Ready_for_pickup,0.0
+x0t4fds,102,019c7875-8f41-767d-ac6d-820361f3f1dd,,1x Vegan Burger,03-25-2026,15.0,Ready_for_pickup,0.0
+pkK6HKz,101,019c7875-8f41-767d-ac6d-820361f3f1dd,e38ca513-b0ce-4428-a52e-c32c30bed946,1x Vegan Burger,03-25-2026,15.0,In_transit,0.0
