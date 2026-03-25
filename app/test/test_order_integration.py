@@ -776,9 +776,9 @@ def test_get_all_available_delivery_orders_unauthorized(order_test_client, test_
 
 def test_get_all_pending_paid_orders_success(order_test_client, test_users, test_orders):
     """
-    Spec:
-    Input:
-    Expected:
+    Spec: System should return only Paid orders belonging to the restaurant owner's restaurant
+    Input: User with authorized restaurant_owner role
+    Expected: Returns only DDDDDDD (the single order with Paid status)
     """
     owner = test_users[1]
     expected_orders = [test_orders[6]]
@@ -804,9 +804,9 @@ def test_get_all_pending_paid_orders_unauthorized(order_test_client, test_users)
 
 def test_get_all_assigned_orders_success(order_test_client, test_users, test_orders):
     """
-    Spec:
-    Input:
-    Expected:
+    Spec: System should return only orders currently assigned to the requesting driver
+    Input: User with authorized delivery_driver role (Barbara)
+    Expected: Returns only CCCCCCC and FFFFFFF (both assigned to Barbara)
     """
     driver = test_users[3]
     expected_orders = [test_orders[5], test_orders[8]]
@@ -818,9 +818,9 @@ def test_get_all_assigned_orders_success(order_test_client, test_users, test_ord
 
 def test_get_all_assigned_orders_success_2(order_test_client, test_users, test_orders):
     """
-    Spec:
-    Input:
-    Expected:
+    Spec: System should return only orders currently assigned to the requesting driver
+    Input: User with authorized delivery_driver role (Cameron)
+    Expected: Returns only GGGGGGG (the only order assigned to Cameron)
     """
     driver2 = test_users[4]
     expected_orders = [test_orders[9]]
@@ -832,9 +832,9 @@ def test_get_all_assigned_orders_success_2(order_test_client, test_users, test_o
 
 def test_get_all_assigned_orders_unauthorized(order_test_client, test_users):
     """
-    Spec:
-    Input:
-    Expected:
+    Spec: Request from non driver roles should be rejected
+    Input: User with unauthorized customer role
+    Expected: 403
     """
     customer = test_users[0]
 
