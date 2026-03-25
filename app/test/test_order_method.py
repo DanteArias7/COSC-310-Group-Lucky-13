@@ -825,3 +825,30 @@ def test_get_all_pending_paid_orders_filters_by_restaurant(
     result = order_service.get_all_pending_paid_orders(999)
 
     assert result == []
+
+#get_all_assigned_orders Unit tests
+
+def test_get_all_assigned_orders_success(mocked_repo, order_service, test_orders_assigned):
+    """
+    Spec: Method should return only orders assigned to the requesting driver
+    Input: orders assigned to different drivers
+    Expected behavior: Returns only orders matching the given driver id
+    """
+    mocked_repo.load_all_orders.return_value = test_orders_assigned
+
+    result = order_service.get_all_assigned_orders("00000001-0000-0000-0000-000000000000")
+
+    assert len(result) == 1
+    assert result[0].assigned_driver_id == "00000001-0000-0000-0000-000000000000"
+
+def test_get_all_assigned_orders_none_found(mocked_repo, order_service, test_orders_assigned):
+    """
+    Spec: Method should return empty list if no orders are assigned to the driver
+    Input: valid driver id with no assigned orders
+    Expected behavior: Returns empty list
+    """
+    mocked_repo.load_all_orders.return_value = test_orders_assigned
+
+    result = order_service.get_all_assigned_orders("00000003-0000-0000-0000-000000000000")
+
+    assert result == []

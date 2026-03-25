@@ -362,6 +362,26 @@ class OrderServices():
 
         return pending_paid_orders
 
+    def get_all_assigned_orders(self, user_id: str) -> List[Order]:
+        """
+        Rules:
+        - order assigned_driver_id should match user_id
+
+        Args:
+        user_id: id of delivery driver requesting assigned orders
+
+        Returns:
+        A list of Order objects with the matching assigned_driver_id
+        """
+        orders = self.repo.load_all_orders()
+        assigned_orders = []
+
+        for order in orders:
+            if order["assigned_driver_id"] == user_id:
+                assigned_orders.append(Order(**order))
+
+        return assigned_orders
+
 class IOrderRepo(Protocol):
 
     """Order Repo Interface"""
