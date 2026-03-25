@@ -128,6 +128,31 @@ def get_all_past_orders_for_a_restaurant(restaurant_id: int,
     authorization_service.authorize_access(user_id, restaurant_owner_id)
     return order_service.get_past_orders_by_restaurant_id(restaurant_id)
 
+@order_router.put("/{order_id}/accept", response_model=Order, status_code=200)
+def accept_delivery(order_id: str,
+                order_repo: OrderRepo = Depends(create_order_repo),
+                user_repo: UserRepo = Depends(create_user_repo),
+                user_id: str = Header(...,alias="user-id")):
+    """API endpoint for a delivery driver to accept a delivery
+
+    Rules:
+        User must have delivery_driver role
+        Order must have a status of Accepted_by_restaurant, Preparing
+        or Ready_for_Pickup
+
+    Args:
+        order_id: the id of the order having a driver assigned
+        order_repo: The order repo object to allow order_service to access order data store,
+        user_repo: The user repo object to allow order_service to access user data store,
+        user_id: header sent with request indicating current user
+
+    Returns:
+        The order object now with an assigned_driver_id"""
+    order_service = OrderServices(order_repo)
+    authorization_service = AuthorizationServices(user_repo)
+    authorization_service.authorize(user_id, "request_delivery")
+    return order_service.accept_delivery(order_id, user_id)
+
 @order_router.put("/{order_id}/restaurant/{status}", response_model=Order, status_code=200)
 def update_order_restaurant_status(order_id: str, status: OrderStatus,
                 order_repo: OrderRepo = Depends(create_order_repo),
