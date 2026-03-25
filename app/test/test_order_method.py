@@ -332,12 +332,19 @@ def test_update_order_delivery_status_success(mocker, mocked_repo,
 
     mocker.patch.object(order_service, "get_order_by_id", return_value=test_orders_available[2])
 
+    mock_send = mocker.patch("app.services.order_services.send_notification")
+
     updated_order = order_service.update_order_delivery_status(test_orders_available[2]["id"],
                                                                "In_transit")
 
     test_orders_available[2]["status"] = "In_transit"
 
     assert updated_order.model_dump() == test_orders_available[2]
+
+    mock_send.assert_called_once()
+    calls = mock_send.call_args[0][0]
+
+    assert calls.message == f"Your order {test_orders_available[2]['id']} is now In_transit"
 
 def test_update_order_delivery_status_order_not_ready(mocker, mocked_repo,
                                                       order_service, test_orders):
