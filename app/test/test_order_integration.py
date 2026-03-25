@@ -152,6 +152,15 @@ def test_orders():
                 "order_date": "03-16-2026",
                 "order_value": 10.00,
                 "status": "In_transit",
+                "delivery_time": 0.0},
+            {"id": "HHHHHHH",
+                "restaurant_id": 101,
+                "customer_id": "00000000-0000-0000-0001-000000000002",
+                "assigned_driver_id": "00000001-0000-0000-0000-000000000000",
+                "food_items": "1x Hot Dog",
+                "order_date": "03-16-2026",
+                "order_value": 10.00,
+                "status": "Pending",
                 "delivery_time": 0.0}
             ]
 

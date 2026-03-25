@@ -92,6 +92,46 @@ class OrderServices():
 
         return new_order
 
+    def update_order_delivery_status(self, order_id: str, status: str):
+        """
+        Updates the delivery status of an order.
+
+        Rules:
+            Status must be in the OrderStatus Literal class
+
+        Args:
+            order_id: The ID of the order being updated.
+            status: The status to update the order to
+
+        Returns:
+            The Updated order object
+        """
+        orders = self.repo.load_all_orders_df()
+        orders = orders.set_index("id", drop = False)
+        available_statuses = ["In_transit",
+                            "Complete",
+                            "Cancelled"]
+
+        if status not in available_statuses:
+            raise HTTPException(status_code=422,
+                             detail="Invalid status.")
+
+        order = self.get_order_by_id(order_id)
+
+        if order["status"] == "Ready_for_pickup" or \
+            order["status"] == "In_transit":
+            order["status"] = status
+
+            orders.loc[order_id] = order
+
+            self.repo.update_orders(orders.to_dict(orient="records"))
+
+            return Order(**order)
+
+        raise HTTPException(status_code=409,
+                            detail=f"Order {order_id} Not Ready Yet or Cancelled.")
+
+
     def get_orders_by_user_id(self, user_id: str) -> List[Order]:
         """
         Gets all orders related to a user.

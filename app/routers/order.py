@@ -163,6 +163,34 @@ def update_order_restaurant_status(order_id: str, status: OrderStatus,
 
 #pylint: disable=too-many-arguments
 #pylint: disable=too-many-positional-arguments
+@order_router.put("/{order_id}/{delivery_status}", response_model=Order, status_code=200)
+def update_order_delivery_status(order_id: str, delivery_status: OrderStatus,
+                order_repo: OrderRepo = Depends(create_order_repo),
+                user_repo: UserRepo = Depends(create_user_repo),
+                user_id: str = Header(...,alias="user-id")):
+    """API endpoint for a delivery driver to update order status
+
+    Rules:
+        User must have delivery_driver role
+        Driver must be assigned to order
+        Order must have a status of ready_for_pickup or in_transit
+
+    Args:
+        order_id: the id of the order having its status updated.
+        status: The updated status, must be in_transit, complete, or cancelled
+        order_repo: The order repo object to allow order_service to access order data store,
+        user_repo: The user repo object to allow order_service to access user data store,
+        user_id: header sent with request indicating current user
+
+    Returns:
+        The new updated order object"""
+    order_service = OrderServices(order_repo)
+    authorization_service = AuthorizationServices(user_repo)
+    authorization_service.authorize(user_id, "update_delivery_status")
+    authorization_service.authorize_access(user_id,
+                                    order_service.get_order_by_id(order_id)["assigned_driver_id"])
+    return order_service.update_order_delivery_status(order_id, delivery_status)
+
 @order_router.post("/{order_id}/simulate-payment", response_model=PaymentResult, status_code=200)
 def simulate_payment(order_id: str,
                      payload: Payment,
