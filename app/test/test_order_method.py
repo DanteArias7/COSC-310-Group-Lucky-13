@@ -318,6 +318,62 @@ def test_place_order_success(mocker, mocked_repo, order_service, test_carts):
         f"Your order {expected_order['id']} "
         "has been created successfully"
     )
+#accept_delivery Unit Tests
+def test_accept_delivery_success(mocker, mocked_repo, order_service, test_orders_available):
+    """Scenario: The method should assign the driver id to the order object
+    Input: A valid order ID and driver ID
+    Expected Behvaiour: Order object with assigned driver ID,
+    is returned."""
+    mocked_repo.load_all_orders_df.return_value = pandas.DataFrame(test_orders_available)
+    mocked_repo.update_orders.return_value = None
+
+    mocker.patch.object(order_service, "get_order_by_id", return_value=test_orders_available[0])
+
+    updated_order = order_service.accept_delivery(test_orders_available[0]["id"],
+                                                  "00000000-0000-0000-0000-000000000001")
+
+    test_orders_available[0]["assigned_driver_id"] = "00000000-0000-0000-0000-000000000001"
+
+    assert updated_order.model_dump() == test_orders_available[0]
+
+def test_accept_delivery_already_assigned(mocker, mocked_repo, order_service,
+                                           test_orders_available):
+    """Scenario: The method should not assign the driver id to the order object
+    if there is already an id assigned.
+    Input: A valid order ID that has an assigned driver id and a driver ID
+    Expected Behvaiour: A 409 HTTPException is raised."""
+    mocked_repo.load_all_orders_df.return_value = pandas.DataFrame(test_orders_available)
+    mocked_repo.update_orders.return_value = None
+
+    mocker.patch.object(order_service, "get_order_by_id", return_value=test_orders_available[2])
+
+    with pytest.raises(HTTPException) as exc_info:
+        order_service.accept_delivery(test_orders_available[2]["id"],
+                                                  "00000000-0000-0000-0000-000000000001")
+
+    assert exc_info.value.status_code == 409
+    assert exc_info.value.detail == "Order CCCCCCC already assigned."
+
+def test_accept_delivery_not_ready(mocker, mocked_repo, order_service, test_orders_paid):
+    """Scenario: The method should not assign the driver id to the order object
+    if the order is not ready.
+    Input: A valid order ID that is not accepted, cancelled or
+    already completed id and a driver ID
+    Expected Behvaiour: A 409 HTTPException is raised."""
+    mocked_repo.load_all_orders_df.return_value = pandas.DataFrame(test_orders_paid)
+    mocked_repo.update_orders.return_value = None
+
+    mocker.patch.object(order_service, "get_order_by_id", return_value=test_orders_paid[1])
+
+    with pytest.raises(HTTPException) as exc_info:
+        order_service.accept_delivery(test_orders_paid[1]["id"],
+                                                  "00000000-0000-0000-0000-000000000001")
+
+
+    assert exc_info.value.status_code == 409
+    assert exc_info.value.detail == f"Order {test_orders_paid[1]["id"]} is" \
+    f" {test_orders_paid[1]["status"]} and Cannot have driver assigned."
+
 
 #update_order_status method
 def test_update_order_delivery_status_success(mocker, mocked_repo,
