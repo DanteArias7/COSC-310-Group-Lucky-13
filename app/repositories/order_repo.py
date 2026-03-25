@@ -21,6 +21,14 @@ class OrderRepo():
 
         return orders.to_dict(orient="records")
 
+    def load_all_orders_df(self) -> pandas.DataFrame:
+        """Loads all orders from csv file
+
+        Returns: All orders in as  List of Dicts."""
+        orders = pandas.read_csv(self.data_path, keep_default_na=False)
+
+        return orders
+
     def save_order(self, order: Dict[str, Any]) -> None:
         """Saves an order object to the order csv file
 
