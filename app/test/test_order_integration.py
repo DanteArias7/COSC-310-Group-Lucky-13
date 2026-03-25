@@ -806,10 +806,10 @@ def test_get_all_assigned_orders_success(order_test_client, test_users, test_ord
     """
     Spec: System should return only orders currently assigned to the requesting driver
     Input: User with authorized delivery_driver role (Barbara)
-    Expected: Returns only CCCCCCC and FFFFFFF (both assigned to Barbara)
+    Expected: Returns only CCCCCCC, FFFFFFF, and HHHHHHH (all assigned to Barbara)
     """
     driver = test_users[3]
-    expected_orders = [test_orders[5], test_orders[8]]
+    expected_orders = [test_orders[5], test_orders[8], test_orders[10]]
 
     r = order_test_client.get("/orders/assigned", headers={"user-id": driver["id"]})
 
