@@ -23,4 +23,3 @@ class Order(BaseModel):
     order_date: str
     order_value: float
     status: OrderStatus = "Pending"
-    delivery_time: float = 0.0

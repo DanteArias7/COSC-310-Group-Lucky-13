@@ -58,8 +58,7 @@ def test_orders():
                 "food_items": "2x Vegan Burger, 1x Bacon Burger",
                 "order_date": "03-06-2025",
                 "order_value": 24.35,
-                "status": "Pending",
-                "delivery_time": 0.0},
+                "status": "Pending",},
             {"id": "QQQQQQQ",
                 "restaurant_id": 101,
                 "customer_id": "00000000-0000-0000-0000-000000000001",
@@ -67,8 +66,7 @@ def test_orders():
                 "food_items": "2x Vegan Burger",
                 "order_date": "03-06-2025",
                 "order_value": 24.35,
-                "status": "Pending",
-                "delivery_time": 0.0},
+                "status": "Pending",},
             {"id": "QQQQQQQ",
                 "restaurant_id": 101,
                 "customer_id": "00000000-0000-0000-0000-000000000002",
@@ -76,8 +74,7 @@ def test_orders():
                 "food_items": "1x Hot Dog",
                 "order_date": "03-06-2025",
                 "order_value": 24.35,
-                "status": "Pending",
-                "delivery_time": 0.0}
+                "status": "Pending",}
             ]
 
 @pytest.fixture
@@ -90,8 +87,7 @@ def test_order_status():
          "food_items": "1x Burger",
          "order_date": "03-06-2026",
          "order_value": 12.50,
-         "status": "Pending",
-         "delivery_time": 0.0}]
+         "status": "Pending"}]
 
 @pytest.fixture
 def test_order_status_2():
@@ -103,8 +99,7 @@ def test_order_status_2():
          "food_items": "1x Burger",
          "order_date": "03-06-2026",
          "order_value": 12.50,
-         "status": "Paid",
-         "delivery_time": 0.0}]
+         "status": "Paid"}]
 
 @pytest.fixture
 def valid_payment():
@@ -177,8 +172,7 @@ def test_orders_available():
             "food_items": "2x Vegan Burger",
             "order_date": "03-16-2026",
             "order_value": 24.35,
-            "status": "Accepted_by_restaurant",
-            "delivery_time": 0.0},
+            "status": "Accepted_by_restaurant"},
         {"id": "BBBBBBB",
             "restaurant_id": 101,
             "customer_id": "00000000-0000-0000-0000-000000000001",
@@ -186,8 +180,7 @@ def test_orders_available():
             "food_items": "1x Hot Dog",
             "order_date": "03-16-2026",
             "order_value": 10.00,
-            "status": "Preparing",
-            "delivery_time": 0.0},
+            "status": "Preparing"},
         {"id": "CCCCCCC",
             "restaurant_id": 101,
             "customer_id": "00000000-0000-0000-0000-000000000001",
@@ -195,8 +188,7 @@ def test_orders_available():
             "food_items": "1x Salad",
             "order_date": "03-16-2026",
             "order_value": 8.00,
-            "status": "Ready_for_pickup",
-            "delivery_time": 0.0}
+            "status": "Ready_for_pickup"}
     ]
 
 @pytest.fixture
@@ -210,8 +202,7 @@ def test_orders_paid():
             "food_items": "2x Vegan Burger",
             "order_date": "03-16-2026",
             "order_value": 24.35,
-            "status": "Paid",
-            "delivery_time": 0.0},
+            "status": "Paid"},
         {"id": "EEEEEEE",
             "restaurant_id": 101,
             "customer_id": "00000000-0000-0000-0000-000000000002",
@@ -219,8 +210,7 @@ def test_orders_paid():
             "food_items": "1x Hot Dog",
             "order_date": "03-16-2026",
             "order_value": 10.00,
-            "status": "Pending",
-            "delivery_time": 0.0}
+            "status": "Pending"}
     ]
 
 @pytest.fixture
@@ -234,8 +224,7 @@ def test_orders_assigned():
             "food_items": "2x Vegan Burger",
             "order_date": "03-16-2026",
             "order_value": 24.35,
-            "status": "In_transit",
-            "delivery_time": 0.0},
+            "status": "In_transit"},
         {"id": "GGGGGGG",
             "restaurant_id": 101,
             "customer_id": "00000000-0000-0000-0000-000000000002",
@@ -243,8 +232,7 @@ def test_orders_assigned():
             "food_items": "1x Hot Dog",
             "order_date": "03-16-2026",
             "order_value": 10.00,
-            "status": "In_transit",
-            "delivery_time": 0.0}
+            "status": "In_transit"}
     ]
 
 #get_order_id Unit Tests
@@ -305,7 +293,7 @@ def test_place_order_success(mocker, mocked_repo, order_service, test_carts):
                       "order_date": test_date,
                       "order_value": 24.35,
                       "status": "Pending",
-                      "delivery_time": 0.0}
+    }
 
     assert order.model_dump() == expected_order
 
