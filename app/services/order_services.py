@@ -92,6 +92,42 @@ class OrderServices():
 
         return new_order
 
+    def accept_delivery(self, order_id: str, driver_id: str) -> Order:
+        """Assigns a delivery driver to an order
+
+        Args:
+            order_id: The ID of the order having a driver assigned
+            driver_id: The ID of the driver being assigned to
+            the order
+
+        Returns:
+            The order object with the assigned ID"""
+        orders = self.repo.load_all_orders_df()
+        orders = orders.set_index("id", drop = False)
+        order = self.get_order_by_id(order_id)
+
+        if order["assigned_driver_id"] != '':
+            raise HTTPException(status_code=409,
+                                detail=f"Order {order_id} already"
+                                " assigned.")
+
+        if  order["status"] == "Ready_for_pickup" or \
+            order["status"] == "Accepted_by_restaurant" or \
+            order["status"] == "Preparing":
+
+            order["assigned_driver_id"] = driver_id
+
+            orders.loc[order_id] = order
+
+            self.repo.update_orders(orders.to_dict(orient="records"))
+
+            return Order(**order)
+
+        raise HTTPException(status_code=409,
+                            detail=f"Order {order_id} is {order["status"]}"
+                            " and Cannot have driver assigned.")
+
+
     def update_order_delivery_status(self, order_id: str, status: str):
         """
         Updates the delivery status of an order.
