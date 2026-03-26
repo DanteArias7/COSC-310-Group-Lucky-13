@@ -13,7 +13,7 @@ from app.repositories.user_repo import UserRepo
 from app.schemas.auth import LoginRequest, TokenResponse
 from app.services.login_services import LoginServices
 
-login_router = APIRouter(prefix="/auth", tags=["auth"])
+login_router = APIRouter(prefix="/login", tags=["login"])
 
 USER_DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "users.json"
 
