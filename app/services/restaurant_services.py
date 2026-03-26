@@ -178,7 +178,7 @@ class RestaurantServices():
                 self.repo.save_all_restaurants(restaurants)
                 return
 
-            raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
+        raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
 
     def validate_restaurant_is_open(self, restaurant_id: int) -> bool:
         """Validates that a given restaurant is currently open.
