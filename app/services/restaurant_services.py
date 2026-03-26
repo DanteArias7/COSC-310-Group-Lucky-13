@@ -198,8 +198,13 @@ class RestaurantServices():
         open_time = times["open"]
         closed_time = times["closed"]
 
-        if open_time <= current_time < closed_time:
-            return True
+        if open_time <= closed_time:
+            if open_time <= current_time <= closed_time:
+                return True
+
+        else:
+            if(open_time <= current_time or current_time <= closed_time):
+                return True
 
         raise HTTPException(status_code=409,
                             detail="Restaurant is currently closed")
