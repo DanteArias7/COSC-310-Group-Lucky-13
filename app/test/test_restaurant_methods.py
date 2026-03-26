@@ -53,6 +53,7 @@ def restaurant_service(mocked_repo):
 #fetch_all_restaurants Tests
 
 def assert_restaurant_results_matching(test, result):
+    """Helper method for checking if the test restaurant and result match"""
     today = date.today().strftime("%A")
 
     assert test["id"] == result["id"]
@@ -98,8 +99,8 @@ def test_fetch_restaurant_not_found(mocked_repo, restaurant_service):
 
 #fetch_name_searched_restaurants Tests
 def test_fetch_name_searched_restaurant_success(test_restaurants, mocked_repo, restaurant_service):
-    "Testing that fetch_name_searched_restaurants returns matching results "
-    "when the search term matches a restaurant name"
+    """Testing that fetch_name_searched_restaurants returns matching results
+    when the search term matches a restaurant name"""
 
     mocked_repo.load_all_restaurants.return_value = test_restaurants
 
