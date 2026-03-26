@@ -161,6 +161,13 @@ class OrderServices():
 
             self.repo.update_orders(orders.to_dict(orient="records"))
 
+            send_notification(
+                Notification(
+                    user_id= order["customer_id"],
+                    message = f"Your order {order_id} is now {status}"
+                )
+            )
+
             return Order(**order)
 
         raise HTTPException(status_code=409,
