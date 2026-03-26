@@ -155,7 +155,8 @@ class CartServices():
         carts = self.repo.load_all_carts()
         cart = self.find_cart_data(carts, cart_id)
 
-        self.validate_cart_from_same_restaurant(cart, payload.restaurant_id)
+
+        self.validate_cart_from_same_restaurant(cart, cart["restaurant_id"])
 
         for cart_item in cart["cart_items"]:
             if cart_item["item"]["id"] == payload.id:
