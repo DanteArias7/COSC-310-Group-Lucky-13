@@ -5,5 +5,15 @@
     "restaurant_id": 101,
     "menu_items": [],
     "total": 12.99
+  },
+  {
+    "id": "019d26ef-5e46-7652-ad6b-133c81f0ce30",
+    "user_id": "019c7875-8f41-767d-ac6d-820361f3f1dd",
+    "restaurant_id": 102,
+    "cart_items": [],
+    "subtotal": 0.0,
+    "delivery_fee": 0.0,
+    "tax": 0.0,
+    "total": 0.0
   }
 ]

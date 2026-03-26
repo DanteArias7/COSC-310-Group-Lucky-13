@@ -14,40 +14,43 @@
     },
     "phone_number": "1234567890",
     "address": "123 Green Street",
-    "tags": ["vegan", "brunch"],
-     "menu": [
+    "tags": [
+      "vegan",
+      "brunch"
+    ],
+    "menu": [
       {
         "id": "018f8c10-7b2a-7f21-9a3c-0a1b2c3d4e01",
         "name": "Vegan Burger",
         "description": "Plant-based patty with lettuce and tomato",
         "price": 12.99,
-        "tags": ["vegan"]
+        "tags": [
+          "vegan"
+        ]
       }
     ]
   },
   {
     "id": 102,
     "user_id": "8a7d5c21-6f4e-4b91-9c2d-3e8f7a1b2c9d",
-    "name": "Burger Hub",
+    "name": "string",
     "hours": {
-      "Monday": "10:00-22:00",
-      "Tuesday": "10:00-22:00",
-      "Wednesday": "10:00-22:00",
-      "Thursday": "10:00-22:00",
-      "Friday": "10:00-23:00",
-      "Saturday": "10:00-23:00",
-      "Sunday": "11:00-20:00"
+      "additionalProp1": "string",
+      "additionalProp2": "string",
+      "additionalProp3": "string"
     },
-    "phone_number": "9876543210",
-    "address": "456 Burger Avenue",
-    "tags": ["fastfood"],
-     "menu": [
+    "phone_number": "string",
+    "address": "string",
+    "tags": [],
+    "menu": [
       {
         "id": "018f8c10-8a4b-7f22-a12d-0b2c3d4e5f02",
         "name": "Classic Burger",
         "description": "Cheeseburger",
-        "price": 10.50,
-        "tags": ["burger"]
+        "price": 10.5,
+        "tags": [
+          "burger"
+        ]
       }
     ]
   }
