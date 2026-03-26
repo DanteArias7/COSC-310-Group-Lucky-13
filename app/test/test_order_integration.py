@@ -157,40 +157,40 @@ def test_orders():
 def test_users():
     """Initialize test user data for each test"""
     return [{"id": "00000000-0000-0000-0000-000000000001",
-            "name": "Alex",
-            "email": "alexsmith@gmail.com",
-            "phone_number": "123-456-7890",
-            "address": "123 Baron Rd, Kelowna, BC, A1B2C3",
-            "password": "password",
-            "role": "customer"},
+                "name": "Alex",
+                "email": "alexsmith@gmail.com",
+                "phone_number": "123-456-7890",
+                "address": "123 Baron Rd, Kelowna, BC, A1B2C3",
+                "password": "password",
+                "role": "customer"},
             {"id": "00000000-0000-0000-0000-000000000002",
-            "name": "Alex",
-            "email": "alexsmith@gmail.com",
-            "phone_number": "123-456-7890",
-            "address": "123 Baron Rd, Kelowna, BC, A1B2C3",
-            "password": "password",
-            "role": "restaurant_owner"},
+                "name": "Alex",
+                "email": "alexsmith@gmail.com",
+                "phone_number": "123-456-7890",
+                "address": "123 Baron Rd, Kelowna, BC, A1B2C3",
+                "password": "password",
+                "role": "restaurant_owner"},
             {"id": "00000000-0000-0000-0000-000000000003",
-            "name": "Alex",
-            "email": "alexsmith@gmail.com",
-            "phone_number": "123-456-7890",
-            "address": "123 Baron Rd, Kelowna, BC, A1B2C3",
-            "password": "password",
-            "role": "customer"},
+                "name": "Alex",
+                "email": "alexsmith@gmail.com",
+                "phone_number": "123-456-7890",
+                "address": "123 Baron Rd, Kelowna, BC, A1B2C3",
+                "password": "password",
+                "role": "customer"},
             {"id": "00000001-0000-0000-0000-000000000000",
-            "name": "Barbara",
-            "email": "barbara@gmail.com",
-            "phone_number": "223-456-7890",
-            "address": "567 Innovation Dr, Kelowna, BC, A1B2C3",
-            "password": "password",
-            "role": "delivery_driver"},
+                "name": "Barbara",
+                "email": "barbara@gmail.com",
+                "phone_number": "223-456-7890",
+                "address": "567 Innovation Dr, Kelowna, BC, A1B2C3",
+                "password": "password",
+                "role": "delivery_driver"},
             {"id": "00000002-0000-0000-0000-000000000000",
-            "name": "Cameron",
-            "email": "camcameron@gmail.com",
-            "phone_number": "323-456-7890",
-            "address": "456 Baron Rd, Kelowna, BC, A1B2C3",
-            "password": "password",
-            "role": "delivery_driver"}
+                "name": "Cameron",
+                "email": "camcameron@gmail.com",
+                "phone_number": "323-456-7890",
+                "address": "456 Baron Rd, Kelowna, BC, A1B2C3",
+                "password": "password",
+                "role": "delivery_driver"}
             ]
 
 @pytest.fixture
@@ -341,7 +341,7 @@ def test_add_order_success(mocker, temp_order_path,
     mocked_time = mocker.patch("app.services.restaurant_services.date")
     mocked_time.today.return_value.strftime.return_value = "Monday"
 
-    r =order_test_client.post(request, headers={"user-id" : test_users[0]["id"]},
+    r = order_test_client.post(request, headers={"user-id" : test_users[0]["id"]},
                            json=payload)
 
     orders = pandas.read_csv(temp_order_path, keep_default_na=False)
@@ -385,7 +385,7 @@ def test_add_order_restaurant_closed(mocker,
     mocked_time = mocker.patch("app.services.restaurant_services.date")
     mocked_time.today.return_value.strftime.return_value = "Monday"
 
-    r =order_test_client.post(request, headers={"user-id" : test_users[0]["id"]},
+    r = order_test_client.post(request, headers={"user-id" : test_users[0]["id"]},
                            json=payload)
 
 
@@ -430,7 +430,7 @@ def test_accept_delivery_success(order_test_client, test_users, test_orders, tem
     Input: A valid order ID and valid driver ID
     Expected Behaviour: Order object has driver's id assigned"""
 
-    request = "/orders/" + str(test_orders[3]["id"]) + "/accept"
+    request = "/orders/" + test_orders[3]["id"] + "/accept"
     r = order_test_client.put(request, headers={"user-id" : test_users[3]["id"]})
 
     data = r.json()
@@ -448,7 +448,7 @@ def test_accept_delivery_not_ready_to_accept(order_test_client, test_users, test
     Input: A valid order ID and valid driver ID
     Expected Behaviour: Order object has driver's id assigned"""
 
-    request = "/orders/" + str(test_orders[7]["id"]) + "/accept"
+    request = "/orders/" + test_orders[7]["id"] + "/accept"
     r = order_test_client.put(request, headers={"user-id" : test_users[3]["id"]})
 
     data = r.json()
@@ -464,7 +464,7 @@ def test_accept_delivery_already_assigned(order_test_client, test_users, test_or
     has a driver and valid driver ID
     Expected Behaviour: Order object has driver's id assigned"""
 
-    request = "/orders/" + str(test_orders[9]["id"]) + "/accept"
+    request = "/orders/" + test_orders[9]["id"] + "/accept"
     r = order_test_client.put(request, headers={"user-id" : test_users[3]["id"]})
 
     data = r.json()
@@ -497,7 +497,7 @@ def test_update_order_restaurant_status_success(order_test_client, test_orders,
     Expected Behaviour: The status is updated and the updated order
     object is returned, and notification is sent to the customer"""
 
-    mock_send =  mocker.patch("app.services.order_services.send_notification")
+    mock_send = mocker.patch("app.services.order_services.send_notification")
 
     request = "/orders/" + test_orders[3]["id"] + "/restaurant/Preparing"
     r = order_test_client.put(request, headers={"user-id" : test_users[1]["id"]})
@@ -635,7 +635,7 @@ def test_simulate_payment_success(temp_order_path,
     and both customer and restaurant owner receive notifications
     """
 
-    mock_send =  mocker.patch("app.services.order_services.send_notification")
+    mock_send = mocker.patch("app.services.order_services.send_notification")
 
     order_id = test_orders[0]["id"]
 
@@ -676,8 +676,8 @@ def test_simulate_payment_success_amex(temp_order_path,
                                   test_orders,
                                   test_users,
                                   valid_payment_amex):
-
-    """Spec: System should simulate payment for an order with Amex card details
+    """
+    Spec: System should simulate payment for an order with Amex card details
     Input: valid order_id and valid Amex payment details
     Expected behavior: Order status updated to Paid and success message returned
     """
