@@ -1,6 +1,7 @@
 
 FROM python:3.14
 
+ENV TZ=America/Vancouver
 
 WORKDIR /code
 
