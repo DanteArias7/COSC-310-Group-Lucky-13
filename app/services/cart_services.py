@@ -62,6 +62,7 @@ class CartServices():
         Rules:
         - subtotal, delivery fee, tax, and total should be rounded to 2 decimal places
         - delivery fee calculated based on distance * FEE_PER_KM
+            (currently only calculated when no delivery fee is set, will be changed in M4)
         - tax calculated based on subtotal * TAX_RATE
 
         Args:
@@ -88,6 +89,13 @@ class CartServices():
             "total": total
         })
 
+    def find_cart_data(self, carts: List[Dict[str, Any]], cart_id: str) -> Dict[str, Any]:
+        """Helper method to find cart data by ID, raises 404 if cart doesn't exist."""
+        for cart in carts:
+            if cart["id"] == cart_id:
+                return cart
+        raise HTTPException(status_code=404, detail=f"Cart {cart_id} Not Found")
+
     def remove_item_from_cart(self, cart_id: str, menu_item_id: str) -> Cart:
         """Remove a menu item from a user's cart
 
@@ -109,20 +117,18 @@ class CartServices():
             A 404 HTTPException if either the menu_item or cart is
             not found"""
         carts = self.repo.load_all_carts()
+        cart = self.find_cart_data(carts, cart_id)
 
-        for cart in carts:
-            if cart["id"] == cart_id:
-                for cart_item in cart["cart_items"]:
-                    if cart_item["item"]["id"] == menu_item_id:
-                        if cart_item["quantity"] > 1:
-                            cart_item["quantity"] -= 1
-                        else:
-                            cart["cart_items"].remove(cart_item)
-                        self.repo.save_all_carts(carts)
-                        return Cart(**cart)
-                raise HTTPException(status_code=404, detail=f"Menu Item {menu_item_id} Not Found")
 
-        raise HTTPException(status_code=404, detail=f"Cart {cart_id} Not Found")
+        for cart_item in cart["cart_items"]:
+            if cart_item["item"]["id"] == menu_item_id:
+                if cart_item["quantity"] > 1:
+                    cart_item["quantity"] -= 1
+                else:
+                    cart["cart_items"].remove(cart_item)
+                self.repo.save_all_carts(carts)
+                return Cart(**cart)
+        raise HTTPException(status_code=404, detail=f"Menu Item {menu_item_id} Not Found")
 
     def add_item_to_cart(self, cart_id: str, payload: MenuItem) -> Cart:
         """
@@ -147,22 +153,19 @@ class CartServices():
         status_code = 404 if the cart with the given cart_id does not exist.
         """
         carts = self.repo.load_all_carts()
+        cart = self.find_cart_data(carts, cart_id)
 
-        for cart in carts:
-            if cart["id"] == cart_id:
-                restaurant_id = cart["restaurant_id"]
-                self.validate_cart_from_same_restaurant(cart, restaurant_id)
+        self.validate_cart_from_same_restaurant(cart, payload.restaurant_id)
 
-                for cart_item in cart["cart_items"]:
-                    if cart_item["item"]["id"] == payload.id:
-                        cart_item["quantity"] += 1
-                        break
-                else:
-                    cart["cart_items"].append({"item": payload.model_dump(), "quantity": 1})
+        for cart_item in cart["cart_items"]:
+            if cart_item["item"]["id"] == payload.id:
+                cart_item["quantity"] += 1
+                break
+        else:
+            cart["cart_items"].append({"item": payload.model_dump(), "quantity": 1})
 
-                self.repo.save_all_carts(carts)
-                return Cart(**cart)
-        raise HTTPException(status_code=404, detail=f"Cart {cart_id} Not Found")
+        self.repo.save_all_carts(carts)
+        return Cart(**cart)
 
     def validate_cart_from_same_restaurant(self, cart: Dict[str, Any], restaurant_id: int) -> None:
         """
