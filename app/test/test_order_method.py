@@ -484,7 +484,7 @@ def test_get_order_by_restaurant_id_success(mocked_repo, order_service, test_ord
     """
     mocked_repo.load_all_orders.return_value = test_orders
 
-    orders = order_service.get_past_orders_by_restaurant_id(test_orders[0]["restaurant_id"])
+    orders = order_service.get_orders_by_restaurant_id(test_orders[0]["restaurant_id"])
 
     expected_orders = [test_orders[0], test_orders[1], test_orders[2]]
 
