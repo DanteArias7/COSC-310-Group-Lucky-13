@@ -34,5 +34,41 @@
     "address": "James Bond Blvd.",
     "password": "james_pwd",
     "role": "delivery_driver"
+  },
+  {
+    "id": "3dd3bcec-5e81-405f-bab0-9cfa5cdfb3d1",
+    "name": "Shane",
+    "email": "shanedoherty@gmail.com",
+    "phone_number": "123-456-7890",
+    "address": "Shane James Pl.",
+    "password": "password",
+    "role": "customer"
+  },
+  {
+    "id": "3b550089-1e93-4483-9a96-65fdbf637fb4",
+    "name": "Nathan",
+    "email": "nathanellis@gmail.com",
+    "phone_number": "123-456-7890",
+    "address": "Nathan House",
+    "password": "password",
+    "role": "delivery_driver"
+  },
+  {
+    "id": "b73ddabf-066f-41eb-8db2-0db0ffa36734",
+    "name": "Admin1",
+    "email": "admin1@gmail.com",
+    "phone_number": "123-456-7890",
+    "address": "Admin1 House",
+    "password": "adminpassword1",
+    "role": "admin"
+  },
+  {
+    "id": "9a73f5a0-2867-4567-adcc-e5bd1102a449",
+    "name": "Admin2",
+    "email": "admin2@gmail.com",
+    "phone_number": "123-456-7890",
+    "address": "Admin2 House",
+    "password": "adminpassword2",
+    "role": "admin"
   }
 ]
