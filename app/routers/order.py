@@ -8,7 +8,7 @@ from app.repositories.user_repo import UserRepo
 from app.routers.restaurant import RESTAURANT_DATA_PATH
 from app.routers.user import USER_DATA_PATH
 from app.schemas.cart import Cart
-from app.schemas.order import Order, OrderStatus
+from app.schemas.order import CreateOrder, Order, OrderStatus
 from app.services.authorization_services import AuthorizationServices
 from app.services.order_services import OrderServices
 from app.schemas.payment import Payment, PaymentResult
@@ -50,7 +50,7 @@ def create_user_repo():
             UserRepo object with the order data path attribute"""
     return UserRepo(USER_DATA_PATH)
 
-@order_router.post("", response_model=Order, status_code=201)
+@order_router.post("", response_model=CreateOrder, status_code=201)
 def add_order(payload: Cart,
                  order_repo: OrderRepo = Depends(create_order_repo),
                  restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
