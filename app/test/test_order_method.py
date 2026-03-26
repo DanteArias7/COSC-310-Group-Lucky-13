@@ -237,9 +237,11 @@ def test_orders_assigned():
 
 #get_order_id Unit Tests
 def test_get_order_by_id_success(mocked_repo, test_orders_available, order_service):
-    """Scenario: Method should get an order matching a given valid id
+    """
+    Scenario: Method should get an order matching a given valid id
     Input: A valid order ID
-    Expected Behaviour: Returns an order in dictionary form"""
+    Expected Behaviour: Returns an order in dictionary form
+    """
 
     orders = pandas.DataFrame(test_orders_available)
     mocked_repo.load_all_orders_df.return_value = orders
@@ -249,9 +251,11 @@ def test_get_order_by_id_success(mocked_repo, test_orders_available, order_servi
     assert order == test_orders_available[0]
 
 def test_get_order_by_id_invalid_id(mocked_repo, test_orders_available, order_service):
-    """Scenario: Method should not accept invalid or nonmatching id's
+    """
+    Scenario: Method should not accept invalid or nonmatching id's
     Input: An invalid ID or ID that does not match any order
-    Expected Behaviour: Returns an order in dictionary form"""
+    Expected Behaviour: Returns an order in dictionary form
+    """
 
     orders = pandas.DataFrame(test_orders_available)
     mocked_repo.load_all_orders_df.return_value = orders
@@ -264,8 +268,13 @@ def test_get_order_by_id_invalid_id(mocked_repo, test_orders_available, order_se
 
 #place_order Unit Tests
 def test_place_order_success(mocker, mocked_repo, order_service, test_carts):
-    """Scenario: check that creating a valid order returns a valid order object
-       and generates a notification"""
+    """
+    Scenario: check that creating a valid order returns a valid order object
+    and generates a notification
+    Input: valid cart with items, user_id, and total
+    Expected Behaviour: Order is created with correct fields and a
+    notification is sent to the customer
+    """
 
     mocked_random = "Q"
     id_mock = mocker.patch("app.services.order_services.random.choice")
@@ -308,10 +317,12 @@ def test_place_order_success(mocker, mocked_repo, order_service, test_carts):
     )
 #accept_delivery Unit Tests
 def test_accept_delivery_success(mocker, mocked_repo, order_service, test_orders_available):
-    """Scenario: The method should assign the driver id to the order object
+    """
+    Scenario: The method should assign the driver id to the order object
     Input: A valid order ID and driver ID
     Expected Behvaiour: Order object with assigned driver ID,
-    is returned."""
+    is returned.
+    """
     mocked_repo.load_all_orders_df.return_value = pandas.DataFrame(test_orders_available)
     mocked_repo.update_orders.return_value = None
 
@@ -326,10 +337,12 @@ def test_accept_delivery_success(mocker, mocked_repo, order_service, test_orders
 
 def test_accept_delivery_already_assigned(mocker, mocked_repo, order_service,
                                            test_orders_available):
-    """Scenario: The method should not assign the driver id to the order object
+    """
+    Scenario: The method should not assign the driver id to the order object
     if there is already an id assigned.
     Input: A valid order ID that has an assigned driver id and a driver ID
-    Expected Behvaiour: A 409 HTTPException is raised."""
+    Expected Behvaiour: A 409 HTTPException is raised.
+    """
     mocked_repo.load_all_orders_df.return_value = pandas.DataFrame(test_orders_available)
     mocked_repo.update_orders.return_value = None
 
@@ -343,11 +356,13 @@ def test_accept_delivery_already_assigned(mocker, mocked_repo, order_service,
     assert exc_info.value.detail == "Order CCCCCCC already assigned."
 
 def test_accept_delivery_not_ready(mocker, mocked_repo, order_service, test_orders_paid):
-    """Scenario: The method should not assign the driver id to the order object
+    """
+    Scenario: The method should not assign the driver id to the order object
     if the order is not ready.
     Input: A valid order ID that is not accepted, cancelled or
     already completed id and a driver ID
-    Expected Behvaiour: A 409 HTTPException is raised."""
+    Expected Behvaiour: A 409 HTTPException is raised.
+    """
     mocked_repo.load_all_orders_df.return_value = pandas.DataFrame(test_orders_paid)
     mocked_repo.update_orders.return_value = None
 
@@ -366,11 +381,13 @@ def test_accept_delivery_not_ready(mocker, mocked_repo, order_service, test_orde
 #update_order_status method
 def test_update_order_delivery_status_success(mocker, mocked_repo,
                                                order_service, test_orders_available):
-    """Scenario: A valid existing order with the proper
+    """
+    Scenario: A valid existing order with the proper
     status of Ready_for_pickup or In_transit should have its status
     updated properly
     Input: A valid order ID of a ready order and and valid status
-    Expected Behaviour: Updated Order object is returned"""
+    Expected Behaviour: Updated Order object is returned
+    """
     mocked_repo.load_all_orders_df.return_value = pandas.DataFrame(test_orders_available)
     mocked_repo.update_orders.return_value = None
 
@@ -392,11 +409,13 @@ def test_update_order_delivery_status_success(mocker, mocked_repo,
 
 def test_update_order_delivery_status_order_not_ready(mocker, mocked_repo,
                                                       order_service, test_orders):
-    """Scenario: Updating an order that is not ready or already,
+    """
+    Scenario: Updating an order that is not ready or already,
     in transit should raise an error
     Input: A valid order ID of an order not yet
     ready and and valid status
-    Expected Behaviour: HTTPException 409 is raised"""
+    Expected Behaviour: HTTPException 409 is raised
+    """
     mocked_repo.load_all_orders_df.return_value = pandas.DataFrame(test_orders)
     mocked_repo.update_orders.return_value = None
 
@@ -410,10 +429,12 @@ def test_update_order_delivery_status_order_not_ready(mocker, mocked_repo,
 
 def test_update_order_delivery_status_invalid_status(mocker, mocked_repo,
                                                      order_service, test_orders):
-    """Scenario: Updating an order with an invalid status should
+    """
+    Scenario: Updating an order with an invalid status should
     raise an error
     Input: A valid order ID of an ready order and and an invalid status
-    Expected Behaviour: HTTPException 422 is raised"""
+    Expected Behaviour: HTTPException 422 is raised
+    """
     mocked_repo.load_all_orders_df.return_value = pandas.DataFrame(test_orders)
     mocked_repo.update_orders.return_value = None
 
@@ -472,7 +493,8 @@ def test_get_order_by_restaurant_id_success(mocked_repo, order_service, test_ord
 #update_order_status method
 def test_update_order_restaurant_status_success(mocker, mocked_repo, order_service,
                                                 test_orders_available):
-    """Scenario: A valid existing order with the proper
+    """
+    Scenario: A valid existing order with the proper
     status of Paid, Accepted_by_restaurant, or Preparing should have its status
     updated properly
     Input: A valid order ID and and valid status
@@ -501,12 +523,14 @@ def test_update_order_restaurant_status_success(mocker, mocked_repo, order_servi
 
 def test_update_order_restaurant_status_order_not_ready(mocker, mocked_repo,
                                                       order_service, test_orders):
-    """Scenario: A valid existing order that does not have a proper
+    """
+    Scenario: A valid existing order that does not have a proper
     status of Paid, Accepted_by_restaurant, or Preparing should not be
     updayed
     Input: A valid order ID of an order not able to be updated
     and a valid status
-    Expected Behaviour: HTTPException 409 is raised"""
+    Expected Behaviour: HTTPException 409 is raised
+    """
     mocked_repo.load_all_orders_df.return_value = pandas.DataFrame(test_orders)
     mocked_repo.update_orders.return_value = None
 
@@ -522,10 +546,12 @@ def test_update_order_restaurant_status_order_not_ready(mocker, mocked_repo,
 
 def test_update_order_restaurant_status_invalid_status(mocker, mocked_repo, order_service,
                                                      test_orders_available):
-    """Scenario: Updating an order with an invalid status should
+    """
+    Scenario: Updating an order with an invalid status should
     raise an error
     Input: A valid order ID of a ready order and and an invalid status
-    Expected Behaviour: HTTPException 422 is raised"""
+    Expected Behaviour: HTTPException 422 is raised
+    """
     mocked_repo.load_all_orders_df.return_value = pandas.DataFrame(test_orders_available)
     mocked_repo.update_orders.return_value = None
 
@@ -588,7 +614,8 @@ def test_simulate_payment_success(mocked_repo, order_service, test_order_status,
 
 def test_simulate_payment_amex(mocked_repo, order_service,
                                            test_order_status, valid_payment_amex, mocker):
-    """Spec: Method should simulate payment for an order and update order status to Paid
+    """
+    Spec: Method should simulate payment for an order and update order status to Paid
     Input: valid order_id and valid Amex payment details
     Expected behavior: Order status should update to Paid &&
                         method should return payment result message
@@ -749,8 +776,6 @@ def test_retry_payment_after_failure(mocked_repo,
         )
     assert exc_info.value.status_code == 400
     assert exc_info.value.detail == "Payment Rejected: Invalid card number"
-
-    # second attempt succeeds
 
     mock_restaurant_obj = mocker.Mock()
     mock_restaurant_obj.user_id = "owner-123"
