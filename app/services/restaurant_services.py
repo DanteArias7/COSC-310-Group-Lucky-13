@@ -8,7 +8,7 @@ from fastapi import HTTPException
 from app.schemas.menu import CreateMenuItem, MenuItem, UpdateMenuItem
 from app.schemas.restaurant import RestaurantResult, Restaurant, RestaurantCreate, UpdateRestaurant
 
-class RestaurantServices():
+class RestaurantServices:
     """Restaurant service methods"""
     def __init__(self, repo: IRestaurantRepo):
         """Initialize instance with repo object"""
@@ -242,7 +242,6 @@ class RestaurantServices():
 
         filtered_menu_items = []
 
-
         for i, tag in enumerate(tags):
             tags[i] = tag.lower()
 
@@ -257,7 +256,7 @@ class RestaurantServices():
         return filtered_menu_items
 
     def filter_menu_items_by_price(self, menu_items: List[MenuItem],
-                                   price_max: float, price_min: float):
+                                   price_max: float, price_min: float)-> List[MenuItem]:
         """
         Filter a given list of menuItems based on a price range.
 
@@ -280,7 +279,7 @@ class RestaurantServices():
     def filter_restaurants_by_tags(self, restaurants: List[RestaurantResult],
                                    tags: List[str] ) -> List[RestaurantResult]:
         """
-        Filter a given list of restaurnts based on given list of tags.
+        Filter a given list of restaurants based on given list of tags.
 
         Args:
             restaurants: list of RestaurantResult objects to be filtered
@@ -300,7 +299,7 @@ class RestaurantServices():
     def filter_closed_restaurants(self,
                                   restaurants: List[RestaurantResult]) -> List[RestaurantResult]:
         """
-        Filter a given list of restaurnts based on if they are currently open or not.
+        Filter a given list of restaurants based on if they are currently open or not.
 
         Args:
             restaurants: list of RestaurantResult objects to be filtered
@@ -413,7 +412,8 @@ class RestaurantServices():
             The updated MenuItem object
 
         Raise:
-            A 404 HTTPException if the restaurant"""
+            A 404 HTTPException if the restaurant or menu item are not found
+        """
 
         restaurants = self.repo.load_all_restaurants()
 
@@ -465,8 +465,8 @@ class RestaurantServices():
                             detail=f"Menu Item {menu_item_id} Not Found.")
 
     def validate_menu_existence(self, restaurant: Dict[str, Any]) -> None:
-        """A validation check to ensure a restaurant always has at
-        least one menu item.
+        """
+        A validation check to ensure a restaurant always has at least one menu item.
 
         Args:
             restaurant: Dict representing a restaurant Object
@@ -475,16 +475,15 @@ class RestaurantServices():
             Nothing
 
         Raises:
-            A 404 HTTPException if the restaurant is not found
-            """
+            A 400 HTTPException if the restaurant is not found
+        """
 
-        if not restaurant.get("menu") or len(restaurant["menu"]) == 0:
-            raise HTTPException(status_code= 400,
-                                detail = "Restaurant must have at least one menu item.")
+        if not restaurant.get("menu"):
+            raise HTTPException(status_code=400,
+                                detail="Restaurant must have at least one menu item.")
 
     def delete_menu_item(self, restaurant_id: int, menu_item_id: str) -> None:
-        """Deletes a menu_item from a restaurants menu
-        that matches a given ID
+        """Deletes a menu_item from a restaurants menu that matches a given ID
 
         Args:
             restaurant_id: ID of the restaurant containing the menu_item
@@ -494,8 +493,8 @@ class RestaurantServices():
             Nothing
 
         Raises:
-            A 404 HTTPException if the restaurant or the
-            MenuItem is not found"""
+            A 404 HTTPException if the restaurant or the MenuItem is not found
+        """
         restaurants = self.repo.load_all_restaurants()
 
         for restaurant in restaurants:
