@@ -703,7 +703,8 @@ def test_simulate_payment_amex_invalid_cvv(order_test_client,
                                        test_orders,
                                        test_users,
                                        amex_card_invalid_cvv):
-    """Spec: System should reject payment with invalid CVV for Amex card
+    """
+    Spec: System should reject payment with invalid CVV for Amex card
     Input: valid order_id and Amex payment details with invalid CVV
     Expected behavior: Endpoint returns 400 error with appropriate message
     """
@@ -768,9 +769,11 @@ def test_simulate_payment_invalid_card(order_test_client,
                                        test_orders,
                                        test_users,
                                        invalid_card_payment):
-    """Spec: System should validate card number and reject payment if invalid
+    """
+    Spec: System should validate card number and reject payment if invalid
     Input: valid order_id and invalid card number in payment details
-    Expected behavior: Endpoint returns 400 error with appropriate message"""
+    Expected behavior: Endpoint returns 400 error with appropriate message
+    """
 
     order_id = test_orders[0]["id"]
 
@@ -789,7 +792,8 @@ def test_simulate_payment_invalid_cvv(order_test_client,
                                       test_orders,
                                       test_users,
                                       invalid_cvv_payment):
-    """Spec: System should validate CVV and reject payment if invalid
+    """
+    Spec: System should validate CVV and reject payment if invalid
     Input: valid order_id and invalid CVV in payment details
     Expected behavior: Endpoint returns 400 error with appropriate message
     """
@@ -811,7 +815,8 @@ def test_simulate_payment_expired_card(order_test_client,
                                        test_orders,
                                        test_users,
                                        expired_payment):
-    """Spec: System should validate card expiration date and reject payment if card is expired
+    """
+    Spec: System should validate card expiration date and reject payment if card is expired
     Input: valid order_id and expired card details in payment
     Expected behavior: Endpoint returns 400 error with appropriate message
     """
@@ -833,7 +838,8 @@ def test_simulate_payment_unauthorized_user(order_test_client,
                                           test_orders,
                                           test_users,
                                           valid_payment):
-    """Spec: System should prevent users from simulating payment for orders that are not their own
+    """
+    Spec: System should prevent users from simulating payment for orders that are not their own
     Input: valid payment details but user_id in header does not match user_id in payment details
     Expected behavior: Endpoint returns 403 error
     """
@@ -858,6 +864,7 @@ def test_get_all_available_delivery_orders_success(order_test_client, test_users
     Input: User with authorized driver role
     Expected: Returns only AAAAAAA and BBBBBBB
     """
+
     driver = test_users[3]
     expected_orders = [test_orders[3], test_orders[4]]
 
@@ -873,6 +880,7 @@ def test_get_all_available_delivery_orders_unauthorized(order_test_client, test_
     Input: User with unauthorized customer role
     Expected: 403
     """
+
     customer = test_users[0]
 
     r = order_test_client.get("/orders/available", headers={"user-id": customer["id"]})
@@ -887,6 +895,7 @@ def test_get_all_pending_paid_orders_success(order_test_client, test_users, test
     Input: User with authorized restaurant_owner role
     Expected: Returns only DDDDDDD (the single order with Paid status)
     """
+
     owner = test_users[1]
     expected_orders = [test_orders[6]]
 
@@ -901,6 +910,7 @@ def test_get_all_pending_paid_orders_unauthorized(order_test_client, test_users)
     Input: User with unauthorized customer role
     Expected: 403
     """
+
     customer = test_users[0]
 
     r = order_test_client.get("/orders/101/pending", headers={"user-id": customer["id"]})
@@ -915,6 +925,7 @@ def test_get_all_assigned_orders_success(order_test_client, test_users, test_ord
     Input: User with authorized delivery_driver role (Barbara)
     Expected: Returns only CCCCCCC, FFFFFFF, and HHHHHHH (all assigned to Barbara)
     """
+
     driver = test_users[3]
     expected_orders = [test_orders[5], test_orders[8], test_orders[10]]
 
@@ -929,6 +940,7 @@ def test_get_all_assigned_orders_success_2(order_test_client, test_users, test_o
     Input: User with authorized delivery_driver role (Cameron)
     Expected: Returns only GGGGGGG (the only order assigned to Cameron)
     """
+
     driver2 = test_users[4]
     expected_orders = [test_orders[9]]
 
@@ -943,6 +955,7 @@ def test_get_all_assigned_orders_unauthorized(order_test_client, test_users):
     Input: User with unauthorized customer role
     Expected: 403
     """
+
     customer = test_users[0]
 
     r = order_test_client.get("/orders/assigned", headers={"user-id": customer["id"]})
