@@ -191,9 +191,9 @@ class OrderServices():
                                 detail="No Orders Found for User")
         return user_orders
 
-    def get_past_orders_by_restaurant_id(self, restaurant_id: int) -> List[Order]:
+    def get_orders_by_restaurant_id(self, restaurant_id: int) -> List[Order]:
         """
-        Gets all past orders related to a restaurant.
+        Gets all orders related to a restaurant.
 
         Args:
             restaurant_id: The ID of the requested restaurants's orders.
