@@ -52,6 +52,17 @@ def restaurant_service(mocked_repo):
 
 #fetch_all_restaurants Tests
 
+def assert_restaurant_results_matching(test, result):
+    """Helper method for checking if the test restaurant and result match"""
+    today = date.today().strftime("%A")
+
+    assert test["id"] == result["id"]
+    assert test["name"] == result["name"]
+    assert test["address"] == result["address"]
+    assert test["hours"][today] == result["todays_hours"]
+    assert test["tags"] == result["tags"]
+
+
 def test_fetch_all_restaurants(test_restaurants, mocked_repo, restaurant_service):
     """Testing that fetch_all_restaurants returns a list of restaurants"""
 
@@ -60,13 +71,7 @@ def test_fetch_all_restaurants(test_restaurants, mocked_repo, restaurant_service
     result = restaurant_service.fetch_all_restaurants()
     result[0] = result[0].model_dump()
 
-    today = date.today().strftime("%A")
-
-    assert test_restaurants[0]["id"] == result[0]["id"]
-    assert test_restaurants[0]["name"] == result[0]["name"]
-    assert test_restaurants[0]["address"] == result[0]["address"]
-    assert test_restaurants[0]["hours"][today] == result[0]["todays_hours"]
-    assert test_restaurants[0]["tags"] == result[0]["tags"]
+    assert_restaurant_results_matching(test_restaurants[0], result[0])
 
 #fetch_restaurant Tests
 
@@ -94,24 +99,20 @@ def test_fetch_restaurant_not_found(mocked_repo, restaurant_service):
 
 #fetch_name_searched_restaurants Tests
 def test_fetch_name_searched_restaurant_success(test_restaurants, mocked_repo, restaurant_service):
-    """Testing that fetch_restaurant returns the result when requested ID exists"""
+    """Testing that fetch_name_searched_restaurants returns matching results
+    when the search term matches a restaurant name"""
 
     mocked_repo.load_all_restaurants.return_value = test_restaurants
 
     result = restaurant_service.fetch_name_searched_restaurants("veg")
     result[0] = result[0].model_dump()
 
-    today = date.today().strftime("%A")
-
-    assert test_restaurants[0]["id"] == result[0]["id"]
-    assert test_restaurants[0]["name"] == result[0]["name"]
-    assert test_restaurants[0]["address"] == result[0]["address"]
-    assert test_restaurants[0]["hours"][today] == result[0]["todays_hours"]
-    assert test_restaurants[0]["tags"] == result[0]["tags"]
+    assert_restaurant_results_matching(test_restaurants[0], result[0])
 
 def test_fetch_name_searched_restaurant_no_matching_restaurant(test_restaurants,
                                                                mocked_repo, restaurant_service):
-    """Testing that fetch_restaurant returns the result when requested ID exists"""
+    """Testing that fetch_restaurant returns an empty list
+    when no matching restaurant is found"""
 
     mocked_repo.load_all_restaurants.return_value = test_restaurants
 
@@ -119,7 +120,7 @@ def test_fetch_name_searched_restaurant_no_matching_restaurant(test_restaurants,
 
     assert result == []
 
-#create_restaurant  Unit Tests
+#create_restaurant Unit Tests
 def test_create_new_restaurant(mocker, mocked_repo, restaurant_service, test_restaurants):
     """Scenario: check that creating a valid restaurant returns a valid restaurant"""
 
@@ -196,7 +197,8 @@ def test_update_restaurant_success(test_restaurants, mocked_repo, restaurant_ser
     assert updated_restaurant == expected_restaurant
 
 def test_update_nonexistent_restaurant(test_restaurants, mocked_repo, restaurant_service):
-    """Test that the update_menu_item returns the proper menu item object"""
+    """Tests that the update_menu_item raises a 404 HTTPException
+    when the restaurant does not exist"""
 
     mocked_repo.load_all_restaurants.return_value = test_restaurants
 
@@ -374,10 +376,12 @@ def test_fetch_name_searched_menu_items_no_search_match(test_restaurants, restau
 
 #filter_restaurants_by_tags Unit Tests
 def test_filter_menu_items_by_tags_success(restaurant_service, test_restaurants):
-    """Spec: A list of tags is given, matching at least one restaurant
-    Input: A list of RestaurantResults and a List of tags matching a restaurants tags,
-    Expected Behaviour: Method retruns a List of RestaurantResult objects,
-    whose tags include all the given tags"""
+    """
+    Spec: A list of tags is given, matching at least one menu item
+    Input: A list of MenuItems and a List of tags matching a restaurants tags,
+    Expected Behaviour: Method returns a List of MenuItems objects,
+    whose tags include all the given tags
+    """
 
     menu_items = test_restaurants[0]["menu"]
 
@@ -389,10 +393,11 @@ def test_filter_menu_items_by_tags_success(restaurant_service, test_restaurants)
     assert result == [test_restaurants[0]["menu"][0]]
 
 def test_filter_menu_items_by_tags_not_all_tags(restaurant_service, test_restaurants):
-    """Spec: If none of the restaurants contain all the tags specified, nothing should be returned
-    Input: A valid list of RestaurantResults and a list of tags
-    where one does not match any restaurant
-    Expected Behaviour: Method returns an empty list"""
+    """
+    Spec: If none of the restaurants contain all the tags specified, nothing should be returned
+    Input: A valid list of MenuItems and a list of tags where one does not match any menu item
+    Expected Behaviour: Method returns an empty list
+    """
 
     menu_items = test_restaurants[0]["menu"]
 
@@ -422,11 +427,13 @@ def test_filter_restaurant_by_tags_no_matching_tags(restaurant_service, test_res
 
 #filter_menu_items_by_price Unit Tests
 def test_filter_menu_items_by_price_success(test_restaurants, restaurant_service):
-    """Spec: A menu exists and has items within a range
+    """
+    Spec: A menu exists and has items within a range
     Input: A valid menu with items within the given range and the min,
     and max of the range.
     Expected Behaviour: Method returns a List of MenuItem objects with
-    a price within the given range"""
+    a price within the given range
+    """
 
     payload = [MenuItem(**test_restaurants[0]["menu"][0])]
 
