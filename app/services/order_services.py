@@ -77,8 +77,7 @@ class OrderServices():
                           assigned_driver_id="",
                           food_items=items,
                           order_date=todays_date,
-                          order_value=cart.total,
-                          delivery_time=0.0
+                          order_value=cart.total
                           )
 
         self.repo.save_order(new_order.model_dump())
