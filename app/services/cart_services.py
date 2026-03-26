@@ -34,7 +34,7 @@ class CartServices():
                 return Cart(**cart)
 
         raise HTTPException(status_code=404,
-                            detail="User Not Found.")
+                            detail="Cart Not Found.")
 
     def start_cart(self, user_id: str, restaurant_id: int) -> Cart:
         """Starts a cart associated with a specific user and restauranat

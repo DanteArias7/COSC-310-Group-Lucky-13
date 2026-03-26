@@ -70,8 +70,7 @@ def test_orders():
                 "food_items": "2x Vegan Burger, 1x Bacon Burger",
                 "order_date": "03-06-2025",
                 "order_value": 24.35,
-                "status": "Pending",
-                "delivery_time": 0.0},
+                "status": "Pending"},
             {"id": "QQQQQQQ",
                 "restaurant_id": 101,
                 "customer_id": "00000000-0000-0000-0000-000000000001",
@@ -79,8 +78,7 @@ def test_orders():
                 "food_items": "2x Vegan Burger",
                 "order_date": "03-06-2025",
                 "order_value": 24.35,
-                "status": "Pending",
-                "delivery_time": 0.0},
+                "status": "Pending"},
             {"id": "QQQQQQQ",
                 "restaurant_id": 101,
                 "customer_id": "00000000-0000-0000-0000-000000000002",
@@ -88,8 +86,7 @@ def test_orders():
                 "food_items": "1x Hot Dog",
                 "order_date": "03-06-2025",
                 "order_value": 24.35,
-                "status": "Pending",
-                "delivery_time": 0.0},
+                "status": "Pending"},
             {"id": "AAAAAAA",
                 "restaurant_id": 101,
                 "customer_id": "00000000-0000-0000-0001-000000000001",
@@ -97,8 +94,7 @@ def test_orders():
                 "food_items": "2x Vegan Burger",
                 "order_date": "03-16-2026",
                 "order_value": 24.35,
-                "status": "Accepted_by_restaurant",
-                "delivery_time": 0.0},
+                "status": "Accepted_by_restaurant"},
             {"id": "BBBBBBB",
                 "restaurant_id": 101,
                 "customer_id": "00000000-0000-0000-0001-000000000001",
@@ -106,8 +102,7 @@ def test_orders():
                 "food_items": "1x Hot Dog",
                 "order_date": "03-16-2026",
                 "order_value": 10.00,
-                "status": "Preparing",
-                "delivery_time": 0.0},
+                "status": "Preparing"},
             {"id": "CCCCCCC",
                 "restaurant_id": 101,
                 "customer_id": "00000000-0000-0000-0001-000000000001",
@@ -115,8 +110,7 @@ def test_orders():
                 "food_items": "1x Salad",
                 "order_date": "03-16-2026",
                 "order_value": 8.00,
-                "status": "Ready_for_pickup",
-                "delivery_time": 0.0},
+                "status": "Ready_for_pickup"},
             {"id": "DDDDDDD",
                 "restaurant_id": 101,
                 "customer_id": "00000000-0000-0000-0001-000000000001",
@@ -124,8 +118,7 @@ def test_orders():
                 "food_items": "2x Vegan Burger",
                 "order_date": "03-16-2026",
                 "order_value": 24.35,
-                "status": "Paid",
-                "delivery_time": 0.0},
+                "status": "Paid"},
             {"id": "EEEEEEE",
                 "restaurant_id": 101,
                 "customer_id": "00000000-0000-0000-0001-000000000002",
@@ -133,8 +126,7 @@ def test_orders():
                 "food_items": "1x Hot Dog",
                 "order_date": "03-16-2026",
                 "order_value": 10.00,
-                "status": "Pending",
-                "delivery_time": 0.0},
+                "status": "Pending"},
             {"id": "FFFFFFF",
                 "restaurant_id": 101,
                 "customer_id": "00000000-0000-0000-0001-000000000001",
@@ -142,8 +134,7 @@ def test_orders():
                 "food_items": "2x Vegan Burger",
                 "order_date": "03-16-2026",
                 "order_value": 24.35,
-                "status": "In_transit",
-                "delivery_time": 0.0},
+                "status": "In_transit"},
             {"id": "GGGGGGG",
                 "restaurant_id": 101,
                 "customer_id": "00000000-0000-0000-0001-000000000002",
@@ -151,8 +142,7 @@ def test_orders():
                 "food_items": "1x Hot Dog",
                 "order_date": "03-16-2026",
                 "order_value": 10.00,
-                "status": "In_transit",
-                "delivery_time": 0.0},
+                "status": "In_transit"},
             {"id": "HHHHHHH",
                 "restaurant_id": 101,
                 "customer_id": "00000000-0000-0000-0001-000000000002",
@@ -160,8 +150,7 @@ def test_orders():
                 "food_items": "1x Hot Dog",
                 "order_date": "03-16-2026",
                 "order_value": 10.00,
-                "status": "Pending",
-                "delivery_time": 0.0}
+                "status": "Pending"}
             ]
 
 @pytest.fixture
@@ -216,8 +205,7 @@ def temp_order_path(tmp_path, test_orders):
                                         "food_items",
                                         "order_date",
                                         "order_value",
-                                        "status",
-                                        "delivery_time"])
+                                        "status"])
 
     headersdf.to_csv(test_order_data_path, index=False)
 
@@ -370,7 +358,7 @@ def test_add_order_success(mocker, temp_order_path,
                       "order_date": date.today().strftime("%m-%d-%Y"),
                       "order_value": 24.35,
                       "status": "Pending",
-                      "delivery_time": 0.0}
+}
 
     assert r.status_code == 201
     assert new_order == expected_order
