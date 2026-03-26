@@ -295,7 +295,6 @@ class OrderServices():
 
                 self.notify_restaurant_owner(order["restaurant_id"], order_id)
 
-                # return payment result
                 return PaymentResult(message="Payment Accepted")
 
         raise HTTPException(status_code=404, detail=f"Order {order_id} Not Found")
