@@ -14,13 +14,15 @@ class UserServices():
         self.repo = repo
 
     def get_user_by_id(self, user_id: str) -> User:
-        """Gets a users information whose ID matches the given ID
+        """
+        Gets a users information whose ID matches the given ID
 
         Args:
             user_id: The ID of the user's info being requested
 
         Returns:
-            A User object matching the given ID """
+            A User object matching the given ID
+        """
         users = self.repo.load_all_users()
 
         for user in users:
@@ -31,7 +33,8 @@ class UserServices():
                             detail=f"User {user_id} not found")
 
     def create_user(self, new_user: UserCreate) -> User:
-        """Creates a new user and stores it in the data store
+        """
+        Creates a new user and stores it in the data store
 
         Args:
             new_user: A UserCreate object containing the information
@@ -39,7 +42,6 @@ class UserServices():
 
         Returns:
             The new User object
-
         """
         new_id = str(uuid.uuid4())
         new_user = User(id=new_id,
@@ -56,7 +58,8 @@ class UserServices():
         return new_user
 
     def update_user(self, user_id: str, updated_user: UserUpdate) -> User:
-        """Updates user information in the data store
+        """
+        Updates user information in the data store
 
         Args:
             user_id: The ID of the user's info being updated
@@ -67,7 +70,8 @@ class UserServices():
             A the updated User object
 
         Raises:
-            A 404 HTTPException if the user is not found"""
+            A 404 HTTPException if the user is not found
+        """
         users = self.repo.load_all_users()
 
         for i, user in enumerate(users):
@@ -79,7 +83,8 @@ class UserServices():
         raise HTTPException(status_code=404, detail=f"User '{user_id}' not found")
 
     def delete_user(self, user_id: str) -> None:
-        """Deletes user from the data store
+        """
+        Deletes user from the data store
 
         Args:
             user_id: The ID of the user's info being deleted
@@ -88,7 +93,8 @@ class UserServices():
             A the updated User object
 
         Raises:
-            A 404 HTTPException if the user is not found"""
+            A 404 HTTPException if the user is not found
+        """
 
         users = self.repo.load_all_users()
 
