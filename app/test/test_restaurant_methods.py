@@ -119,7 +119,7 @@ def test_fetch_name_searched_restaurant_no_matching_restaurant(test_restaurants,
 
     assert result == []
 
-#create_restaurant  Unit Tests
+#create_restaurant Unit Tests
 def test_create_new_restaurant(mocker, mocked_repo, restaurant_service, test_restaurants):
     """Scenario: check that creating a valid restaurant returns a valid restaurant"""
 
