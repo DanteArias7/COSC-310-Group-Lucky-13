@@ -23,31 +23,39 @@ order_router = APIRouter(prefix="/orders",
 # pylint: disable=too-many-arguments
 # pylint: disable=too-many-positional-arguments
 def create_order_repo():
-    """"Initialize repo object with data path to user data store
+    """"
+    Initialize repo object with data path to user data store
 
     Returns:
-            UserRepo object with the order data path attribute"""
+            UserRepo object with the order data path attribute
+    """
     return OrderRepo(ORDER_DATA_PATH)
 
 def create_past_order_repo():
-    """"Initialize repo object with data path to past order data store
+    """"
+    Initialize repo object with data path to past order data store
 
     Returns:
-            OrderRepo object with the order data path attribute"""
+            OrderRepo object with the order data path attribute
+    """
     return OrderRepo(PAST_ORDER_DATA_PATH)
 
 def create_restaurant_repo():
-    """"Initialize repo object with data path to user data store
+    """"
+    Initialize repo object with data path to user data store
 
     Returns:
-            UserRepo object with the order data path attribute"""
+            UserRepo object with the order data path attribute
+    """
     return RestaurantRepo(RESTAURANT_DATA_PATH)
 
 def create_user_repo():
-    """"Initialize repo object with data path to user data store
+    """"
+    Initialize repo object with data path to user data store
 
     Returns:
-            UserRepo object with the order data path attribute"""
+            UserRepo object with the order data path attribute
+    """
     return UserRepo(USER_DATA_PATH)
 
 @order_router.post("", response_model=CreateOrder, status_code=201)
@@ -56,7 +64,8 @@ def add_order(payload: Cart,
                  restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
                  user_repo: UserRepo = Depends(create_user_repo),
                  user_id: str = Header(...,alias="user-id")):
-    """Adds a user created order to the data store
+    """
+    Adds a user created order to the data store
 
     Rules: User must have customer role, Restaurant must be open
 
@@ -72,7 +81,7 @@ def add_order(payload: Cart,
         409 Error if restaurant is closed
         404 Error if requesting user is not found
         403 Error if requesting user does not have the correct access or role
-        """
+    """
     authorization_service = AuthorizationServices(user_repo)
     restaurant_service = RestaurantServices(restaurant_repo)
     order_service = OrderServices(order_repo, restaurant_service)
@@ -85,7 +94,8 @@ def add_order(payload: Cart,
 def get_all_orders_for_a_user(order_repo: OrderRepo = Depends(create_order_repo),
                  user_repo: UserRepo = Depends(create_user_repo),
                  user_id: str = Header(...,alias="user-id")):
-    """Gets all the previous and current orders for a given user.
+    """
+    Gets all the previous and current orders for a given user.
 
     Rules: User must have customer role
 
@@ -94,7 +104,8 @@ def get_all_orders_for_a_user(order_repo: OrderRepo = Depends(create_order_repo)
     user_repo: The user repo object to allow order_service to access user data store,
     user_id: header sent with request indicating current user
 
-    Returns: List of order objects pertaining to the given user"""
+    Returns: List of order objects pertaining to the given user
+    """
     order_service = OrderServices(order_repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "view_own_orders")
@@ -106,7 +117,8 @@ def get_all_past_orders_for_a_restaurant(restaurant_id: int,
                 restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
                 user_repo: UserRepo = Depends(create_user_repo),
                 user_id: str = Header(...,alias="user-id")):
-    """Gets all the previous and current orders for a given user.
+    """
+    Gets all the previous and current orders for a given user.
 
     Rules:
         User must have restaurant_id role
@@ -118,7 +130,8 @@ def get_all_past_orders_for_a_restaurant(restaurant_id: int,
         restaurant_id: The ID of the restaurant's orders being requested
 
     Returns:
-        List of order objects pertaining to the given restaurant"""
+        List of order objects pertaining to the given restaurant
+    """
 
     order_service = OrderServices(order_repo)
     restaurant_service = RestaurantServices(restaurant_repo)
@@ -133,7 +146,8 @@ def accept_delivery(order_id: str,
                 order_repo: OrderRepo = Depends(create_order_repo),
                 user_repo: UserRepo = Depends(create_user_repo),
                 user_id: str = Header(...,alias="user-id")):
-    """API endpoint for a delivery driver to accept a delivery
+    """
+    API endpoint for a delivery driver to accept a delivery
 
     Rules:
         User must have delivery_driver role
@@ -147,7 +161,8 @@ def accept_delivery(order_id: str,
         user_id: header sent with request indicating current user
 
     Returns:
-        The order object now with an assigned_driver_id"""
+        The order object now with an assigned_driver_id
+    """
     order_service = OrderServices(order_repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "request_delivery")
@@ -159,7 +174,8 @@ def update_order_restaurant_status(order_id: str, status: OrderStatus,
                 restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
                 user_repo: UserRepo = Depends(create_user_repo),
                 user_id: str = Header(...,alias="user-id")):
-    """API endpoint for a restaurant owner to update order status
+    """
+    API endpoint for a restaurant owner to update order status
 
     Rules:
         User must have restaurant_owner role
@@ -176,7 +192,8 @@ def update_order_restaurant_status(order_id: str, status: OrderStatus,
         user_id: header sent with request indicating current user
 
     Returns:
-        The new updated order object"""
+        The new updated order object
+    """
     order_service = OrderServices(order_repo)
     restaurant_services = RestaurantServices(restaurant_repo)
     authorization_service = AuthorizationServices(user_repo)
@@ -193,7 +210,8 @@ def update_order_delivery_status(order_id: str, delivery_status: OrderStatus,
                 order_repo: OrderRepo = Depends(create_order_repo),
                 user_repo: UserRepo = Depends(create_user_repo),
                 user_id: str = Header(...,alias="user-id")):
-    """API endpoint for a delivery driver to update order status
+    """
+    API endpoint for a delivery driver to update order status
 
     Rules:
         User must have delivery_driver role
@@ -208,7 +226,8 @@ def update_order_delivery_status(order_id: str, delivery_status: OrderStatus,
         user_id: header sent with request indicating current user
 
     Returns:
-        The new updated order object"""
+        The new updated order object
+    """
     order_service = OrderServices(order_repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "update_delivery_status")
@@ -223,7 +242,8 @@ def simulate_payment(order_id: str,
                      restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
                      user_repo: UserRepo = Depends(create_user_repo),
                      user_id: str = Header(..., alias="user-id")):
-    """Simulates payment processing for an order
+    """
+    Simulates payment processing for an order
 
     Rules: User must have customer role
 
@@ -250,7 +270,8 @@ def get_all_available_delivery_orders(
         order_repo: OrderRepo = Depends(create_order_repo),
         user_repo: UserRepo = Depends(create_user_repo),
         user_id: str = Header(..., alias="user-id")):
-    """Gets all orders available for delivery drivers to pick up.
+    """
+    Gets all orders available for delivery drivers to pick up.
 
     Rules:
     - user must have delivery_driver role
@@ -277,7 +298,8 @@ def get_all_pending_paid_orders(
         user_repo: UserRepo = Depends(create_user_repo),
         restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
         user_id: str = Header(..., alias="user-id")):
-    """Gets all orders available for restaurant owners to accept/reject.
+    """
+    Gets all orders available for restaurant owners to accept/reject.
 
     Rules:
     - user must have restaurant_owner role
@@ -305,7 +327,8 @@ def get_all_assigned_orders(
         order_repo: OrderRepo = Depends(create_order_repo),
         user_repo: UserRepo = Depends(create_user_repo),
         user_id: str = Header(..., alias="user-id")):
-    """Gets all orders assigned to specified delivery driver.
+    """
+    Gets all orders assigned to specified delivery driver.
 
     Rules:
     - user must have delivery_driver role
