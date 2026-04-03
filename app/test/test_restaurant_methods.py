@@ -633,7 +633,7 @@ def test_add_review_success(mocker, mocked_repo, restaurant_service,
                           rating=4.5,
                           review="Great Food!")
 
-    result = restaurant_service.add_review(test_restaurants[0]["id"],
+    result = restaurant_service.add_rating(test_restaurants[0]["id"],
                                 rating)
 
     assert result == [{"id": test_uuid} | rating.model_dump()]
@@ -656,7 +656,7 @@ def test_add_review_to_non_existent_restaurant(mocker, mocked_repo, restaurant_s
                           review="Great Food!")
 
     with pytest.raises(HTTPException) as exc_info:
-        restaurant_service.add_review(9999999,
+        restaurant_service.add_rating(9999999,
                                 rating)
 
     assert exc_info.value.status_code == 404
