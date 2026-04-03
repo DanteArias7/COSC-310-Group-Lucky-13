@@ -10,6 +10,7 @@ from fastapi_pagination.utils import disable_installed_extensions_check
 from app.repositories.cart_repo import CartRepo
 from app.repositories.user_repo import UserRepo
 from app.schemas.menu import CreateMenuItem, MenuItem, UpdateMenuItem
+from app.schemas.rating import CreateRating
 from app.schemas.restaurant import Restaurant, UpdateRestaurant, RestaurantCreate, RestaurantResult
 from app.services.authorization_services import AuthorizationServices
 from app.services.cart_services import CartServices
@@ -271,3 +272,28 @@ def add_menu_item_to_cart(cart_id: str,
     updated_cart = cart_service.add_item_to_cart(cart_id, payload)
     temp_dist = random.uniform(1.00, 20.00)
     return cart_service.calculate_cart(updated_cart, temp_dist)
+
+@restaurant_router.post("/{restaurant_id}/rate",
+                        status_code=status.HTTP_201_CREATED)
+def add_review_to_restaurant(restaurant_id: int,
+                          payload: CreateRating,
+                          restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
+                          user_repo: UserRepo = Depends(create_user_repo),
+                          user_id: str = Header(..., alias="user-id")):
+    """Adds a rating to a specified restaurant
+
+     Args:
+        payload: The CreateRestaurant object containing the rated information
+        user_id: The id of the user ceating the rated,
+        restaurant_id: The id of the restaurant being rated,
+        restaurant_repo: Restaurant Repo object to allow restaurant service
+        object to access restaurant data store,
+        user_repo: User Repo object to allow authorization service object to access user data store
+
+    Returns:
+        An updated list of the Restaurant's ratings.
+    """
+    restaurant_service = RestaurantServices(restaurant_repo)
+    authorization_service = AuthorizationServices(user_repo)
+    authorization_service.authorize(user_id, "leave_rating")
+    return restaurant_service.add_review(restaurant_id, payload)
