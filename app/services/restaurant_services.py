@@ -52,6 +52,8 @@ class RestaurantServices:
             address=restaurant.address,
             tags=restaurant.tags,
             menu=new_menu,
+            average_rating= None,
+            ratings = []
         )
 
         restaurants.append(restaurant.model_dump())
@@ -76,7 +78,8 @@ class RestaurantServices:
                         name=restaurant["name"],
                         address=restaurant["address"],
                         todays_hours=restaurant["hours"][today],
-                        tags=restaurant["tags"]
+                        tags=restaurant["tags"],
+                        average_rating=restaurant["average_rating"]
                         )
             restaurants.append(restaurant)
 
@@ -101,7 +104,8 @@ class RestaurantServices:
                                   name=restaurant["name"],
                                   address=restaurant["address"],
                                   todays_hours=restaurant["hours"][today],
-                                  tags=restaurant["tags"])
+                                  tags=restaurant["tags"],
+                        average_rating=restaurant["average_rating"])
                 results.append(result)
 
         return results
@@ -149,9 +153,12 @@ class RestaurantServices:
             if restaurant["id"] == restaurant_id:
                 ids = {"id" : restaurant_id} | {"user_id" : restaurant["user_id"]}
                 menu = restaurant["menu"]
+                average_rating = {"average_rating": restaurant["average_rating"]}
+                ratings = {"ratings": restaurant["ratings"]}
 
                 restaurant = ids | updated_restaurant.model_dump()
                 restaurant = restaurant | {"menu" : menu}
+                restaurant = restaurant | average_rating | ratings
 
                 restaurants[i] = restaurant
                 self.repo.save_all_restaurants(restaurants)
