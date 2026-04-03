@@ -10,7 +10,7 @@ from fastapi_pagination.utils import disable_installed_extensions_check
 from app.repositories.cart_repo import CartRepo
 from app.repositories.user_repo import UserRepo
 from app.schemas.menu import CreateMenuItem, MenuItem, UpdateMenuItem
-from app.schemas.rating import CreateRating
+from app.schemas.rating import CreateRating, Rating
 from app.schemas.restaurant import Restaurant, UpdateRestaurant, RestaurantCreate, RestaurantResult
 from app.services.authorization_services import AuthorizationServices
 from app.services.cart_services import CartServices
@@ -273,7 +273,7 @@ def add_menu_item_to_cart(cart_id: str,
     temp_dist = random.uniform(1.00, 20.00)
     return cart_service.calculate_cart(updated_cart, temp_dist)
 
-@restaurant_router.post("/{restaurant_id}/rate",
+@restaurant_router.post("/{restaurant_id}/rate", response_model=Rating,
                         status_code=status.HTTP_201_CREATED)
 def add_rating_to_restaurant(restaurant_id: int,
                           payload: CreateRating,

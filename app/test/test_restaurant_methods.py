@@ -636,7 +636,7 @@ def test_add_review_success(mocker, mocked_repo, restaurant_service,
     result = restaurant_service.add_rating(test_restaurants[0]["id"],
                                 rating)
 
-    assert result == [{"id": test_uuid} | rating.model_dump()]
+    assert result.model_dump() == {"id": test_uuid} | rating.model_dump()
 
 def test_add_review_to_non_existent_restaurant(mocker, mocked_repo, restaurant_service,
                             test_restaurants):

@@ -517,7 +517,7 @@ class RestaurantServices:
 
         raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
 
-    def add_rating(self, restaurant_id: int, rating: CreateRating) -> List[Rating]:
+    def add_rating(self, restaurant_id: int, rating: CreateRating) -> Rating:
         """Adds a rating to a restaurant
 
         Args:
@@ -540,7 +540,7 @@ class RestaurantServices:
             if restaurant["id"] == restaurant_id:
                 restaurant["ratings"].append(new_rating.model_dump())
                 self.repo.save_all_restaurants(restaurants)
-                return restaurant["ratings"]
+                return new_rating
 
         raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
 
