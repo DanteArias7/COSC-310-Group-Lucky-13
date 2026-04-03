@@ -57,7 +57,10 @@ def test_restaurants():
                 "menu": [{"id": "00000000-0000-0000-0000-0000000000001",
                 "name": "Vegan Burger", "description": "Plant-based patty with lettuce and tomato",
                 "price": 12.99, "tags": ["vegan"]
-                }]
+                }],
+                "average_rating": None,
+                "ratings": []
+
         }]
 
 @pytest.fixture
