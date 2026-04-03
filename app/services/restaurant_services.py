@@ -562,7 +562,7 @@ class RestaurantServices:
             rating_sum += rating["rating"]
             count += 1
 
-        return round(sum/count, 2)
+        return round(rating_sum/count, 2)
 
 
 #pylint: disable=too-few-public-methods
