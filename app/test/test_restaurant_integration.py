@@ -36,7 +36,9 @@ def test_restaurants():
                 "menu": [{"id": "00000000-0000-0000-0000-0000000000001",
                 "name": "Vegan Burger", "description": "Plant-based patty with lettuce and tomato",
                 "price": 12.99, "tags": ["vegan"], "status" : "Available"
-                }]
+                }],
+                "average_rating": None,
+                "ratings": []
         },
         {"id": 101,
              "user_id" : "00000000-0000-0000-0000-000000000003",
@@ -54,7 +56,9 @@ def test_restaurants():
                 "menu": [{"id": "00000000-0000-0000-0000-0000000000002",
                 "name": "Bacon Burger", "description": "Beef patty with bacon, lettuce, and tomato",
                 "price": 15.99, "tags": ["Bacon"], "status" : "Available"
-                }]
+                }],
+                "average_rating": None,
+                "ratings": []
         }]
 
 @pytest.fixture
@@ -66,7 +70,8 @@ def test_restaurant_results(test_restaurants):
             "name": test_restaurants[0]["name"],
             "address": test_restaurants[0]["address"],
             "todays_hours": test_restaurants[0]["hours"][today],
-            "tags": test_restaurants[0]["tags"]
+            "tags": test_restaurants[0]["tags"],
+            "average_rating": test_restaurants[0]["average_rating"]
             }]
 
 @pytest.fixture
@@ -345,7 +350,8 @@ def test_browse_restaurants_integration_specified_page_pagination(mocker, restau
                "name": "Burger Palace",
                 "todays_hours": "9:00-17:00",
                 "address": "123 Red Street",
-                "tags": ["Burgers"]
+                "tags": ["Burgers"],
+                "average_rating": None
         }]
     assert expected_restaurant_result == data["items"]
     assert data["pages"] == 2
