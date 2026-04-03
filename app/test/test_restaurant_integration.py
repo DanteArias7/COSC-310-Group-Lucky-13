@@ -1139,3 +1139,47 @@ def test_add_cart_item_to_nonexistent_cart_integration(test_carts, test_users,
 
     assert r.status_code == 404
     assert carts == test_carts
+
+def test_add_review_to_restaurant_success(test_restaurants, test_users,
+                                          restaurant_test_client, temp_restaurant_path):
+    """Scenario: A customer should be able to leave a review of a restaurant
+    Input: A valid restaurant ID and rating
+    Expected Behaviour: Updated list of the Restaurant's ratings"""
+
+    request = "/restaurants/" + str(test_restaurants[0]["id"]) + "/rate"
+
+    rating = {"customer_id":test_users[0]["id"],
+                          "rating":4.5,
+                          "review":"Great fiood!"}
+
+    r = restaurant_test_client.post(request, json=rating,
+                                    headers={"user-id" : test_users[0]["id"]})
+
+    data = r.json()
+
+    with open(temp_restaurant_path, "r", encoding="utf-8") as f:
+        restaurants = json.load(f)
+
+    assert r.status_code == 201
+    assert data == restaurants[0]["ratings"]
+
+def test_add_review_to_nonexistent_restaurant(test_users,
+                                          restaurant_test_client):
+    """Scenario: A customer should not be able to leave a review on a restaurant
+    that does not exist.
+    Input: An invalid restaurant ID and rating
+    Expected Behaviour: A 404 HTTPException is raised"""
+
+    request = "/restaurants/9999999/rate"
+
+    rating = {"customer_id":test_users[0]["id"],
+                          "rating":4.5,
+                          "review":"Great fiood!"}
+
+    r = restaurant_test_client.post(request, json=rating,
+                                    headers={"user-id" : test_users[0]["id"]})
+
+    data = r.json()
+
+    assert r.status_code == 404
+    assert data["detail"] == "Restaurant 9999999 Not Found"
