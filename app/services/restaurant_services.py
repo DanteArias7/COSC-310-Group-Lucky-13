@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Protocol
 import uuid
 from fastapi import HTTPException
 from app.schemas.menu import CreateMenuItem, MenuItem, UpdateMenuItem
+from app.schemas.rating import CreateRating, Rating
 from app.schemas.restaurant import RestaurantResult, Restaurant, RestaurantCreate, UpdateRestaurant
 
 class RestaurantServices:
@@ -515,6 +516,34 @@ class RestaurantServices:
                 raise HTTPException(status_code=404, detail=f"Menu Item '{menu_item_id}' not found")
 
         raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
+
+    def add_review(self, restaurant_id: int, review: CreateRating) -> List[Rating]:
+        """Adds a review to a restaurant
+
+        Args:
+            restaurant_id: The ID of the restaurant having a review added
+            review: A CreateReview object containg the information about the review
+
+        Returns:
+            The Updated List of the Restaurant's Ratings """
+
+        new_id = str(uuid.uuid4())
+
+        new_rating = Rating(id=new_id,
+                            customer_id=review.customer_id,
+                            rating=review.rating,
+                            review=review.review)
+
+        restaurants = self.repo.load_all_restaurants()
+
+        for restaurant in restaurants:
+            if restaurant["id"] == restaurant_id:
+                restaurant["ratings"].append(new_rating.model_dump())
+                self.repo.save_all_restaurants(restaurants)
+                return restaurant["ratings"]
+
+        raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
+
 
 #pylint: disable=too-few-public-methods
 class IRestaurantRepo(Protocol):
