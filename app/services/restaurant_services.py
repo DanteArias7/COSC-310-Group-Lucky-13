@@ -518,7 +518,7 @@ class RestaurantServices:
         raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
 
     def add_rating(self, restaurant_id: int, rating: CreateRating) -> Rating:
-        """Adds a rating to a restaurant
+        """Adds a rating to a restaurant and updates the restaurant's average rating
 
         Args:
             restaurant_id: The ID of the restaurant having a review added
@@ -555,11 +555,11 @@ class RestaurantServices:
             The average of all the ratings as a float
         """
 
-        sum = 0
+        rating_sum = 0
         count = 0
 
         for rating in ratings:
-            sum += rating["rating"]
+            rating_sum += rating["rating"]
             count += 1
 
         return round(sum/count, 2)
