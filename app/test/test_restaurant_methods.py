@@ -28,7 +28,10 @@ def test_restaurants():
                 "menu": [{"id": "00000000-0000-0000-0000-0000000000001",
                 "name": "Vegan Burger", "description": "Plant-based patty with lettuce and tomato",
                 "price": 12.99, "tags": ["vegan"], "status":"Available"
-                }]
+                },
+                ],
+                "average_rating": None,
+                "ratings": []
         }]
 
 @pytest.fixture
@@ -38,7 +41,8 @@ def test_restaurant_results(test_restaurants):
                                 name=test_restaurants[0]["name"],
                                 address=test_restaurants[0]["address"],
                                 todays_hours=test_restaurants[0]["hours"]["Monday"],
-                                tags=test_restaurants[0]["tags"])]
+                                tags=test_restaurants[0]["tags"],
+                        average_rating=test_restaurants[0]["average_rating"])]
 
 @pytest.fixture
 def mocked_repo(mocker):
@@ -189,7 +193,9 @@ def test_update_restaurant_success(test_restaurants, mocked_repo, restaurant_ser
                                     "name": "Vegan Burger",
                                     "description": "Plant-based patty with lettuce and tomato",
                                     "price": 12.99, "tags": ["vegan"]
-                                    }])
+                                    }],
+                                    average_rating=None,
+                                    ratings=[])
 
     updated_restaurant = restaurant_service.update_restaurant(
                             test_restaurants[0]["id"], payload)
@@ -341,7 +347,8 @@ def test_get_current_operating_hours_of_a_restaurant_result(mocker, test_restaur
                                   name=test_restaurants[0]["name"],
                                   address=test_restaurants[0]["address"],
                                   todays_hours=test_restaurants[0]["hours"]["Monday"],
-                                  tags=test_restaurants[0]["tags"])
+                                  tags=test_restaurants[0]["tags"],
+                        average_rating=test_restaurants[0]["average_rating"])
 
     result = restaurant_service.get_current_operating_times(restaurant)
 
