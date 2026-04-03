@@ -10,6 +10,8 @@ from app.services.restaurant_services import RestaurantServices
 
 #pylint: disable=duplicate-code
 #pylint: disable=redefined-outer-name
+#pylint: disable=protected-access
+
 @pytest.fixture
 def test_restaurants():
     """Test restaurant data"""

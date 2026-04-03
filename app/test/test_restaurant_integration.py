@@ -1142,7 +1142,8 @@ def test_add_cart_item_to_nonexistent_cart_integration(test_carts, test_users,
 
 def test_add_review_to_restaurant_success(test_restaurants, test_users,
                                           restaurant_test_client, temp_restaurant_path):
-    """Scenario: A customer should be able to leave a review of a restaurant
+    """Scenario: A customer should be able to leave a review of a restaurant and
+    the restaurants average_rating should be updated accordingly
     Input: A valid restaurant ID and rating
     Expected Behaviour: Updated list of the Restaurant's ratings"""
 
