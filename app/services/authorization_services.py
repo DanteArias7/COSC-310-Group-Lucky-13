@@ -18,7 +18,8 @@ ROLE_PERMISSIONS: dict = {
         "make_payment",
         "track_order",
         "manage_own_account",
-        "manage_own_cart"
+        "manage_own_cart",
+        "leave_rating"
     ],
     "restaurant_owner": [
         "browse_restaurants",
