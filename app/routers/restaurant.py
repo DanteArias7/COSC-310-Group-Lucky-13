@@ -275,7 +275,7 @@ def add_menu_item_to_cart(cart_id: str,
 
 @restaurant_router.post("/{restaurant_id}/rate",
                         status_code=status.HTTP_201_CREATED)
-def add_review_to_restaurant(restaurant_id: int,
+def add_rating_to_restaurant(restaurant_id: int,
                           payload: CreateRating,
                           restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
                           user_repo: UserRepo = Depends(create_user_repo),
@@ -296,4 +296,4 @@ def add_review_to_restaurant(restaurant_id: int,
     restaurant_service = RestaurantServices(restaurant_repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "leave_rating")
-    return restaurant_service.add_review(restaurant_id, payload)
+    return restaurant_service.add_rating(restaurant_id, payload)

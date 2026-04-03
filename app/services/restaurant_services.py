@@ -517,8 +517,8 @@ class RestaurantServices:
 
         raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
 
-    def add_review(self, restaurant_id: int, review: CreateRating) -> List[Rating]:
-        """Adds a review to a restaurant
+    def add_rating(self, restaurant_id: int, rating: CreateRating) -> List[Rating]:
+        """Adds a rating to a restaurant
 
         Args:
             restaurant_id: The ID of the restaurant having a review added
@@ -530,9 +530,9 @@ class RestaurantServices:
         new_id = str(uuid.uuid4())
 
         new_rating = Rating(id=new_id,
-                            customer_id=review.customer_id,
-                            rating=review.rating,
-                            review=review.review)
+                            customer_id=rating.customer_id,
+                            rating=rating.rating,
+                            review=rating.review)
 
         restaurants = self.repo.load_all_restaurants()
 
