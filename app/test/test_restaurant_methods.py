@@ -4,6 +4,7 @@ from datetime import date, time
 from fastapi import HTTPException
 import pytest
 from app.schemas.menu import CreateMenuItem, MenuItem, UpdateMenuItem
+from app.schemas.rating import CreateRating
 from app.schemas.restaurant import Restaurant, RestaurantCreate, RestaurantResult, UpdateRestaurant
 from app.services.restaurant_services import RestaurantServices
 
@@ -615,3 +616,48 @@ def test_validate_menu_is_available_not_avaialble(mocked_repo,
 
     assert exc_info.value.status_code == 400
     assert exc_info.value.detail == "Vegan Burger Is Unavailable"
+
+def test_add_review_success(mocker, mocked_repo, restaurant_service,
+                            test_restaurants):
+    """Scenario: The method should add the rating to the restaurants list and return the list
+    Input: A valid Restaurant ID and rating
+    Expected Behaviour: The updated list of ratings is returned"""
+
+    mocked_repo.load_all_restaurants.return_value = test_restaurants
+
+    test_uuid = '00000000-0000-0000-0000-000000000002'
+    uuid_mock = mocker.patch("app.services.restaurant_services.uuid.uuid4")
+    uuid_mock.return_value = test_uuid
+
+    rating = CreateRating(customer_id=test_uuid,
+                          rating=4.5,
+                          review="Great Food!")
+
+    result = restaurant_service.add_review(test_restaurants[0]["id"],
+                                rating)
+
+    assert result == [{"id": test_uuid} | rating.model_dump()]
+
+def test_add_review_to_non_existent_restaurant(mocker, mocked_repo, restaurant_service,
+                            test_restaurants):
+    """Scenario: The method should not allow a rating to be added to a
+    nonexistent restaurant
+    Input: An invalid Restaurant ID and valid rating
+    Expected Behaviour: A 404 HTTPException is raised."""
+
+    mocked_repo.load_all_restaurants.return_value = test_restaurants
+
+    test_uuid = '00000000-0000-0000-0000-000000000002'
+    uuid_mock = mocker.patch("app.services.restaurant_services.uuid.uuid4")
+    uuid_mock.return_value = test_uuid
+
+    rating = CreateRating(customer_id=test_uuid,
+                          rating=4.5,
+                          review="Great Food!")
+
+    with pytest.raises(HTTPException) as exc_info:
+        restaurant_service.add_review(9999999,
+                                rating)
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Restaurant 9999999 Not Found"
