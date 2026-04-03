@@ -539,10 +539,30 @@ class RestaurantServices:
         for restaurant in restaurants:
             if restaurant["id"] == restaurant_id:
                 restaurant["ratings"].append(new_rating.model_dump())
+                restaurant["average_rating"] = self._calculate_average_rating(restaurant["ratings"])
                 self.repo.save_all_restaurants(restaurants)
                 return new_rating
 
         raise HTTPException(status_code=404, detail=f"Restaurant {restaurant_id} Not Found")
+
+    def _calculate_average_rating(self, ratings: List[Dict]):
+        """Calcualted the average rating of a restaurant's ratings
+
+        Args:
+            ratings: A list of ratings in dict form
+
+        Returns:
+            The average of all the ratings as a float
+        """
+
+        sum = 0
+        count = 0
+
+        for rating in ratings:
+            sum += rating["rating"]
+            count += 1
+
+        return round(sum/count, 2)
 
 
 #pylint: disable=too-few-public-methods
