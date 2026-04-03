@@ -1161,7 +1161,7 @@ def test_add_review_to_restaurant_success(test_restaurants, test_users,
         restaurants = json.load(f)
 
     assert r.status_code == 201
-    assert data == restaurants[0]["ratings"]
+    assert data == restaurants[0]["ratings"][-1]
 
 def test_add_review_to_nonexistent_restaurant(test_users,
                                           restaurant_test_client):
