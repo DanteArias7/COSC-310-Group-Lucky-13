@@ -3,6 +3,7 @@
 from typing import List
 from pydantic import BaseModel, Field
 from app.schemas.menu import CreateMenuItem, MenuItem
+from app.schemas.rating import Rating
 
 class Restaurant(BaseModel):
     """Restaurant entity."""
@@ -14,6 +15,8 @@ class Restaurant(BaseModel):
     address: str
     tags: List[str] = []
     menu: List[MenuItem] = []
+    average_rating: float | None
+    ratings: List[Rating]
 
 class RestaurantCreate(BaseModel):
     """schema to create new restaurant"""
@@ -39,3 +42,4 @@ class RestaurantResult(BaseModel):
     address: str
     todays_hours: str
     tags: List[str] = []
+    average_rating: float | None
