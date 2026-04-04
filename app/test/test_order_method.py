@@ -232,7 +232,15 @@ def test_orders_assigned():
             "food_items": "1x Hot Dog",
             "order_date": "03-16-2026",
             "order_value": 10.00,
-            "status": "In_transit"}
+            "status": "In_transit"},
+            {"id": "HHHHHHH",
+            "restaurant_id": 101,
+            "customer_id": "00000000-0000-0000-0000-000000000002",
+            "assigned_driver_id": "00000002-0000-0000-0000-000000000000",
+            "food_items": "1x Hot Dog",
+            "order_date": "03-16-2026",
+            "order_value": 10.00,
+            "status": "Complete"}
     ]
 
 #get_order_id Unit Tests
@@ -938,3 +946,54 @@ def test_get_all_assigned_orders_none_found(mocked_repo, order_service, test_ord
     result = order_service.get_all_assigned_orders("00000003-0000-0000-0000-000000000000")
 
     assert result == []
+
+def test_validate_customer_has_orders_from_restaurant_success(mocker, order_service,
+                                                              test_orders_assigned):
+    """Scenario: Method should successfully validate a user
+    who has ordered from the given restaurant
+    Input: A user ID who has an order from the restaurant, and the restaurant ID
+    Expected Behaviour: Method returns true"""
+    mocker.patch.object(order_service, "get_orders_by_user_id",
+                        return_value=[test_orders_assigned[2]])
+
+    assert order_service.validate_customer_has_orders_from_restaurant(
+                                        "00000000-0000-0000-0000-000000000002",
+                                        test_orders_assigned[2]["restaurant_id"])
+
+def test_validate_customer_has_orders_from_restaurant_user_has_no_completed_orders(mocker,
+                                                                        order_service,
+                                                                    test_orders_assigned):
+    """Scenario: Method should not validate a user who has
+    not ordered from the given restaurant
+    Input: A user ID who has no complete order from the
+    restaurant, and the restaurant ID
+    Expected Behaviour: Method raises 409 HTTPException"""
+    mocker.patch.object(order_service, "get_orders_by_user_id",
+                        return_value=[test_orders_assigned[0],
+                        test_orders_assigned[1]])
+
+    with pytest.raises(HTTPException) as exc_info:
+        order_service.validate_customer_has_orders_from_restaurant(
+                                            "00000000-0000-0000-0000-000000000001",
+                                            test_orders_assigned[2]["restaurant_id"])
+
+    assert exc_info.value.status_code == 409
+    assert exc_info.value.detail == "You must have at least 1 completed order " \
+    "from this restaurant to rate it."
+
+def test_validate_customer_has_orders_from_restaurant_user_has_no_orders(mocker, order_service,
+                                                                         test_orders_assigned):
+    """Scenario: Method should successfully validate a user who has no orders
+    Input: A user ID who has no orders and a restaurant ID
+    Expected Behaviour: Method raises 409 HTTPException"""
+    mocker.patch.object(order_service, "get_orders_by_user_id",
+                        side_effect=HTTPException(status_code=404))
+
+    with pytest.raises(HTTPException) as exc_info:
+        order_service.validate_customer_has_orders_from_restaurant(
+                                                    "00000000-0000-0000-0000-000000000004",
+                                                    test_orders_assigned[2]["restaurant_id"])
+
+    assert exc_info.value.status_code == 409
+    assert exc_info.value.detail == "You must have at least 1 completed order " \
+    "from this restaurant to rate it."
