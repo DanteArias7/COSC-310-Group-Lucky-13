@@ -10,6 +10,8 @@ from app.services.restaurant_services import RestaurantServices
 
 #pylint: disable=duplicate-code
 #pylint: disable=redefined-outer-name
+#pylint: disable=protected-access
+
 @pytest.fixture
 def test_restaurants():
     """Test restaurant data"""
@@ -661,3 +663,30 @@ def test_add_review_to_non_existent_restaurant(mocker, mocked_repo, restaurant_s
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Restaurant 9999999 Not Found"
+
+def test_caluclate_average_rating(restaurant_service):
+    """Scenario: Method should calculate the average ratings
+    given a list of ratings
+    Input: A list of ratings with varied rating scores
+    Expected Behaviour: Average rounded to 2 decimals is returned"""
+    ratings = [{"id":"000000000-0000-0000-0000-0000000001",
+                "customer_id": "11111111-1111-1111-1111-111111111111",
+                "rating":5,
+                "review": "Amazing Food!"},
+                {"id":"000000000-0000-0000-0000-0000000001",
+                "customer_id": "11111111-1111-1111-1111-111111111111",
+                "rating":4.5,
+                "review": "Great Food!"},
+                {"id":"000000000-0000-0000-0000-0000000001",
+                "customer_id": "11111111-1111-1111-1111-111111111111",
+                "rating":3,
+                "review": "Ok Food!"},
+                {"id":"000000000-0000-0000-0000-0000000001",
+                "customer_id": "11111111-1111-1111-1111-111111111111",
+                "rating":1,
+                "review": "Terrible Food!"}]
+
+    average = restaurant_service._calculate_average_rating(ratings)
+    expected_average = round((5 + 4.5 + 3 + 1)/4, 2)
+
+    assert average == expected_average
