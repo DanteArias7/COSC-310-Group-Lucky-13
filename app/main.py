@@ -1,7 +1,6 @@
 """Main application"""
-from fastapi import FastAPI
+from fastapi import FastAPI, CORSMiddleware
 from fastapi_pagination import add_pagination
-from fastapi.middleware.cors import CORSMiddleware
 from app.routers.user import user_router
 from app.routers.restaurant import restaurant_router
 from app.routers.order import order_router
