@@ -430,6 +430,36 @@ class OrderServices():
 
         return assigned_orders
 
+    def validate_customer_has_orders_from_restaurant(self, user_id: str,
+                                                     restaurant_id: int) -> bool:
+        """Validates if a customer has ordered from a specified restaurant
+
+        Args:
+            user_id: The ID of the user being validated
+            restaurant_id: The ID of the restaurant being validated
+
+        Returns:
+            True if the user has an order from the given restaurant
+
+        Raises:
+            A 409 HTTPException if the user does not have an order
+            from the restaurant
+        """
+
+        try:
+            orders = self.get_orders_by_user_id(user_id)
+            for order in orders:
+                if order["restaurant_id"] == restaurant_id and order["status"] == "Complete":
+                    return True
+
+            raise HTTPException(status_code=409,
+                            detail="You must have at least 1 completed"
+                            " order from this restaurant to rate it.")
+        except HTTPException as exc:
+            raise HTTPException(status_code=409,
+                            detail="You must have at least 1 completed"
+                            " order from this restaurant to rate it.") from exc
+
 class IOrderRepo(Protocol):
 
     """Order Repo Interface"""

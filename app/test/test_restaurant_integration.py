@@ -3,12 +3,15 @@ from datetime import date, time
 import json
 from typing import List
 from fastapi.testclient import TestClient
+import pandas
 import pytest
 from app.main import app
 from app.repositories.cart_repo import CartRepo
+from app.repositories.order_repo import OrderRepo
 from app.repositories.restaurant_repo import RestaurantRepo
 from app.repositories.user_repo import UserRepo
-from app.routers.restaurant import create_cart_repo, create_restaurant_repo, create_user_repo
+from app.routers.restaurant import create_cart_repo, create_order_repo, \
+    create_restaurant_repo, create_user_repo
 
 #pylint: disable=duplicate-code
 #pylint: disable=redefined-outer-name
@@ -91,6 +94,27 @@ def test_carts():
                 "tax" : 1.30,
                 "total": 14.64}]
 
+
+@pytest.fixture
+def test_orders():
+    """Initialize test cart data for each test"""
+    return [{"id": "QQQQQQQ",
+                "restaurant_id": 101,
+                "customer_id": "00000000-0000-0000-0000-000000000001",
+                "assigned_driver_id": "",
+                "food_items": "2x Vegan Burger, 1x Bacon Burger",
+                "order_date": "03-06-2025",
+                "order_value": 24.35,
+                "status": "Complete"},
+            {"id": "QQQQQQQ",
+                "restaurant_id": 101,
+                "customer_id": "00000000-0000-0000-0000-000000000001",
+                "assigned_driver_id": "",
+                "food_items": "2x Vegan Burger",
+                "order_date": "03-06-2025",
+                "order_value": 24.35,
+                "status": "Paid"}]
+
 @pytest.fixture
 def test_users():
     """Initialize test user data for each test"""
@@ -107,7 +131,14 @@ def test_users():
             "phone_number": "123-456-7890",
             "address": "123 Baron Rd, Kelowna, BC, A1B2C3",
             "password": "password",
-            "role": "restaurant_owner"}]
+            "role": "restaurant_owner"},
+            {"id": "00000000-0000-0000-0000-000000000003",
+            "name": "Jake",
+            "email": "jake@gmail.com",
+            "phone_number": "123-456-7890",
+            "address": "123 Baron Rd, Kelowna, BC, A1B2C3",
+            "password": "password",
+            "role": "customer"}]
 
 @pytest.fixture
 def temp_restaurant_path(tmp_path, test_restaurants):
@@ -130,6 +161,27 @@ def temp_cart_path(tmp_path, test_carts):
     return test_cart_data_path
 
 @pytest.fixture
+def temp_order_path(tmp_path, test_orders):
+    """Create temporary cart file path for each test"""
+    test_order_data_path = tmp_path / "order.csv"
+
+    headersdf = pandas.DataFrame(columns=["id",
+                                        "restaurant_id",
+                                        "customer_id",
+                                        "assigned_driver_id",
+                                        "food_items",
+                                        "order_date",
+                                        "order_value",
+                                        "status"])
+
+    headersdf.to_csv(test_order_data_path, index=False)
+
+    orderdf = pandas.DataFrame(test_orders)
+    orderdf.to_csv(test_order_data_path, mode='a', index=False, header=False)
+
+    return test_order_data_path
+
+@pytest.fixture
 def temp_user_path(tmp_path, test_users):
     """Create temporary user file path for each test"""
     test_user_data_path = tmp_path / "users.json"
@@ -140,17 +192,21 @@ def temp_user_path(tmp_path, test_users):
     return test_user_data_path
 
 @pytest.fixture
-def restaurant_test_client(temp_user_path, temp_restaurant_path):
+def restaurant_test_client(temp_user_path, temp_restaurant_path, temp_order_path):
     """Override dependency injection for restaurant repo object"""
 
     def override_restaurant_repo():
         return RestaurantRepo(temp_restaurant_path)
+
+    def override_order_repo():
+        return OrderRepo(temp_order_path)
 
     def override_user_repo():
         return UserRepo(temp_user_path)
 
     app.dependency_overrides[create_restaurant_repo] = override_restaurant_repo
     app.dependency_overrides[create_user_repo] = override_user_repo
+    app.dependency_overrides[create_order_repo] = override_order_repo
 
     yield TestClient(app)
 
@@ -1177,23 +1233,24 @@ def test_add_review_to_restaurant_success(test_restaurants, test_users,
 
     assert restaurants[0]["average_rating"] == round(5.5/2, 2)
 
-def test_add_review_to_nonexistent_restaurant(test_users,
-                                          restaurant_test_client):
+def test_add_review_to_nonexistent_with_no_orders(test_users,
+                                          restaurant_test_client, test_restaurants):
     """Scenario: A customer should not be able to leave a review on a restaurant
     that does not exist.
     Input: An invalid restaurant ID and rating
     Expected Behaviour: A 404 HTTPException is raised"""
 
-    request = "/restaurants/9999999/rate"
+    request = "/restaurants/" + str(test_restaurants[0]["id"]) + "/rate"
 
-    rating = {"customer_id":test_users[0]["id"],
+    rating = {"customer_id":test_users[2]["id"],
                           "rating":4.5,
                           "review":"Great fiood!"}
 
     r = restaurant_test_client.post(request, json=rating,
-                                    headers={"user-id" : test_users[0]["id"]})
+                                    headers={"user-id" : test_users[2]["id"]})
 
     data = r.json()
 
-    assert r.status_code == 404
-    assert data["detail"] == "Restaurant 9999999 Not Found"
+    assert r.status_code == 409
+    assert data["detail"] == "You must have at least 1 completed order " \
+    "from this restaurant to rate it."

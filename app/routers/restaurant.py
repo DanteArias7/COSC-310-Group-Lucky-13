@@ -8,12 +8,14 @@ from fastapi import APIRouter, Depends, Header, Query, status
 from fastapi_pagination import Page, paginate
 from fastapi_pagination.utils import disable_installed_extensions_check
 from app.repositories.cart_repo import CartRepo
+from app.repositories.order_repo import OrderRepo
 from app.repositories.user_repo import UserRepo
 from app.schemas.menu import CreateMenuItem, MenuItem, UpdateMenuItem
 from app.schemas.rating import CreateRating, Rating
 from app.schemas.restaurant import Restaurant, UpdateRestaurant, RestaurantCreate, RestaurantResult
 from app.services.authorization_services import AuthorizationServices
 from app.services.cart_services import CartServices
+from app.services.order_services import OrderServices
 from app.services.restaurant_services import RestaurantServices
 from app.repositories.restaurant_repo import RestaurantRepo
 from app.routers.user import USER_DATA_PATH
@@ -22,6 +24,7 @@ disable_installed_extensions_check()
 
 RESTAURANT_DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "restaurants.json"
 CART_DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "carts.json"
+ORDER_DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "orders.csv"
 restaurant_router = APIRouter(
     prefix="/restaurants",
     tags=["restaurant"],
@@ -32,6 +35,10 @@ restaurant_router = APIRouter(
 def create_restaurant_repo():
     """"Initialize repo object with data path to restaurant json file"""
     return RestaurantRepo(RESTAURANT_DATA_PATH)
+
+def create_order_repo():
+    """"Initialize repo object with data path to order json file"""
+    return OrderRepo(ORDER_DATA_PATH)
 
 def create_cart_repo():
     """"Initialize repo object with data path to restaurant json file"""
@@ -278,11 +285,15 @@ def add_menu_item_to_cart(cart_id: str,
 def add_rating_to_restaurant(restaurant_id: int,
                           payload: CreateRating,
                           restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
+                          order_repo: OrderRepo = Depends(create_order_repo),
                           user_repo: UserRepo = Depends(create_user_repo),
                           user_id: str = Header(..., alias="user-id")):
     """Adds a rating to a specified restaurant
 
-     Args:
+    Rules:
+        - User must have customer role
+
+    Args:
         payload: The CreateRestaurant object containing the rated information
         user_id: The id of the user ceating the rated,
         restaurant_id: The id of the restaurant being rated,
@@ -292,8 +303,14 @@ def add_rating_to_restaurant(restaurant_id: int,
 
     Returns:
         An updated list of the Restaurant's ratings.
+
+    Raises:
+        A 409 HTTPEXception if the customer does not have a completed from the restaurant
+        A 403 Exception if user does not have the customer role
     """
     restaurant_service = RestaurantServices(restaurant_repo)
+    order_service = OrderServices(order_repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "leave_rating")
+    order_service.validate_customer_has_orders_from_restaurant(user_id, restaurant_id)
     return restaurant_service.add_rating(restaurant_id, payload)
