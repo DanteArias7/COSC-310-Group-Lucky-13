@@ -12,8 +12,7 @@ notification_router = APIRouter(prefix="/notifications",
 @notification_router.get("/stream",
                          response_class=EventSourceResponse,
                          status_code=200)
-async def stream_notifications(
-    user_id: str = Header(..., alias="user-id")):
+async def stream_notifications(user_id: str):
     """Streams notifications to the client using Server-Sent Events (SSE)
 
     Rules: User must provide a valid user-id header
