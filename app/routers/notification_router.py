@@ -1,7 +1,7 @@
 """API Endpoints for Notification functionality"""
 
 import asyncio
-from fastapi import APIRouter, Header
+from fastapi import APIRouter
 from fastapi.sse import EventSourceResponse, ServerSentEvent
 
 from app.services.notification_services import notifications, user_queues
