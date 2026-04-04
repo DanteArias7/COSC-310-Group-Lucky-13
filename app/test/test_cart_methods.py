@@ -10,30 +10,24 @@ from app.schemas.menu import MenuItem
 def test_carts():
     """Test cart data"""
     return [{"id" : "00000000-0000-0000-0000-000000000001",
-            "user_id" : "00000000-0000-0000-0000-000000000001",
-            "restaurant_id" : 101,
-            "cart_items" :  [{"item": {"id": "018f8c10-7b2a-7f21-9a3c-0a1b2c3d4e01",
-                            "name": "Vegan Burger",
-                            "description": "Plant-based patty with lettuce and tomato",
-                            "price": 12.99,
-                            "status": "Available",
-                            "tags": ["vegan"]},
-                            "quantity": 1}],
+                "user_id" : "00000000-0000-0000-0000-000000000001",
+                "restaurant_id" : 101,
+                "cart_items" :  [{"item": {"id": "018f8c10-7b2a-7f21-9a3c-0a1b2c3d4e01",
+                                "name": "Vegan Burger",
+                                "description": "Plant-based patty with lettuce and tomato",
+                                "price": 12.99,
+                                "status": "Available",
+                                "tags": ["vegan"]},
+                                "quantity": 1}],
                 "subtotal" : 0.00,
                 "delivery_fee" : 0.00,
                 "tax" : 0.00,
-                "total" : 0.00}]
-
-@pytest.fixture
-def empty_cart():
-    """Empty cart with no items"""
-    return Cart(**{
-        "id": "00000000-0000-0000-0000-000000000002",
-        "user_id": "00000000-0000-0000-0000-000000000001",
-        "restaurant_id": 101,
-        "cart_items": [],
-        "subtotal": 0.00, "delivery_fee": 0.00, "tax": 0.00, "total": 0.00
-    })
+                "total" : 0.00},
+            {"id": "00000000-0000-0000-0000-000000000002",
+                "user_id": "00000000-0000-0000-0000-000000000001",
+                "restaurant_id": 101,
+                "cart_items": [],
+                "subtotal": 0.00, "delivery_fee": 0.00, "tax": 0.00, "total": 0.00}]
 
 @pytest.fixture
 def mocked_repo(mocker):
@@ -201,19 +195,21 @@ def test_validate_cart_same_restaurant(test_carts, mocked_cart_service):
 
 # calculate_cart Tests
 
-def test_calculate_cart(test_carts, mocked_cart_service):
+def test_calculate_cart(test_carts, mocked_repo, mocked_cart_service):
     """Test calculate_cart returns correct totals when distance is 1.0 km."""
-    cart = Cart(**test_carts[0])
-    result = mocked_cart_service.calculate_cart(cart, 1.0)
+    mocked_repo.load_all_carts.return_value = test_carts
+    result = mocked_cart_service.calculate_cart("00000000-0000-0000-0000-000000000001", 1.0)
 
     assert result.subtotal     == 12.99
     assert result.delivery_fee == 0.35
     assert result.tax          == 1.30
     assert result.total        == 14.64
 
-def test_calculate_cart_empty_items(mocked_cart_service, empty_cart):
+def test_calculate_cart_empty_items(test_carts, mocked_cart_service, mocked_repo):
     """Test calculate_cart returns correct totals when cart is empty"""
-    result = mocked_cart_service.calculate_cart(empty_cart, 1.0)
+    mocked_repo.load_all_carts.return_value = test_carts
+    result = mocked_cart_service.calculate_cart("00000000-0000-0000-0000-000000000002", 1.0)
+
 
     assert result.subtotal     == 0.00
     assert result.delivery_fee == 0.35
