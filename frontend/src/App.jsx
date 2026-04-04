@@ -5,6 +5,8 @@ export default function App() {
   const [password, setPassword] = useState("");
   const [response, setResponse] = useState("");
   const [error, setError] = useState("");
+  const [user, setUser] = useState(null);
+  const [tab, setTab] = useState("home");
 
   const [createResponse, setCreateResponse] = useState(null);
 
@@ -16,6 +18,16 @@ export default function App() {
     password: "",
     role: "customer",
   });
+
+  const [updateForm, setUpdateForm] = useState({
+  name: "",
+  email: "",
+  phone_number: "",
+  address: "",
+  password: "",
+  role: "",
+  });
+
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -53,16 +65,68 @@ export default function App() {
       }
 
       setResponse(data);
+      setUser(data)
+      setTab("home");
 
     } catch (err) {
   setError(err.message || JSON.stringify(err));
 }
   };
 
+  const handleLogout = () => {
+  setUser(null);
+  setIdentifier("");
+  setPassword("");
+  setError("");
+  setTab("home");
+  };
+
+  const loadMyAccount = async () => {
+  setError("");
+
+  try {
+    const res = await fetch(`http://127.0.0.1:8000/users/${user.user_id}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "user-id": user.user_id,
+      },
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      let msg = "Failed to load account";
+
+      if (typeof data.detail === "string") {
+        msg = data.detail;
+      } else if (Array.isArray(data.detail)) {
+        msg = data.detail.map((x) => x.msg).join(", ");
+      } else if (data.detail) {
+        msg = JSON.stringify(data.detail);
+      }
+
+      throw new Error(msg);
+    }
+
+    setUpdateForm({
+      name: data.name,
+      email: data.email,
+      phone_number: data.phone_number,
+      address: data.address,
+      password: data.password,
+      role: data.role,
+    });
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  }
+};
+
   const handleCreateUser = async (e) => {
     e.preventDefault();
     setError("");
     setCreateResponse(null);
+
 
       const { name, email, phone_number, address, password, role } = createForm;
 
@@ -113,6 +177,66 @@ export default function App() {
     }
   };
 
+ const handleUpdateUser = async (e) => {
+  e.preventDefault();
+  setError("");
+
+  const { name, email, phone_number, address, password, role } = updateForm;
+
+  if (!name.trim()) return setError("Name is required");
+  if (!email.trim()) return setError("Email is required");
+  if (!phone_number.trim()) return setError("Phone number is required");
+  if (!address.trim()) return setError("Address is required");
+  if (!password.trim()) return setError("Password is required");
+  if (!role.trim()) return setError("Role is required");
+
+  try {
+    const payload = {
+      ...updateForm,
+      role: user.role, // 🔥 force original role
+    };
+
+    const res = await fetch(`http://127.0.0.1:8000/users/${user.user_id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "user-id": user.user_id,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      let msg = "Update failed";
+
+      if (typeof data.detail === "string") {
+        msg = data.detail;
+      } else if (Array.isArray(data.detail)) {
+        msg = data.detail.map((x) => x.msg).join(", ");
+      } else if (data.detail) {
+        msg = JSON.stringify(data.detail);
+      }
+
+      throw new Error(msg);
+    }
+
+    setUser({
+      ...user,
+      name: data.name,
+      role: data.role,
+    });
+
+    setUpdateForm({
+      ...updateForm,
+      role: data.role,
+    });
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  }
+};
+
+  if(!user) {
   return (
     <div style={{ padding: "2rem", fontFamily: "Arial" }}>
       <h1>Login</h1>
@@ -235,6 +359,116 @@ export default function App() {
         {typeof error === "string" ? error : JSON.stringify(error)}
       </p>
     )}
+    </div>
+  );
+}
+
+return (
+    <div style={{ padding: "2rem", fontFamily: "Arial" }}>
+      <h1>Main Page</h1>
+
+      <p>Welcome {user.name}</p>
+      <p>Role: {user.role}</p>
+      <p>User ID: {user.user_id}</p>
+
+      <div style={{ marginTop: "1rem", marginBottom: "1rem" }}>
+        <button onClick={() => setTab("home")}>Home</button>
+
+        <button
+          onClick={() => {
+            setTab("account");
+            loadMyAccount();
+          }}
+          style={{ marginLeft: "0.5rem" }}
+        >
+          Account
+        </button>
+
+        <button onClick={handleLogout} style={{ marginLeft: "0.5rem" }}>
+          Logout
+        </button>
+      </div>
+
+      {tab === "home" && (
+        <div>
+          <h2>Home</h2>
+          <p>This will be the main page.</p>
+        </div>
+      )}
+
+      {tab === "account" && (
+        <div>
+          <h2>Update Account</h2>
+
+          <form onSubmit={handleUpdateUser}>
+            <div>
+              <input
+                placeholder="Name"
+                value={updateForm.name}
+                onChange={(e) =>
+                  setUpdateForm({ ...updateForm, name: e.target.value })
+                }
+              />
+            </div>
+
+            <div style={{ marginTop: "0.5rem" }}>
+              <input
+                placeholder="Email"
+                value={updateForm.email}
+                onChange={(e) =>
+                  setUpdateForm({ ...updateForm, email: e.target.value })
+                }
+              />
+            </div>
+
+            <div style={{ marginTop: "0.5rem" }}>
+              <input
+                placeholder="Phone number"
+                value={updateForm.phone_number}
+                onChange={(e) =>
+                  setUpdateForm({
+                    ...updateForm,
+                    phone_number: e.target.value,
+                  })
+                }
+              />
+            </div>
+
+            <div style={{ marginTop: "0.5rem" }}>
+              <input
+                placeholder="Address"
+                value={updateForm.address}
+                onChange={(e) =>
+                  setUpdateForm({ ...updateForm, address: e.target.value })
+                }
+              />
+            </div>
+
+            <div style={{ marginTop: "0.5rem" }}>
+              <input
+                type="password"
+                placeholder="Password"
+                value={updateForm.password}
+                onChange={(e) =>
+                  setUpdateForm({ ...updateForm, password: e.target.value })
+                }
+              />
+            </div>
+
+            <div style={{ marginTop: "0.5rem" }}></div>
+
+            <button type="submit" style={{ marginTop: "1rem" }}>
+              Update User
+            </button>
+          </form>
+        </div>
+      )}
+
+      {error && (
+        <p style={{ marginTop: "1rem", color: "red" }}>
+          {error}
+        </p>
+      )}
     </div>
   );
 }
