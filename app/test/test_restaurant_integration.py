@@ -1098,6 +1098,10 @@ def test_deleting_cart_item_from_cart_success(test_carts, test_users,
         carts = json.load(f)
 
     test_carts[0]["cart_items"] = []
+    test_carts[0]["subtotal"] = 0.00
+    test_carts[0]["delivery_fee"] = 0.35
+    test_carts[0]["tax"] = 0.00
+    test_carts[0]["total"] = 0.35
 
     assert r.status_code == 204
     assert test_carts == carts

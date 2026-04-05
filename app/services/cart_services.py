@@ -57,37 +57,38 @@ class CartServices():
 
         return new_cart
 
-    def calculate_cart(self, cart: Cart, distance : float) -> Cart:
+    def calculate_cart(self, cart_id: str, distance : float) -> Cart:
         """Calculate subtotal, delivery fee, tax, and total for a cart.
         Rules:
         - subtotal, delivery fee, tax, and total should be rounded to 2 decimal places
         - delivery fee calculated based on distance * FEE_PER_KM
-            (currently only calculated when no delivery fee is set, will be changed in M4)
         - tax calculated based on subtotal * TAX_RATE
 
         Args:
         - Cart object with up to date CartItems list
             (subtotal, delivery fee, tax, and total not yet updated)
         - distance: float of distance from restaurant to customer
-            (distance currently randomly selected, will implement Google API in M4)
 
         Returns:
             Cart object with updated subtotal, delivery fee tax, and total
         """
-        subtotal = round(sum(item.item.price * item.quantity for item in cart.cart_items), 2)
-        if cart.delivery_fee == 0:
-            delivery_fee = round(distance * FEE_PER_KM, 2)
-        else:
-            delivery_fee = cart.delivery_fee
+        carts = self.repo.load_all_carts()
+        cart = self.find_cart_data(carts, cart_id)
+
+        subtotal = round(
+            sum(item["item"]["price"] * item["quantity"]
+                for item in cart["cart_items"]), 2)
+        delivery_fee = round(distance * FEE_PER_KM, 2)
         tax = round(subtotal * TAX_RATE, 2)
         total = round(subtotal + delivery_fee + tax, 2)
 
-        return cart.model_copy(update={
-            "subtotal": subtotal,
-            "delivery_fee": delivery_fee,
-            "tax": tax,
-            "total": total
-        })
+        cart["subtotal"] = subtotal
+        cart["delivery_fee"] = delivery_fee
+        cart["tax"] = tax
+        cart["total"] = total
+
+        self.repo.save_all_carts(carts)
+        return Cart(**cart)
 
     def find_cart_data(self, carts: List[Dict[str, Any]], cart_id: str) -> Dict[str, Any]:
         """Helper method to find cart data by ID, raises 404 if cart doesn't exist."""
