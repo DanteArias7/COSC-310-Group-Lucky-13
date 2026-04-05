@@ -1,8 +1,6 @@
 """Pydantic schema for user favorites."""
 
-from typing import Optional
 from pydantic import BaseModel
-
 
 class Favorite(BaseModel):
     """Favorite entity."""
