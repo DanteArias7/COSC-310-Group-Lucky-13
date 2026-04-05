@@ -73,6 +73,21 @@ def test_restaurants():
         }
     ]
 
+@pytest.fixture
+def test_get_favorite_payload():
+    """Favorite payload for GET tests"""
+    return {
+        "id": "fav-get-1",
+        "user_id": "00000000-0000-0000-0000-000000000001",
+        "restaurant_id": 101,
+        "menu_item_id": "m1"
+    }
+
+
+@pytest.fixture
+def test_get_user_id():
+    """User ID for GET tests"""
+    return "00000000-0000-0000-0000-000000000001"
 
 @pytest.fixture
 def temp_favorite_path(tmp_path):
@@ -188,3 +203,41 @@ def test_remove_favorite_not_found_integration(favorite_client):
         headers={"user-id": "00000000-0000-0000-0000-000000000002"}
     )
     assert delete_response.status_code == 404
+
+def test_get_favorites_integration(favorite_client, test_get_favorite_payload, test_get_user_id):
+    """
+    Spec: Getting favorites for a user should return their favorites
+    Input: valid user id with existing favorites.
+    Expected behavior: 200 response with list of favorites is returned.
+    """
+
+    favorite_client.post(
+        "/favorites",
+        headers={"user-id": test_get_user_id},
+        json=test_get_favorite_payload
+    )
+
+    response = favorite_client.get(
+        "/favorites",
+        headers={"user-id": test_get_user_id}
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["menu_item_id"] == "m1"
+
+def test_get_favorites_integration_not_found(favorite_client,test_get_user_id):
+    """
+    Spec: Getting favorites with no data should return 404
+    Input: user_id with no favorites
+    Expected behavior: 404 response
+    """
+
+    response = favorite_client.get(
+        "/favorites",
+        headers={"user-id": test_get_user_id}
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "No favorites found for the user"
