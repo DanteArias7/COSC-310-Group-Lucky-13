@@ -7,6 +7,7 @@ export default function App() {
   const [error, setError] = useState("");
   const [user, setUser] = useState(null);
   const [tab, setTab] = useState("home");
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const [createResponse, setCreateResponse] = useState(null);
 
@@ -231,6 +232,42 @@ export default function App() {
       ...updateForm,
       role: data.role,
     });
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  }
+};
+
+  const handleDeleteUser = async () => {
+  setError("");
+
+  try {
+    const res = await fetch(`http://127.0.0.1:8000/users/${user.user_id}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "user-id": user.user_id,
+      },
+    });
+
+    if (!res.ok) {
+      let msg = "Delete failed";
+
+      const data = await res.json().catch(() => null);
+
+      if (typeof data?.detail === "string") {
+        msg = data.detail;
+      } else if (Array.isArray(data?.detail)) {
+        msg = data.detail.map((x) => x.msg).join(", ");
+      } else if (data?.detail) {
+        msg = JSON.stringify(data.detail);
+      }
+
+      throw new Error(msg);
+    }
+
+    setUser(null);
+    setConfirmDelete(false);
+    setTab("home");
   } catch (err) {
     setError(err.message || "Something went wrong");
   }
@@ -461,6 +498,36 @@ return (
               Update User
             </button>
           </form>
+          <div style={{ marginTop: "1rem" }}>
+          {!confirmDelete ? (
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              style={{ backgroundColor: "red", color: "white" }}
+            >
+              Delete Account
+            </button>
+          ) : (
+            <div>
+              <p style={{ color: "red" }}>Are you sure?</p>
+
+              <button
+                type="button"
+                onClick={handleDeleteUser}
+                style={{ backgroundColor: "red", color: "white", marginRight: "0.5rem" }}
+              >
+                Yes, Delete
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
         </div>
       )}
 
