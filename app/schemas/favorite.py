@@ -9,4 +9,4 @@ class Favorite(BaseModel):
     id: str
     user_id: str
     restaurant_id: int
-    menu_item_id: Optional[str] = None
+    menu_item_id: str
