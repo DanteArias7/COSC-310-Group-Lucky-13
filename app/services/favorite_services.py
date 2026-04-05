@@ -18,6 +18,24 @@ class FavoriteServices:
         self.repo = repo
         self.restaurant_service = restaurant_service
 
+    def validate_favorite_not_duplicate(self, payload: Favorite) -> None:
+        """Ensures the favorite odes not already exist
+
+        Args:
+            payload (Favorite): The favorite to be added
+
+        Raises:
+            HTTPException: If the favorite already exists
+        """
+
+        favorites = self.repo.load_all_favorites()
+        for fav in favorites:
+            if (fav["user_id"] == payload.user_id and
+                fav["restaurant_id"] == payload.restaurant_id and
+                fav["menu_item_id"] == payload.menu_item_id):
+                raise HTTPException(status_code=400, detail="Favorite already exists")
+
+
     def add_favorite(self, payload: Favorite) -> Dict[str, Any]:
         """
         Adds a favorite menu item
@@ -33,6 +51,8 @@ class FavoriteServices:
         """
 
         favorites = self.repo.load_all_favorites()
+
+        self.validate_favorite_not_duplicate(payload)
 
         restaurant = self.restaurant_service.fetch_restaurant(payload.restaurant_id)
 
