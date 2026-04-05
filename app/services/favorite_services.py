@@ -98,6 +98,29 @@ class FavoriteServices:
                 return
         raise HTTPException(status_code=404, detail="Favorite not found")
 
+    def get_favorites_by_user_id(self, user_id: str) -> List[Favorite]:
+        """
+        Gets all favorites for a given user
+        Args:
+            user_id (str): The ID of the user whose favorites are to be retrieved
+        Returns:
+            List[Favorite]: A list of the user's favorites
+        Raises:
+            HTTPException: If no favorites are found for the user
+        """
+        favorites = self.repo.load_all_favorites()
+        user_favorites = []
+
+        for fav in favorites:
+            if fav["user_id"] == user_id:
+                user_favorites.append(Favorite(**fav))
+
+        if not user_favorites:
+            raise HTTPException(status_code=404,
+                                detail="No favorites found for the user")
+
+        return user_favorites
+
 
 class IFavoriteRepo(Protocol):
     """Favorite Repo Interface"""
