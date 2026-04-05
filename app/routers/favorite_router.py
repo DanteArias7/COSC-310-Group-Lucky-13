@@ -63,3 +63,24 @@ def add_favorite(
     )
 
     return service.add_favorite(payload)
+
+@favorite_router.delete("/{favorite_id}", status_code=204)
+def remove_favorite(
+    favorite_id: str,
+    favorite_repo: FavoriteRepo = Depends(create_favorite_repo),
+    restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
+    user_repo: UserRepo = Depends(create_user_repo),
+    user_id: str = Header(..., alias="user-id")
+):
+    """Remove a menu item from favorites"""
+
+    restaurant_service = RestaurantServices(restaurant_repo)
+    authorization_service = AuthorizationServices(user_repo)
+    authorization_service.authorize(user_id, "browse_restaurants")
+
+    service = FavoriteServices(
+        favorite_repo,
+        restaurant_service
+    )
+
+    service.remove_favorite(favorite_id, user_id)
