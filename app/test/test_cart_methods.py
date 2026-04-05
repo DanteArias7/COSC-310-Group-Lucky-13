@@ -1,7 +1,6 @@
 """Unit tests for cart methods."""
 from fastapi import HTTPException
 import pytest
-from app.schemas.cart import Cart
 from app.services.cart_services import CartServices
 from app.schemas.menu import MenuItem
 

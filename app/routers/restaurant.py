@@ -260,7 +260,7 @@ def delete_menu_item_from_cart(cart_id: str, menu_item_id: str,
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "manage_own_cart")
     authorization_service.authorize_access(user_id, cart_service.fetch_cart(cart_id).user_id)
-    updated_cart = cart_service.remove_item_from_cart(cart_id, menu_item_id)
+    cart_service.remove_item_from_cart(cart_id, menu_item_id)
     temp_dist = random.uniform(1.00, 20.00)
     return cart_service.calculate_cart(cart_id, temp_dist)
 
@@ -276,7 +276,7 @@ def add_menu_item_to_cart(cart_id: str,
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "manage_own_cart")
     authorization_service.authorize_access(user_id, cart_service.fetch_cart(cart_id).user_id)
-    updated_cart = cart_service.add_item_to_cart(cart_id, payload)
+    cart_service.add_item_to_cart(cart_id, payload)
     temp_dist = random.uniform(1.00, 20.00)
     return cart_service.calculate_cart(cart_id, temp_dist)
 
