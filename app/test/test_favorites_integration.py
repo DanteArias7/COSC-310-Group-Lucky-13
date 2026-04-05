@@ -155,3 +155,36 @@ def test_add_favorite_invalid_menu_item_integration(favorite_client,
     )
 
     assert response.status_code == 404
+
+def test_remove_favorite_integration(favorite_client, test_create_favorite_payload):
+    """
+    Spec: Removing a favorite should succeed
+    Input: valid favorite id.
+    Expected behavior: Favorite is removed successfully.
+    """
+
+    create_response = favorite_client.post(
+        "/favorites",
+        headers={"user-id": "00000000-0000-0000-0000-000000000001"},
+        json=test_create_favorite_payload
+    )
+
+    favorite_id = create_response.json()["id"]
+
+    delete_response = favorite_client.delete(
+        f"/favorites/{favorite_id}",
+        headers={"user-id": "00000000-0000-0000-0000-000000000001"}
+    )
+    assert delete_response.status_code == 204
+
+def test_remove_favorite_not_found_integration(favorite_client):
+    """
+    Spec: Removing a non-existent favorite should return 404
+    Input: invalid favorite id.
+    Expected behavior: HTTPException with status code 404 is raised.
+    """
+    delete_response = favorite_client.delete(
+        "/favorites/non-existent-id",
+        headers={"user-id": "00000000-0000-0000-0000-000000000002"}
+    )
+    assert delete_response.status_code == 404
