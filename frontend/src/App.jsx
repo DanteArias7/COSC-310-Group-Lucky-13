@@ -12,6 +12,7 @@ export default function App() {
   const eventSourceRef = useRef(null);
   const [createResponse, setCreateResponse] = useState(null);
   const [restaurantTab, setRestaurantTab] = useState("create");
+  const [confirmDeleteRestaurant, setConfirmDeleteRestaurant] = useState(false);
   const [createForm, setCreateForm] = useState({
     name: "",
     email: "",
@@ -716,6 +717,68 @@ const handleUpdateRestaurantHoursChange = (day, field, value) => {
   }));
 };
 
+const handleDeleteRestaurant = async () => {
+  setError("");
+
+  const idToDelete = loadedRestaurant?.id || restaurantIdInput;
+
+  if (!idToDelete) {
+    return setError("Load a restaurant or enter a restaurant ID first");
+  }
+
+  try {
+    const res = await fetch(`http://127.0.0.1:8000/restaurants/${idToDelete}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "user-id": user.user_id,
+      },
+    });
+
+    if (!res.ok) {
+      let msg = "Restaurant delete failed";
+
+      const data = await res.json().catch(() => null);
+
+      if (typeof data?.detail === "string") {
+        msg = data.detail;
+      } else if (Array.isArray(data?.detail)) {
+        msg = data.detail.map((x) => x.msg).join(", ");
+      } else if (data?.detail) {
+        msg = JSON.stringify(data.detail);
+      }
+
+      throw new Error(msg);
+    }
+
+    setLoadedRestaurant(null);
+    setRestaurantIdInput("");
+    setConfirmDeleteRestaurant(false);
+
+    setUpdateRestaurantForm({
+      id: "",
+      name: "",
+      phone_number: "",
+      address: "",
+      tags: "",
+      hours: {
+        Monday: { open: "", close: "", closed: false },
+        Tuesday: { open: "", close: "", closed: false },
+        Wednesday: { open: "", close: "", closed: false },
+        Thursday: { open: "", close: "", closed: false },
+        Friday: { open: "", close: "", closed: false },
+        Saturday: { open: "", close: "", closed: false },
+        Sunday: { open: "", close: "", closed: false },
+      },
+    });
+
+    setRestaurantResponse({ deleted: true, id: idToDelete });
+    setRestaurantTab("delete");
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  }
+};
+
   if(!user) {
   return (
     <div style={{ padding: "2rem", fontFamily: "Arial" }}>
@@ -1016,6 +1079,15 @@ return (
         style={{ marginLeft: "0.5rem" }}
       >
         Update Restaurant
+      </button>
+      <button
+        onClick={() => {
+          setRestaurantTab("delete");
+          setConfirmDeleteRestaurant(false);
+        }}
+        style={{ marginLeft: "0.5rem" }}
+      >
+        Delete Restaurant
       </button>
     </div>
 
@@ -1396,6 +1468,87 @@ return (
           Update Restaurant
         </button>
       </form>
+    )}
+  </div>
+)}
+
+{restaurantTab === "delete" && (
+  <div>
+    <h3>Delete Restaurant</h3>
+
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        setConfirmDeleteRestaurant(true);
+      }}
+    >
+      <input
+        type="number"
+        min="1"
+        placeholder="Restaurant ID"
+        value={restaurantIdInput}
+        onChange={(e) => setRestaurantIdInput(e.target.value)}
+      />
+
+      <button type="submit" style={{ marginLeft: "0.5rem" }}>
+        Select Restaurant
+      </button>
+    </form>
+
+    {loadedRestaurant && (
+      <div style={{ marginTop: "1rem" }}>
+        <p><strong>ID:</strong> {loadedRestaurant.id}</p>
+        <p><strong>Name:</strong> {loadedRestaurant.name}</p>
+        <p><strong>Owner User ID:</strong> {loadedRestaurant.user_id}</p>
+        <p><strong>Phone:</strong> {loadedRestaurant.phone_number}</p>
+        <p><strong>Address:</strong> {loadedRestaurant.address}</p>
+      </div>
+    )}
+
+    {(restaurantIdInput || loadedRestaurant?.id) && (
+      <div style={{ marginTop: "1rem" }}>
+        {!confirmDeleteRestaurant ? (
+          <button
+            type="button"
+            onClick={() => setConfirmDeleteRestaurant(true)}
+            style={{ backgroundColor: "red", color: "white" }}
+          >
+            Delete Restaurant
+          </button>
+        ) : (
+          <div>
+            <p style={{ color: "red" }}>
+              Are you sure you want to delete this restaurant?
+            </p>
+
+            <button
+              type="button"
+              onClick={handleDeleteRestaurant}
+              style={{
+                backgroundColor: "red",
+                color: "white",
+                marginRight: "0.5rem",
+              }}
+            >
+              Yes, Delete
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setConfirmDeleteRestaurant(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+      </div>
+    )}
+
+    {restaurantResponse?.deleted && (
+      <div style={{ marginTop: "1rem", color: "green" }}>
+        <p>Restaurant deleted successfully.</p>
+        <p>ID: {restaurantResponse.id}</p>
+      </div>
     )}
   </div>
 )}
