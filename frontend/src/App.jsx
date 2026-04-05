@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function App() {
   const [identifier, setIdentifier] = useState("");
@@ -8,9 +8,9 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [tab, setTab] = useState("home");
   const [confirmDelete, setConfirmDelete] = useState(false);
-
+  const [notifications, setNotifications] = useState([]);
+  const eventSourceRef = useRef(null);
   const [createResponse, setCreateResponse] = useState(null);
-
   const [createForm, setCreateForm] = useState({
     name: "",
     email: "",
@@ -29,6 +29,27 @@ export default function App() {
   role: "",
   });
 
+  useEffect(() => {
+      if (!user) return; // only start after login
+
+      const es = new EventSource(
+        `http://127.0.0.1:8000/notifications/stream?user_id=${user.user_id}`
+      );
+
+      eventSourceRef.current = es;
+
+      es.addEventListener("notification", (event) => {
+        setNotifications((prev) => [...prev, event.data]);
+      });
+
+      es.onerror = () => {
+        console.error("SSE error");
+      };
+
+      return () => {
+        es.close(); // cleanup on logout/unmount
+      };
+    }, [user]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -421,10 +442,17 @@ return (
           Account
         </button>
 
+          <button
+          onClick={() => setTab("notifications")}
+          style={{ marginLeft: "0.5rem" }}
+        >
+          Notifications
+        </button>
+
         <button onClick={handleLogout} style={{ marginLeft: "0.5rem" }}>
           Logout
         </button>
-      </div>
+        </div>
 
       {tab === "home" && (
         <div>
@@ -528,6 +556,21 @@ return (
             </div>
           )}
         </div>
+        </div>
+      )}
+            {tab === "notifications" && (
+        <div>
+          <h2>Notifications</h2>
+
+          {notifications.length === 0 ? (
+            <p>No notifications yet.</p>
+          ) : (
+            <ul>
+              {notifications.map((notification, index) => (
+                <li key={index}>{notification}</li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 
