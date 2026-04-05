@@ -50,6 +50,35 @@ class FavoriteServices:
 
         return new_favorite
 
+    def remove_favorite(self, favorite_id: str , user_id: str) -> None:
+        """
+        Removes a favorite menu item
+
+        Args:
+            favorite_id (str): The ID of the favorite to be removed
+            user_id (str): The ID of the user attempting to remove the favorite
+
+        Returns:
+            None
+
+        Raises:
+            HTTPException: If the favorite is not found
+        """
+
+        favorites = self.repo.load_all_favorites()
+
+        for fav in favorites:
+            if fav["id"] == favorite_id:
+                if fav["user_id"] != user_id:
+                    raise HTTPException(status_code=403,
+                                        detail="Forbidden: You can only delete your own favorites")
+
+                favorites.remove(fav)
+                self.repo.save_all_favorites(favorites)
+                return
+        raise HTTPException(status_code=404, detail="Favorite not found")
+
+
 class IFavoriteRepo(Protocol):
     """Favorite Repo Interface"""
 
