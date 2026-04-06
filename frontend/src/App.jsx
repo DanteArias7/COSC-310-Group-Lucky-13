@@ -164,6 +164,9 @@ const convertApiHoursToFormHours = (hoursObj) => {
   return base;
 };
 
+const [addToCartLoading, setAddToCartLoading] = useState(false);
+const [cartMessage, setCartMessage] = useState("");
+
 const convertFormHoursToApiHours = (hoursObj) =>
   Object.fromEntries(
     Object.entries(hoursObj).map(([day, val]) => [
@@ -1348,6 +1351,7 @@ const loadBrowseRestaurantDetails = async (restaurantId) => {
 
   setError("");
   setCartResponse(null);
+  setCartMessage("");
   setBrowseDetailLoading(true);
 
   try {
@@ -1387,6 +1391,7 @@ const handleStartCart = async (restaurantId) => {
   if (!user || user.role !== "customer") return;
 
   setError("");
+  setCartMessage("");
   setCartResponse(null);
   setCartLoading(true);
 
@@ -1423,6 +1428,60 @@ const handleStartCart = async (restaurantId) => {
     setError(err.message || "Something went wrong");
   } finally {
     setCartLoading(false);
+  }
+};
+
+// === ADD THIS near your other handler functions ===
+const handleAddItemToCart = async (menuItem) => {
+  if (!user || user.role !== "customer") return;
+
+  if (!cartResponse?.id) {
+    return setError("Start a cart first for this restaurant");
+  }
+
+  setError("");
+  setCartMessage("");
+  setAddToCartLoading(true);
+
+  try {
+    const payload = {
+  ...menuItem,
+};
+
+    const res = await fetch(
+  `http://127.0.0.1:8000/restaurants/${selectedBrowseRestaurant.id}/cart/${cartResponse.id}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.user_id,
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      let msg = "Failed to add item to cart";
+
+      if (typeof data.detail === "string") {
+        msg = data.detail;
+      } else if (Array.isArray(data.detail)) {
+        msg = data.detail.map((x) => x.msg).join(", ");
+      } else if (data.detail) {
+        msg = JSON.stringify(data.detail);
+      }
+
+      throw new Error(msg);
+    }
+
+    setCartResponse(data);
+    setCartMessage(`${menuItem.name} added to cart.`);
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  } finally {
+    setAddToCartLoading(false);
   }
 };
 
@@ -2840,27 +2899,48 @@ return (
               ))}
 
               <h4 style={{ marginTop: "1rem" }}>Menu</h4>
-              {selectedBrowseRestaurant.menu?.length > 0 ? (
-                selectedBrowseRestaurant.menu.map((item) => (
-                  <div
-                    key={item.id}
-                    style={{
-                      border: "1px solid #ccc",
-                      padding: "0.75rem",
-                      marginTop: "0.5rem",
-                    }}
-                  >
-                    <p><strong>ID:</strong> {item.id}</p>
-                    <p><strong>Name:</strong> {item.name}</p>
-                    <p><strong>Price:</strong> {item.price}</p>
-                    <p><strong>Description:</strong> {item.description}</p>
-                    <p><strong>Status:</strong> {item.status}</p>
-                    <p><strong>Tags:</strong> {(item.tags || []).join(", ")}</p>
-                  </div>
-                ))
-              ) : (
-                <p>No menu items.</p>
-              )}
+                {selectedBrowseRestaurant.menu?.length > 0 ? (
+                  selectedBrowseRestaurant.menu.map((item) => (
+                    <div
+                      key={item.id}
+                      style={{
+                        border: "1px solid #ccc",
+                        padding: "0.75rem",
+                        marginTop: "0.5rem",
+                      }}
+                    >
+                      <p><strong>ID:</strong> {item.id}</p>
+                      <p><strong>Name:</strong> {item.name}</p>
+                      <p><strong>Price:</strong> {item.price}</p>
+                      <p><strong>Description:</strong> {item.description}</p>
+                      <p><strong>Status:</strong> {item.status}</p>
+                      <p><strong>Tags:</strong> {(item.tags || []).join(", ")}</p>
+
+                      {/* === ADD THIS button inside each menu item card === */}
+                      <button
+                        type="button"
+                        disabled={
+                          addToCartLoading ||
+                          !cartResponse ||
+                          String(cartResponse.restaurant_id) !== String(selectedBrowseRestaurant.id)
+                        }
+                        onClick={() => handleAddItemToCart(item)}
+                        style={{ marginTop: "0.5rem" }}
+                      >
+                        Add To Cart
+                      </button>
+
+                      {!cartResponse ||
+                      String(cartResponse.restaurant_id) !== String(selectedBrowseRestaurant.id) ? (
+                        <p style={{ marginTop: "0.5rem", color: "gray" }}>
+                          Start a cart first before adding items.
+                        </p>
+                      ) : null}
+                    </div>
+                  ))
+                ) : (
+                  <p>No menu items.</p>
+                )}
 
               <h4 style={{ marginTop: "1rem" }}>Ratings</h4>
               {selectedBrowseRestaurant.ratings?.length > 0 ? (
@@ -2905,6 +2985,39 @@ return (
         <p><strong>Items in Cart:</strong> {(cartResponse.cart_items || []).length}</p>
       </div>
     )}
+    {cartMessage && (
+  <p style={{ marginTop: "0.5rem", color: "green" }}>{cartMessage}</p>
+)}
+
+{cartResponse && String(cartResponse.restaurant_id) === String(selectedBrowseRestaurant.id) && (
+  <div style={{ marginTop: "1rem" }}>
+    <h4>Current Cart</h4>
+    <p><strong>Cart ID:</strong> {cartResponse.id}</p>
+    <p><strong>Subtotal:</strong> {cartResponse.subtotal}</p>
+    <p><strong>Delivery Fee:</strong> {cartResponse.delivery_fee}</p>
+    <p><strong>Tax:</strong> {cartResponse.tax}</p>
+    <p><strong>Total:</strong> {cartResponse.total}</p>
+
+    {(cartResponse.cart_items || []).length > 0 ? (
+      cartResponse.cart_items.map((cartItem, index) => (
+        <div
+          key={index}
+          style={{
+            border: "1px solid #ccc",
+            padding: "0.5rem",
+            marginTop: "0.5rem",
+          }}
+        >
+          <p><strong>Name:</strong> {cartItem.item?.name}</p>
+          <p><strong>Price:</strong> {cartItem.item?.price}</p>
+          <p><strong>Quantity:</strong> {cartItem.quantity}</p>
+        </div>
+      ))
+    ) : (
+      <p>No items in cart yet.</p>
+    )}
+  </div>
+)}
 
         </div>
       )}
