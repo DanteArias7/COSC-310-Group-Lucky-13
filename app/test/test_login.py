@@ -8,9 +8,6 @@ from app.repositories.auth_repo import AuthRepo
 from app.schemas.auth import LoginRequest
 from app.services.login_services import LoginServices
 
-# ---------------------------------------------------------------------------
-# Sample user data
-# ---------------------------------------------------------------------------
 
 SAMPLE_USERS = [
     {
@@ -42,11 +39,6 @@ def _make_service(mocker):
         (u for u in SAMPLE_USERS if u["phone_number"] == phone), None
     )
     return LoginServices(mock_repo)
-
-
-# ---------------------------------------------------------------------------
-# Tests
-# ---------------------------------------------------------------------------
 
 
 def test_login_with_email_success(mocker):

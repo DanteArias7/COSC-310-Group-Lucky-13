@@ -7,9 +7,6 @@ from fastapi import HTTPException
 from app.repositories.user_repo import UserRepo
 from app.services.authorization_services import AuthorizationServices, ROLE_PERMISSIONS
 
-# ---------------------------------------------------------------------------
-# Sample user data
-# ---------------------------------------------------------------------------
 #pylint: disable=duplicate-code
 SAMPLE_USERS = [
     {
@@ -54,10 +51,6 @@ def _make_service(mocker):
     return AuthorizationServices(mock_repo)
 
 
-# ---------------------------------------------------------------------------
-# Customer restriction tests (Issue 2 core requirement)
-# ---------------------------------------------------------------------------
-
 
 def test_customer_cannot_manage_restaurant(mocker):
     """Customers must not be allowed to manage a restaurant profile."""
@@ -89,11 +82,6 @@ def test_customer_cannot_accept_order(mocker):
     assert exc_info.value.status_code == 403
 
 
-# ---------------------------------------------------------------------------
-# Restaurant owner restriction tests (Issue 2 core requirement)
-# ---------------------------------------------------------------------------
-
-
 def test_restaurant_owner_cannot_manage_users(mocker):
     """Restaurant owners must not be allowed to manage other users."""
     service = _make_service(mocker)
@@ -112,11 +100,6 @@ def test_restaurant_owner_cannot_create_order(mocker):
         service.authorize("user-2", "create_order")
 
     assert exc_info.value.status_code == 403
-
-
-# ---------------------------------------------------------------------------
-# Permitted action tests
-# ---------------------------------------------------------------------------
 
 
 def test_customer_can_create_order(mocker):
@@ -153,11 +136,6 @@ def test_admin_can_view_all_orders(mocker):
     """Admins are permitted to view all orders."""
     service = _make_service(mocker)
     assert service.authorize("user-4", "view_all_orders") is True
-
-
-# ---------------------------------------------------------------------------
-# Edge case tests
-# ---------------------------------------------------------------------------
 
 
 def test_authorize_unknown_user_raises_404(mocker):
@@ -204,10 +182,6 @@ def test_role_permissions_map_has_all_roles():
         assert role in ROLE_PERMISSIONS
         assert len(ROLE_PERMISSIONS[role]) > 0
 
-
-# ---------------------------------------------------------------------------
-# authorize_access Unit Tests
-# ---------------------------------------------------------------------------
 
 def test_authorize_access_succes(mocker):
     """Scenario: User attempts to edit resource they own
