@@ -166,6 +166,7 @@ const convertApiHoursToFormHours = (hoursObj) => {
 
 const [addToCartLoading, setAddToCartLoading] = useState(false);
 const [cartMessage, setCartMessage] = useState("");
+const [removeFromCartLoading, setRemoveFromCartLoading] = useState(false);
 
 const convertFormHoursToApiHours = (hoursObj) =>
   Object.fromEntries(
@@ -1482,6 +1483,106 @@ const handleAddItemToCart = async (menuItem) => {
     setError(err.message || "Something went wrong");
   } finally {
     setAddToCartLoading(false);
+  }
+};
+
+const handleRemoveItemFromCart = async (menuItemId) => {
+  if (!user || user.role !== "customer") return;
+
+  if (!cartResponse?.id) {
+    return setError("No active cart found");
+  }
+
+  if (!selectedBrowseRestaurant?.id) {
+    return setError("Load a restaurant first");
+  }
+
+  setError("");
+  setCartMessage("");
+  setRemoveFromCartLoading(true);
+
+  try {
+    const res = await fetch(
+      `http://127.0.0.1:8000/restaurants/${selectedBrowseRestaurant.id}/cart/${cartResponse.id}/${menuItemId}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.user_id,
+        },
+      }
+    );
+
+    if (!res.ok) {
+      let msg = "Failed to remove item from cart";
+
+      const data = await res.json().catch(() => null);
+
+      if (typeof data?.detail === "string") {
+        msg = data.detail;
+      } else if (Array.isArray(data?.detail)) {
+        msg = data.detail.map((x) => x.msg).join(", ");
+      } else if (data?.detail) {
+        msg = JSON.stringify(data.detail);
+      }
+
+      throw new Error(msg);
+    }
+
+    // Backend succeeded, so mirror its behavior locally:
+    // decrease quantity by 1, and remove only when quantity becomes 0
+    setCartResponse((prev) => {
+      if (!prev) return prev;
+
+      const updatedItems = (prev.cart_items || [])
+        .map((cartItem) => {
+          if (String(cartItem.item?.id) !== String(menuItemId)) {
+            return cartItem;
+          }
+
+          const currentQty = Number(cartItem.quantity || 0);
+          const nextQty = currentQty - 1;
+
+          if (nextQty <= 0) {
+            return null;
+          }
+
+          return {
+            ...cartItem,
+            quantity: nextQty,
+          };
+        })
+        .filter(Boolean);
+
+      const subtotal = updatedItems.reduce((sum, cartItem) => {
+        const price = Number(cartItem.item?.price || 0);
+        const qty = Number(cartItem.quantity || 0);
+        return sum + price * qty;
+      }, 0);
+
+      // Keep existing fee/tax values since backend recalculates them randomly
+      // and does not return a body with 204.
+      const deliveryFee = Number(prev.delivery_fee || 0);
+      const taxRate = subtotal > 0 && Number(prev.subtotal || 0) > 0
+        ? Number(prev.tax || 0) / Number(prev.subtotal || 1)
+        : 0;
+      const tax = subtotal * taxRate;
+      const total = subtotal + deliveryFee + tax;
+
+      return {
+        ...prev,
+        cart_items: updatedItems,
+        subtotal: Number(subtotal.toFixed(2)),
+        tax: Number(tax.toFixed(2)),
+        total: Number(total.toFixed(2)),
+      };
+    });
+
+    setCartMessage("Item quantity updated.");
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  } finally {
+    setRemoveFromCartLoading(false);
   }
 };
 
@@ -2999,23 +3100,33 @@ return (
     <p><strong>Total:</strong> {cartResponse.total}</p>
 
     {(cartResponse.cart_items || []).length > 0 ? (
-      cartResponse.cart_items.map((cartItem, index) => (
-        <div
-          key={index}
-          style={{
-            border: "1px solid #ccc",
-            padding: "0.5rem",
-            marginTop: "0.5rem",
-          }}
-        >
-          <p><strong>Name:</strong> {cartItem.item?.name}</p>
-          <p><strong>Price:</strong> {cartItem.item?.price}</p>
-          <p><strong>Quantity:</strong> {cartItem.quantity}</p>
-        </div>
-      ))
-    ) : (
-      <p>No items in cart yet.</p>
-    )}
+  cartResponse.cart_items.map((cartItem, index) => (
+    <div
+      key={cartItem.item?.id || index}
+      style={{
+        border: "1px solid #ccc",
+        padding: "0.5rem",
+        marginTop: "0.5rem",
+      }}
+    >
+      <p><strong>Name:</strong> {cartItem.item?.name}</p>
+      <p><strong>Price:</strong> {cartItem.item?.price}</p>
+      <p><strong>Quantity:</strong> {cartItem.quantity}</p>
+      <p><strong>Menu Item ID:</strong> {cartItem.item?.id}</p>
+
+      <button
+        type="button"
+        onClick={() => handleRemoveItemFromCart(cartItem.item?.id)}
+        disabled={removeFromCartLoading}
+        style={{ marginTop: "0.5rem", backgroundColor: "red", color: "white" }}
+      >
+        {removeFromCartLoading ? "Removing..." : "Remove From Cart"}
+      </button>
+    </div>
+  ))
+) : (
+  <p>No items in cart yet.</p>
+)}
   </div>
 )}
 
