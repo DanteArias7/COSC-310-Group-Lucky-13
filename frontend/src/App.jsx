@@ -11,6 +11,7 @@ export default function App() {
   const [notifications, setNotifications] = useState([]);
   const eventSourceRef = useRef(null);
   const [createResponse, setCreateResponse] = useState(null);
+  const [restaurantTab, setRestaurantTab] = useState("create");
   const [createForm, setCreateForm] = useState({
     name: "",
     email: "",
@@ -21,13 +22,51 @@ export default function App() {
   });
 
   const [updateForm, setUpdateForm] = useState({
+      name: "",
+      email: "",
+      phone_number: "",
+      address: "",
+      password: "",
+      role: "",
+      });
+
+  const [restaurantResponse, setRestaurantResponse] = useState(null);
+
+  const [restaurantForm, setRestaurantForm] = useState({
   name: "",
-  email: "",
   phone_number: "",
   address: "",
-  password: "",
-  role: "",
-  });
+  tags: "",
+  hours: {
+  Monday: { open: "", close: "", closed: false },
+  Tuesday: { open: "", close: "", closed: false },
+  Wednesday: { open: "", close: "", closed: false },
+  Thursday: { open: "", close: "", closed: false },
+  Friday: { open: "", close: "", closed: false },
+  Saturday: { open: "", close: "", closed: false },
+  Sunday: { open: "", close: "", closed: false },
+},
+  menu: [
+    {
+      name: "",
+      price: "",
+      description: "",
+      tags: "",
+    },
+  ],
+});
+
+  const generateTimeOptions = () => {
+  const times = [];
+  for (let h = 0; h < 24; h++) {
+    const hour = h.toString().padStart(2, "0");
+    times.push(`${hour}:00`);
+    times.push(`${hour}:30`);
+  }
+  return times;
+};
+
+  const timeOptions = generateTimeOptions();
 
   useEffect(() => {
       if (!user) return; // only start after login
@@ -294,6 +333,179 @@ export default function App() {
   }
 };
 
+const handleRestaurantFieldChange = (field, value) => {
+  setRestaurantForm((prev) => ({
+    ...prev,
+    [field]: value,
+  }));
+};
+
+const handleMenuItemChange = (index, field, value) => {
+  setRestaurantForm((prev) => {
+    const updatedMenu = [...prev.menu];
+    updatedMenu[index] = {
+      ...updatedMenu[index],
+      [field]: value,
+    };
+    return {
+      ...prev,
+      menu: updatedMenu,
+    };
+  });
+};
+
+const addMenuItem = () => {
+  setRestaurantForm((prev) => ({
+    ...prev,
+    menu: [
+      ...prev.menu,
+      {
+        name: "",
+        price: "",
+        description: "",
+        tags: "",
+      },
+    ],
+  }));
+};
+
+const removeMenuItem = (index) => {
+  setRestaurantForm((prev) => ({
+    ...prev,
+    menu: prev.menu.filter((_, i) => i !== index),
+  }));
+};
+
+const handleCreateRestaurant = async (e) => {
+  e.preventDefault();
+  setError("");
+  setRestaurantResponse(null);
+
+  if (!restaurantForm.name.trim()) return setError("Restaurant name is required");
+  if (!/^\d{10}$/.test(restaurantForm.phone_number)) {
+  return setError("Phone number must be exactly 10 digits");
+}
+    if (!/^\d+$/.test(restaurantForm.phone_number)) {
+      return setError("Phone number must contain only digits");
+} if (!restaurantForm.address.trim()) return setError("Address is required");
+  if (restaurantForm.menu.length < 1) return setError("At least one menu item is required");
+
+  for (const item of restaurantForm.menu) {
+  if (!item.name.trim()) return setError("Each menu item must have a name");
+
+  const price = Number(item.price);
+
+  if (item.price === "" || isNaN(price)) {
+    return setError("Each menu item must have a valid price");
+  }
+
+  if (price < 0) {
+    return setError("Price cannot be negative");
+  }
+
+  if (!item.description.trim()) {
+    return setError("Each menu item must have a description");
+  }
+}
+
+  const payload = {
+    name: restaurantForm.name,
+    hours: Object.fromEntries(
+  Object.entries(restaurantForm.hours).map(([day, val]) => [
+    day,
+    val.closed
+      ? "Closed"
+      : val.open && val.close
+      ? `${val.open}-${val.close}`
+      : "Closed",
+  ])
+),
+    phone_number: restaurantForm.phone_number,
+    address: restaurantForm.address,
+    tags: restaurantForm.tags
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean),
+    menu: restaurantForm.menu.map((item) => ({
+      name: item.name.trim(),
+      price: Number(item.price),
+      description: item.description.trim(),
+      tags: item.tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean),
+    })),
+  };
+
+  try {
+    const res = await fetch("http://127.0.0.1:8000/restaurants", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "user-id": user.user_id,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      let msg = "Restaurant creation failed";
+
+      if (typeof data.detail === "string") {
+        msg = data.detail;
+      } else if (Array.isArray(data.detail)) {
+        msg = data.detail.map((x) => x.msg).join(", ");
+      } else if (data.detail) {
+        msg = JSON.stringify(data.detail);
+      }
+
+      throw new Error(msg);
+    }
+
+    setRestaurantResponse(data);
+
+    setRestaurantForm({
+      name: "",
+      phone_number: "",
+      address: "",
+      tags: "",
+      hours: {
+        Monday: { open: "", close: "", closed: false },
+        Tuesday: { open: "", close: "", closed: false },
+        Wednesday: { open: "", close: "", closed: false },
+        Thursday: { open: "", close: "", closed: false },
+        Friday: { open: "", close: "", closed: false },
+        Saturday: { open: "", close: "", closed: false },
+        Sunday: { open: "", close: "", closed: false },
+      },
+      menu: [
+        {
+          name: "",
+          price: "",
+          description: "",
+          tags: "",
+        },
+      ],
+    });
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  }
+};
+
+const handleHoursChange = (day, field, value) => {
+  setRestaurantForm((prev) => ({
+    ...prev,
+    hours: {
+      ...prev.hours,
+      [day]: {
+        ...prev.hours[day],
+        [field]: value,
+      },
+    },
+  }));
+};
+
   if(!user) {
   return (
     <div style={{ padding: "2rem", fontFamily: "Arial" }}>
@@ -442,12 +654,25 @@ return (
           Account
         </button>
 
+          {user.role === "restaurant_owner" && (
+            <button
+              onClick={() => {
+                setTab("manage-restaurants");
+                setRestaurantTab("create");
+              }}
+              style={{ marginLeft: "0.5rem" }}
+            >
+              Manage Restaurants
+            </button>
+          )}
+
           <button
           onClick={() => setTab("notifications")}
           style={{ marginLeft: "0.5rem" }}
         >
           Notifications
         </button>
+
 
         <button onClick={handleLogout} style={{ marginLeft: "0.5rem" }}>
           Logout
@@ -557,7 +782,233 @@ return (
           )}
         </div>
         </div>
-      )}
+         )}
+
+     {tab === "manage-restaurants" && user.role === "restaurant_owner" && (
+  <div>
+    <h2>Manage Restaurants</h2>
+
+    <div style={{ marginBottom: "1rem" }}>
+      <button
+        onClick={() => setRestaurantTab("create")}
+      >
+        Create Restaurant
+      </button>
+    </div>
+
+    {restaurantTab === "create" && (
+      <div>
+        <h3>Create Restaurant</h3>
+
+        <form onSubmit={handleCreateRestaurant}>
+          <div>
+            <input
+              placeholder="Restaurant name"
+              value={restaurantForm.name}
+              onChange={(e) => handleRestaurantFieldChange("name", e.target.value)}
+            />
+          </div>
+
+          <div style={{ marginTop: "0.5rem" }}>
+           <input
+            type="tel"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={10}
+            placeholder="Phone number"
+            value={restaurantForm.phone_number}
+            onChange={(e) => {
+              const value = e.target.value.replace(/\D/g, "");
+              handleRestaurantFieldChange("phone_number", value);
+            }}
+          />
+          </div>
+
+          <div style={{ marginTop: "0.5rem" }}>
+            <input
+              placeholder="Address"
+              value={restaurantForm.address}
+              onChange={(e) => handleRestaurantFieldChange("address", e.target.value)}
+            />
+          </div>
+
+          <h3 style={{ marginTop: "1rem" }}>Hours</h3>
+
+            <div style={{ marginLeft: "120px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "1rem",
+                  fontWeight: "bold",
+                  marginTop: "0.5rem",
+                }}
+              >
+                <div style={{ width: "100px" }}></div>
+                <div style={{ width: "140px" }}>Open</div>
+                <div style={{ width: "140px" }}>Close</div>
+                <div>Closed</div>
+              </div>
+
+              {Object.keys(restaurantForm.hours).map((day) => {
+                const dayData = restaurantForm.hours[day];
+
+                return (
+                  <div
+                    key={day}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "1rem",
+                      marginTop: "0.5rem",
+                    }}
+                  >
+                    <div style={{ width: "100px" }}>
+                      <strong>{day}</strong>
+                    </div>
+
+                    <select
+                      disabled={dayData.closed}
+                      style={{ width: "140px" }}
+                      value={dayData.open}
+                      onChange={(e) => handleHoursChange(day, "open", e.target.value)}
+                    >
+                      <option value=""></option>
+                      {timeOptions.map((t) => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+
+                    <select
+                      disabled={dayData.closed}
+                      style={{ width: "140px" }}
+                      value={dayData.close}
+                      onChange={(e) => handleHoursChange(day, "close", e.target.value)}
+                    >
+                      <option value=""></option>
+                      {timeOptions.map((t) => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+
+                    <input
+                      type="checkbox"
+                      checked={dayData.closed}
+                      onChange={(e) =>
+                        handleHoursChange(day, "closed", e.target.checked)
+                      }
+                    />
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={{ marginTop: "1rem" }}>
+            <input
+              placeholder="Restaurant tags (comma separated)"
+              value={restaurantForm.tags}
+              onChange={(e) => handleRestaurantFieldChange("tags", e.target.value)}
+            />
+          </div>
+
+          <h3 style={{ marginTop: "1rem" }}>Menu</h3>
+
+          {restaurantForm.menu.map((item, index) => (
+            <div
+              key={index}
+              style={{
+                border: "1px solid #ccc",
+                padding: "1rem",
+                marginTop: "1rem",
+              }}
+            >
+              <p>Menu Item {index + 1}</p>
+
+              <div>
+                <input
+                  placeholder="Item name"
+                  value={item.name}
+                  onChange={(e) =>
+                    handleMenuItemChange(index, "name", e.target.value)
+                  }
+                />
+              </div>
+
+              <div style={{ marginTop: "0.5rem" }}>
+                <input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Price"
+                value={item.price}
+                onKeyDown={(e) => {
+                  if (e.key === "-" || e.key === "e") e.preventDefault();
+                }}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (Number(value) < 0) return;
+                  handleMenuItemChange(index, "price", value);
+                }}
+              />
+              </div>
+
+              <div style={{ marginTop: "0.5rem" }}>
+                <input
+                  placeholder="Description"
+                  value={item.description}
+                  onChange={(e) =>
+                    handleMenuItemChange(index, "description", e.target.value)
+                  }
+                />
+              </div>
+
+              <div style={{ marginTop: "0.5rem" }}>
+                <input
+                  placeholder="Item tags (comma separated)"
+                  value={item.tags}
+                  onChange={(e) =>
+                    handleMenuItemChange(index, "tags", e.target.value)
+                  }
+                />
+              </div>
+
+              {restaurantForm.menu.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeMenuItem(index)}
+                  style={{ marginTop: "0.5rem" }}
+                >
+                  Remove Item
+                </button>
+              )}
+            </div>
+          ))}
+
+          <button
+            type="button"
+            onClick={addMenuItem}
+            style={{ marginTop: "1rem", marginRight: "0.5rem" }}
+          >
+            Add Menu Item
+          </button>
+
+          <button type="submit" style={{ marginTop: "1rem" }}>
+            Create Restaurant
+          </button>
+        </form>
+
+        {restaurantResponse && (
+          <div style={{ marginTop: "1rem", color: "green" }}>
+            <p>Restaurant created successfully.</p>
+            <p>ID: {restaurantResponse.id}</p>
+            <p>Name: {restaurantResponse.name}</p>
+            <p>Owner User ID: {restaurantResponse.user_id}</p>
+          </div>
+        )}
+      </div>
+    )}
+  </div>
+)}
             {tab === "notifications" && (
         <div>
           <h2>Notifications</h2>
