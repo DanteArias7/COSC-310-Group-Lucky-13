@@ -97,6 +97,18 @@ const emptyHoursState = () => ({
   Sunday: { open: "", close: "", closed: false },
 });
 
+const [updateMenuItemResponse, setUpdateMenuItemResponse] = useState(null);
+
+const [updateMenuItemForm, setUpdateMenuItemForm] = useState({
+  restaurant_id: "",
+  menu_item_id: "",
+  name: "",
+  price: "",
+  description: "",
+  tags: "",
+  item_status: "",
+});
+
 const convertApiHoursToFormHours = (hoursObj) => {
   const base = emptyHoursState();
 
@@ -885,6 +897,115 @@ const handleAddMenuItemToRestaurant = async (e) => {
   }
 };
 
+  const handleUpdateMenuItemFieldChange = (field, value) => {
+  setUpdateMenuItemForm((prev) => ({
+    ...prev,
+    [field]: value,
+  }));
+};
+
+const handleUpdateMenuItem = async (e) => {
+  e.preventDefault();
+  setError("");
+  setUpdateMenuItemResponse(null);
+
+  if (!updateMenuItemForm.restaurant_id.trim()) {
+    return setError("Restaurant ID is required");
+  }
+
+  if (!updateMenuItemForm.menu_item_id.trim()) {
+    return setError("Menu item ID is required");
+  }
+
+  if (!updateMenuItemForm.name.trim()) {
+    return setError("Menu item name is required");
+  }
+
+  const price = Number(updateMenuItemForm.price);
+
+  if (updateMenuItemForm.price === "" || isNaN(price)) {
+    return setError("Menu item price must be valid");
+  }
+
+  if (price < 0) {
+    return setError("Price cannot be negative");
+  }
+
+  if (!updateMenuItemForm.description.trim()) {
+    return setError("Menu item description is required");
+  }
+
+  const payload = {
+    name: updateMenuItemForm.name.trim(),
+    price,
+    description: updateMenuItemForm.description.trim(),
+    tags: updateMenuItemForm.tags
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean),
+  };
+
+  const query = updateMenuItemForm.item_status.trim()
+    ? `?item_status=${encodeURIComponent(updateMenuItemForm.item_status.trim())}`
+    : "";
+
+  try {
+    const res = await fetch(
+      `http://127.0.0.1:8000/restaurants/${updateMenuItemForm.restaurant_id}/menu/${updateMenuItemForm.menu_item_id}${query}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.user_id,
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      let msg = "Failed to update menu item";
+
+      if (typeof data.detail === "string") {
+        msg = data.detail;
+      } else if (Array.isArray(data.detail)) {
+        msg = data.detail.map((x) => x.msg).join(", ");
+      } else if (data.detail) {
+        msg = JSON.stringify(data.detail);
+      }
+
+      throw new Error(msg);
+    }
+
+    setUpdateMenuItemResponse(data);
+
+    if (loadedRestaurant && String(loadedRestaurant.id) === String(updateMenuItemForm.restaurant_id)) {
+      setLoadedRestaurant({
+        ...loadedRestaurant,
+        menu: (loadedRestaurant.menu || []).map((item) =>
+          String(item.id) === String(updateMenuItemForm.menu_item_id) ? data : item
+        ),
+      });
+    }
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  }
+};
+
+const loadMenuItemIntoUpdateForm = (menuItem) => {
+  setUpdateMenuItemForm({
+    restaurant_id: loadedRestaurant ? String(loadedRestaurant.id) : "",
+    menu_item_id: menuItem.id,
+    name: menuItem.name || "",
+    price: String(menuItem.price ?? ""),
+    description: menuItem.description || "",
+    tags: (menuItem.tags || []).join(", "),
+    item_status: menuItem.status || "",
+  });
+  setRestaurantTab("update-menu-item");
+};
+
   if(!user) {
   return (
     <div style={{ padding: "2rem", fontFamily: "Arial" }}>
@@ -1198,7 +1319,18 @@ return (
       >
         Add Menu Item
       </button>
-
+        <button
+        onClick={() => {
+          setRestaurantTab("update-menu-item");
+          setUpdateMenuItemForm((prev) => ({
+            ...prev,
+            restaurant_id: loadedRestaurant?.id ? String(loadedRestaurant.id) : prev.restaurant_id,
+          }));
+        }}
+        style={{ marginLeft: "0.5rem" }}
+      >
+        Update Menu Item
+      </button>
       <button
         onClick={() => {
           setRestaurantTab("delete");
@@ -1451,7 +1583,36 @@ return (
         <p><strong>Average Rating:</strong> {String(loadedRestaurant.average_rating)}</p>
       </div>
     )}
+    {loadedRestaurant?.menu?.length > 0 && (
+  <div style={{ marginTop: "1rem" }}>
+    <h4>Menu</h4>
+    {loadedRestaurant.menu.map((item) => (
+      <div
+        key={item.id}
+        style={{
+          border: "1px solid #ccc",
+          padding: "0.75rem",
+          marginTop: "0.5rem",
+        }}
+      >
+        <p><strong>ID:</strong> {item.id}</p>
+        <p><strong>Name:</strong> {item.name}</p>
+        <p><strong>Price:</strong> {item.price}</p>
+        <p><strong>Status:</strong> {item.status}</p>
+
+        <button
+          type="button"
+          onClick={() => loadMenuItemIntoUpdateForm(item)}
+        >
+          Edit This Menu Item
+        </button>
+      </div>
+    ))}
   </div>
+)}
+  </div>
+
+
 )}
 
 {restaurantTab === "update" && (
@@ -1670,6 +1831,110 @@ return (
         <p>Description: {menuItemResponse.description}</p>
         <p>Status: {menuItemResponse.status}</p>
         <p>Tags: {(menuItemResponse.tags || []).join(", ")}</p>
+      </div>
+    )}
+  </div>
+)}
+
+{restaurantTab === "update-menu-item" && (
+  <div>
+    <h3>Update Menu Item</h3>
+
+    <form onSubmit={handleUpdateMenuItem}>
+      <div>
+        <input
+          type="number"
+          min="1"
+          placeholder="Restaurant ID"
+          value={updateMenuItemForm.restaurant_id}
+          onChange={(e) =>
+            handleUpdateMenuItemFieldChange("restaurant_id", e.target.value)
+          }
+        />
+      </div>
+
+      <div style={{ marginTop: "0.5rem" }}>
+        <input
+          placeholder="Menu Item ID"
+          value={updateMenuItemForm.menu_item_id}
+          onChange={(e) =>
+            handleUpdateMenuItemFieldChange("menu_item_id", e.target.value)
+          }
+        />
+      </div>
+
+      <div style={{ marginTop: "0.5rem" }}>
+        <input
+          placeholder="Menu item name"
+          value={updateMenuItemForm.name}
+          onChange={(e) =>
+            handleUpdateMenuItemFieldChange("name", e.target.value)
+          }
+        />
+      </div>
+
+      <div style={{ marginTop: "0.5rem" }}>
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          placeholder="Price"
+          value={updateMenuItemForm.price}
+          onKeyDown={(e) => {
+            if (e.key === "-" || e.key === "e") e.preventDefault();
+          }}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (Number(value) < 0) return;
+            handleUpdateMenuItemFieldChange("price", value);
+          }}
+        />
+      </div>
+
+      <div style={{ marginTop: "0.5rem" }}>
+        <input
+          placeholder="Description"
+          value={updateMenuItemForm.description}
+          onChange={(e) =>
+            handleUpdateMenuItemFieldChange("description", e.target.value)
+          }
+        />
+      </div>
+
+      <div style={{ marginTop: "0.5rem" }}>
+        <input
+          placeholder="Tags (comma separated)"
+          value={updateMenuItemForm.tags}
+          onChange={(e) =>
+            handleUpdateMenuItemFieldChange("tags", e.target.value)
+          }
+        />
+      </div>
+
+      <div style={{ marginTop: "0.5rem" }}>
+        <input
+          placeholder='Optional status, e.g. "Available" or "Unavailable"'
+          value={updateMenuItemForm.item_status}
+          onChange={(e) =>
+            handleUpdateMenuItemFieldChange("item_status", e.target.value)
+          }
+        />
+      </div>
+
+      <button type="submit" style={{ marginTop: "1rem" }}>
+        Update Menu Item
+      </button>
+    </form>
+
+    {updateMenuItemResponse && (
+      <div style={{ marginTop: "1rem", color: "green" }}>
+        <p>Menu item updated successfully.</p>
+        <p>ID: {updateMenuItemResponse.id}</p>
+        <p>Name: {updateMenuItemResponse.name}</p>
+        <p>Price: {updateMenuItemResponse.price}</p>
+        <p>Description: {updateMenuItemResponse.description}</p>
+        <p>Status: {updateMenuItemResponse.status}</p>
+        <p>Tags: {(updateMenuItemResponse.tags || []).join(", ")}</p>
       </div>
     )}
   </div>
