@@ -84,3 +84,23 @@ def remove_favorite(
     )
 
     service.remove_favorite(favorite_id, user_id)
+
+@favorite_router.get("", status_code=200)
+def get_favorites(
+    favorite_repo: FavoriteRepo = Depends(create_favorite_repo),
+    restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
+    user_repo: UserRepo = Depends(create_user_repo),
+    user_id: str = Header(..., alias="user-id")
+):
+    """Get all favorites for a user"""
+
+    restaurant_service = RestaurantServices(restaurant_repo)
+    authorization_service = AuthorizationServices(user_repo)
+    authorization_service.authorize(user_id, "browse_restaurants")
+
+    service = FavoriteServices(
+        favorite_repo,
+        restaurant_service
+    )
+
+    return service.get_favorites_by_user_id(user_id)

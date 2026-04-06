@@ -29,6 +29,29 @@ def favorite_payload_delete():
     }
 
 @pytest.fixture
+def favorites_data():
+    """Favorite data for testing"""
+    return [
+        {
+            "id": "fav1",
+            "user_id": "00000000-0000-0000-0000-000000000001",
+            "restaurant_id": 101,
+            "menu_item_id": "m1"
+        },
+        {
+            "id": "fav2",
+            "user_id": "00000000-0000-0000-0000-000000000001",
+            "restaurant_id": 102,
+            "menu_item_id": "m2"
+        }
+    ]
+
+@pytest.fixture
+def test_user_id():
+    """User ID for tests"""
+    return "00000000-0000-0000-0000-000000000001"
+
+@pytest.fixture
 def mocked_repo(mocker):
     """Create mocked repo object for each test"""
     mocked_repo = mocker.Mock()
@@ -142,3 +165,31 @@ def test_add_favorite_duplicate(favorite_service, mocked_repo, favorite_payload)
         favorite_service.add_favorite(favorite_payload)
 
     assert exc_info.value.status_code == 400
+
+def test_get_favorites_by_user_id_success(favorite_service, mocked_repo,
+                                          favorites_data, test_user_id):
+    """
+    Spec: Getting favorites for a user should return their favorites
+    Input: valid user id.
+    Expected behavior: List of favorites belonging to the user is returned.
+    """
+
+    mocked_repo.load_all_favorites.return_value = favorites_data
+
+    result = favorite_service.get_favorites_by_user_id(test_user_id)
+
+    assert len(result) == 2
+
+def test_get_favorites_by_user_id_no_favorites(favorite_service, mocked_repo, test_user_id):
+    """
+    Spec: Getting favorites for a user with no favorites should return empty list
+    Input: valid user id with no favorites.
+    Expected behavior: Empty list is returned.
+    """
+
+    mocked_repo.load_all_favorites.return_value = []
+
+    with pytest.raises(HTTPException) as exc_info:
+        favorite_service.get_favorites_by_user_id(test_user_id)
+
+    assert exc_info.value.status_code == 404
