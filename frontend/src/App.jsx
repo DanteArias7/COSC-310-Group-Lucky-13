@@ -109,6 +109,15 @@ const [updateMenuItemForm, setUpdateMenuItemForm] = useState({
   item_status: "",
 });
 
+const [confirmDeleteMenuItem, setConfirmDeleteMenuItem] = useState(false);
+
+const [deleteMenuItemForm, setDeleteMenuItemForm] = useState({
+  restaurant_id: "",
+  menu_item_id: "",
+});
+
+const [deleteMenuItemResponse, setDeleteMenuItemResponse] = useState(null);
+
 const convertApiHoursToFormHours = (hoursObj) => {
   const base = emptyHoursState();
 
@@ -1006,6 +1015,91 @@ const loadMenuItemIntoUpdateForm = (menuItem) => {
   setRestaurantTab("update-menu-item");
 };
 
+const handleDeleteMenuItemFieldChange = (field, value) => {
+  setDeleteMenuItemForm((prev) => ({
+    ...prev,
+    [field]: value,
+  }));
+};
+
+const handleDeleteMenuItem = async () => {
+  setError("");
+  setDeleteMenuItemResponse(null);
+
+  const restaurantId = deleteMenuItemForm.restaurant_id || loadedRestaurant?.id;
+
+  if (!restaurantId) {
+    return setError("Restaurant ID is required");
+  }
+
+  if (!deleteMenuItemForm.menu_item_id.trim()) {
+    return setError("Menu item ID is required");
+  }
+
+  try {
+    const res = await fetch(
+      `http://127.0.0.1:8000/restaurants/${restaurantId}/menu/${deleteMenuItemForm.menu_item_id}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.user_id,
+        },
+      }
+    );
+
+    if (!res.ok) {
+      let msg = "Failed to delete menu item";
+
+      const data = await res.json().catch(() => null);
+
+      if (typeof data?.detail === "string") {
+        msg = data.detail;
+      } else if (Array.isArray(data?.detail)) {
+        msg = data.detail.map((x) => x.msg).join(", ");
+      } else if (data?.detail) {
+        msg = JSON.stringify(data.detail);
+      }
+
+      throw new Error(msg);
+    }
+
+    setDeleteMenuItemResponse({
+      deleted: true,
+      restaurant_id: String(restaurantId),
+      menu_item_id: deleteMenuItemForm.menu_item_id,
+    });
+
+    if (loadedRestaurant && String(loadedRestaurant.id) === String(restaurantId)) {
+      setLoadedRestaurant({
+        ...loadedRestaurant,
+        menu: (loadedRestaurant.menu || []).filter(
+          (item) => String(item.id) !== String(deleteMenuItemForm.menu_item_id)
+        ),
+      });
+    }
+
+    setDeleteMenuItemForm({
+      restaurant_id: String(restaurantId),
+      menu_item_id: "",
+    });
+
+    setConfirmDeleteMenuItem(false);
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  }
+};
+
+const loadMenuItemIntoDeleteForm = (menuItem) => {
+  setDeleteMenuItemForm({
+    restaurant_id: loadedRestaurant ? String(loadedRestaurant.id) : "",
+    menu_item_id: menuItem.id,
+  });
+  setDeleteMenuItemResponse(null);
+  setConfirmDeleteMenuItem(false);
+  setRestaurantTab("delete-menu-item");
+};
+
   if(!user) {
   return (
     <div style={{ padding: "2rem", fontFamily: "Arial" }}>
@@ -1333,6 +1427,20 @@ return (
       </button>
       <button
         onClick={() => {
+          setRestaurantTab("delete-menu-item");
+          setConfirmDeleteMenuItem(false);
+          setDeleteMenuItemResponse(null);
+          setDeleteMenuItemForm((prev) => ({
+            ...prev,
+            restaurant_id: loadedRestaurant?.id ? String(loadedRestaurant.id) : prev.restaurant_id,
+          }));
+        }}
+        style={{ marginLeft: "0.5rem" }}
+      >
+        Delete Menu Item
+      </button>
+      <button
+        onClick={() => {
           setRestaurantTab("delete");
           setConfirmDeleteRestaurant(false);
         }}
@@ -1606,10 +1714,19 @@ return (
         >
           Edit This Menu Item
         </button>
+
+        <button
+      type="button"
+      onClick={() => loadMenuItemIntoDeleteForm(item)}
+      style={{ marginLeft: "0.5rem" }}
+    >
+      Delete This Menu Item
+    </button>
       </div>
     ))}
   </div>
 )}
+
   </div>
 
 
@@ -1935,6 +2052,93 @@ return (
         <p>Description: {updateMenuItemResponse.description}</p>
         <p>Status: {updateMenuItemResponse.status}</p>
         <p>Tags: {(updateMenuItemResponse.tags || []).join(", ")}</p>
+      </div>
+    )}
+  </div>
+)}
+
+{restaurantTab === "delete-menu-item" && (
+  <div>
+    <h3>Delete Menu Item</h3>
+
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        setConfirmDeleteMenuItem(true);
+      }}
+    >
+      <div>
+        <input
+          type="number"
+          min="1"
+          placeholder="Restaurant ID"
+          value={deleteMenuItemForm.restaurant_id}
+          onChange={(e) =>
+            handleDeleteMenuItemFieldChange("restaurant_id", e.target.value)
+          }
+        />
+      </div>
+
+      <div style={{ marginTop: "0.5rem" }}>
+        <input
+          placeholder="Menu Item ID"
+          value={deleteMenuItemForm.menu_item_id}
+          onChange={(e) =>
+            handleDeleteMenuItemFieldChange("menu_item_id", e.target.value)
+          }
+        />
+      </div>
+
+      <button type="submit" style={{ marginTop: "1rem" }}>
+        Select Menu Item
+      </button>
+    </form>
+
+    {(deleteMenuItemForm.restaurant_id || loadedRestaurant?.id) &&
+      deleteMenuItemForm.menu_item_id && (
+        <div style={{ marginTop: "1rem" }}>
+          {!confirmDeleteMenuItem ? (
+            <button
+              type="button"
+              onClick={() => setConfirmDeleteMenuItem(true)}
+              style={{ backgroundColor: "red", color: "white" }}
+            >
+              Delete Menu Item
+            </button>
+          ) : (
+            <div>
+              <p style={{ color: "red" }}>
+                Are you sure you want to delete this menu item?
+              </p>
+
+              <button
+                type="button"
+                onClick={handleDeleteMenuItem}
+                style={{
+                  backgroundColor: "red",
+                  color: "white",
+                  marginRight: "0.5rem",
+                }}
+              >
+                Yes, Delete
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setConfirmDeleteMenuItem(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+    {deleteMenuItemResponse?.deleted && (
+      <div style={{ marginTop: "1rem", color: "green" }}>
+        <p>Menu item deleted successfully.</p>
+        <p>Restaurant ID: {deleteMenuItemResponse.restaurant_id}</p>
+        <p>Menu Item ID: {deleteMenuItemResponse.menu_item_id}</p>
       </div>
     )}
   </div>
