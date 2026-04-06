@@ -4,7 +4,7 @@ from pathlib import Path
 import sys
 from typing import List
 import random
-from fastapi import APIRouter, Depends, Header, Query, status, HTTPException
+from fastapi import APIRouter, Depends, Header, Query, status
 from fastapi_pagination import Page, paginate
 from fastapi_pagination.utils import disable_installed_extensions_check
 from app.repositories.cart_repo import CartRepo
@@ -187,36 +187,27 @@ def browse_menu_items(restaurant_id: int,
 
     return paginate(menu_items)
 
-@restaurant_router.get("/random-meal", status_code=200)
 def get_random_meal(
     restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
     user_repo: UserRepo = Depends(create_user_repo),
     user_id: str = Header(..., alias="user-id")
 ):
-    """Get a random meal from any restaurant's menu"""
+    """
+    Get a random meal from any restaurant's menu
 
+    Args:
+        restaurant_repo: Repository for restaurant data
+        user_repo: Repository for user data
+        user_id: Current user ID from header
+
+    Returns:
+        A random menu item with restaurant info
+    """
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "browse_restaurants")
 
-    restaurants = restaurant_repo.load_all_restaurants()
-
-    all_meals = []
-    for restaurant in restaurants:
-        for meal in restaurant.get('menu', []):
-            all_meals.append({
-                'id': meal.get('id'),
-                'name': meal.get('name'),
-                'description': meal.get('description', ''),
-                'price': float(meal.get('price', 0)),
-                'tags': meal.get('tags', []),
-                'restaurant_id': restaurant.get('id'),
-                'restaurant_name': restaurant.get('name')
-            })
-
-    if not all_meals:
-        raise HTTPException(status_code=404, detail="No meals found in any restaurant")
-
-    return random.choice(all_meals)
+    restaurant_service = RestaurantServices(restaurant_repo)
+    return restaurant_service.get_random_meal()
 
 @restaurant_router.post("/{restaurant_id}/menu", response_model=MenuItem, status_code=201)
 def add_menu_item_to_menu(restaurant_id: int, payload: CreateMenuItem,
