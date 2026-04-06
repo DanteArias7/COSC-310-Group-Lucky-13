@@ -1,10 +1,9 @@
 """Service layer for managing user favorites"""
 
 from typing import Any, Dict, List, Protocol
-import uuid
-from fastapi import HTTPException
-from app.schemas.favorite import Favorite
+
 from app.services.restaurant_services import RestaurantServices
+from app.services.cart_services import CartServices
 
 # pylint: disable=too-few-public-methods
 class FavoriteServices:
@@ -12,43 +11,12 @@ class FavoriteServices:
 
     def __init__(self,
                  repo: IFavoriteRepo,
-                 restaurant_service: RestaurantServices
-                 ):
+                 restaurant_service: RestaurantServices,
+                 cart_service: CartServices):
         """Initialize instance with repo object"""
         self.repo = repo
         self.restaurant_service = restaurant_service
-
-    def add_favorite(self, payload: Favorite) -> Dict[str, Any]:
-        """
-        Adds a favorite menu item
-
-        Args:
-            payload (Favorite): The favorite to be added
-
-        Returns:
-            Dict[str, Any]: The newly added favorite
-
-        Raises:
-            HTTPException: If the item is not found
-        """
-
-        favorites = self.repo.load_all_favorites()
-
-        restaurant = self.restaurant_service.fetch_restaurant(payload.restaurant_id)
-
-        for item in restaurant.menu:
-            if item.id == payload.menu_item_id:
-                break
-
-            raise HTTPException(status_code=404, detail="Menu item not found")
-
-        new_favorite = payload.model_dump()
-        new_favorite["id"] = str(uuid.uuid4())
-
-        favorites.append(new_favorite)
-        self.repo.save_all_favorites(favorites)
-
-        return new_favorite
+        self.cart_service = cart_service
 
 class IFavoriteRepo(Protocol):
     """Favorite Repo Interface"""
