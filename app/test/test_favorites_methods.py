@@ -128,3 +128,17 @@ def test_remove_favorite_not_found(favorite_service, mocked_repo):
         favorite_service.remove_favorite("invalid-id", "00000000-0000-0000-0000-000000000002")
 
     assert exc_info.value.status_code == 404
+
+def test_add_favorite_duplicate(favorite_service, mocked_repo, favorite_payload):
+    """
+    Spec: Adding a duplicate favorite should raise 400
+    Input: valid restaurant id and menu item id that already exists in favorites.
+    Expected behavior: HTTPException with status code 400 is raised.
+    """
+
+    mocked_repo.load_all_favorites.return_value = [favorite_payload.model_dump()]
+
+    with pytest.raises(HTTPException) as exc_info:
+        favorite_service.add_favorite(favorite_payload)
+
+    assert exc_info.value.status_code == 400
