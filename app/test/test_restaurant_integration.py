@@ -1092,7 +1092,7 @@ def test_deleting_cart_item_from_cart_success(test_carts, test_users,
     """
     mock_distance = mocker.MagicMock()
     mock_distance.status_code = 200
-    mock_distance.json.return_value = {"routes": [{"distanceMeters": 1000}]}
+    mock_distance.json.return_value = {"routes": [{"distanceMeters": 100000}]}
     mocker.patch("app.services.delivery_distance_services.httpx.post",
                  return_value=mock_distance)
 
@@ -1106,9 +1106,9 @@ def test_deleting_cart_item_from_cart_success(test_carts, test_users,
 
     test_carts[0]["cart_items"] = []
     test_carts[0]["subtotal"] = 0.00
-    test_carts[0]["delivery_fee"] = 0.35
+    test_carts[0]["delivery_fee"] = 15.00
     test_carts[0]["tax"] = 0.00
-    test_carts[0]["total"] = 0.35
+    test_carts[0]["total"] = 15.00
 
     assert r.status_code == 204
     assert test_carts == carts
