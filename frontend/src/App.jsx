@@ -120,6 +120,10 @@ const [deleteMenuItemResponse, setDeleteMenuItemResponse] = useState(null);
 
 const [favorites, setFavorites] = useState([]);
 const [favoriteTab, setFavoriteTab] = useState("view");
+const [favoriteForm, setFavoriteForm] = useState({
+  restaurant_id: "",
+  menu_item_id: "",
+});
 
 const convertApiHoursToFormHours = (hoursObj) => {
   const base = emptyHoursState();
@@ -1168,6 +1172,59 @@ if (!Array.isArray(data)) {
     setError(err.message);
   }
 };
+
+const handleAddFavorite = async (e) => {
+  e.preventDefault();
+  setError("");
+
+  try {
+    const payload = {
+      id: crypto.randomUUID(),
+      user_id: user.user_id,
+      restaurant_id: Number(favoriteForm.restaurant_id),
+      menu_item_id: favoriteForm.menu_item_id,
+    };
+
+    const res = await fetch("http://127.0.0.1:8000/favorites", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "user-id": user.user_id,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      let msg = "Failed to add favorite";
+
+      if (typeof data.detail === "string") {
+        msg = data.detail;
+      } else if (Array.isArray(data.detail)) {
+        msg = data.detail.map((x) => x.msg).join(", ");
+      } else if (data.detail) {
+        msg = JSON.stringify(data.detail);
+      }
+
+      throw new Error(msg);
+    }
+
+    // ✅ success
+    setFavoriteForm({
+      restaurant_id: "",
+      menu_item_id: "",
+    });
+
+    // optional refresh
+    setFavoriteTab("view");
+    loadFavorites();
+
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  }
+};
+
 
   if(!user) {
   return (
@@ -2320,6 +2377,12 @@ return (
 }}>
   View Favorites
 </button>
+ <button
+    onClick={() => setFavoriteTab("add")}
+    style={{ marginLeft: "0.5rem" }}
+  >
+    Add Favorite
+  </button>
     </div>
 
     {favoriteTab === "view" && (
@@ -2337,6 +2400,42 @@ return (
         )}
       </div>
     )}
+
+    {favoriteTab === "add" && (
+  <div>
+    <form onSubmit={handleAddFavorite}>
+      <div>
+        <input
+          placeholder="Restaurant ID"
+          value={favoriteForm.restaurant_id}
+          onChange={(e) =>
+            setFavoriteForm({
+              ...favoriteForm,
+              restaurant_id: e.target.value,
+            })
+          }
+        />
+      </div>
+
+      <div style={{ marginTop: "0.5rem" }}>
+        <input
+          placeholder="Menu Item ID"
+          value={favoriteForm.menu_item_id}
+          onChange={(e) =>
+            setFavoriteForm({
+              ...favoriteForm,
+              menu_item_id: e.target.value,
+            })
+          }
+        />
+      </div>
+
+      <button type="submit" style={{ marginTop: "1rem" }}>
+        Add Favorite
+      </button>
+    </form>
+  </div>
+)}
   </div>
 )}
             {tab === "notifications" && (
