@@ -6,7 +6,6 @@ from app.routers.restaurant import restaurant_router
 from app.routers.order import order_router
 from app.routers.notification_router import notification_router
 from app.routers.login import login_router
-from app.routers.favorite_router import favorite_router
 app = FastAPI()
 
 app.include_router(user_router)
@@ -14,6 +13,5 @@ app.include_router(restaurant_router)
 app.include_router(order_router)
 app.include_router(notification_router)
 app.include_router(login_router)
-app.include_router(favorite_router)
 
 add_pagination(app)

@@ -23,9 +23,7 @@
         "price": 12.99,
         "tags": ["vegan"]
       }
-    ],
-    "average_rating": null,
-    "ratings": []
+    ]
   },
   {
     "id": 102,
@@ -51,8 +49,6 @@
         "price": 10.50,
         "tags": ["burger"]
       }
-    ],
-    "average_rating": null,
-    "ratings": []
+    ]
   }
 ]
