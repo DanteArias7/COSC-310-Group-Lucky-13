@@ -3,7 +3,6 @@
 from pathlib import Path
 import sys
 from typing import List
-import random
 from fastapi import APIRouter, Depends, Header, Query, status
 from fastapi_pagination import Page, paginate
 from fastapi_pagination.utils import disable_installed_extensions_check
@@ -15,7 +14,9 @@ from app.schemas.rating import CreateRating, Rating
 from app.schemas.restaurant import Restaurant, UpdateRestaurant, RestaurantCreate, RestaurantResult
 from app.services.authorization_services import AuthorizationServices
 from app.services.cart_services import CartServices
+from app.services.delivery_distance_services import DeliveryDistanceServices, GOOGLE_MAPS_API_KEY
 from app.services.order_services import OrderServices
+from app.services.user_services import UserServices
 from app.services.restaurant_services import RestaurantServices
 from app.repositories.restaurant_repo import RestaurantRepo
 from app.routers.user import USER_DATA_PATH
@@ -252,33 +253,53 @@ def add_user_cart_for_a_resataurant(restaurant_id: int,
 @restaurant_router.delete("/{restaurant_id}/cart/{cart_id}/" \
                         "{menu_item_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_menu_item_from_cart(cart_id: str, menu_item_id: str,
-                        restaurant_repo: CartRepo=Depends(create_cart_repo),
+                        cart_repo: CartRepo = Depends(create_cart_repo),
+                        restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
                         user_repo: UserRepo = Depends(create_user_repo),
                         user_id: str  = Header(..., alias="user-id")):
     """Delate a menu item from a users cart"""
-    cart_service = CartServices(restaurant_repo)
+    cart_service = CartServices(cart_repo)
+    restaurant_service = RestaurantServices(restaurant_repo)
+    user_service = UserServices(user_repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "manage_own_cart")
     authorization_service.authorize_access(user_id, cart_service.fetch_cart(cart_id).user_id)
     cart_service.remove_item_from_cart(cart_id, menu_item_id)
-    temp_dist = random.uniform(1.00, 20.00)
-    return cart_service.calculate_cart(cart_id, temp_dist)
+    cart = cart_service.fetch_cart(cart_id)
+
+    customer_address = user_service.get_user_by_id(user_id).address
+    restaurant_address = restaurant_service.fetch_restaurant(cart.restaurant_id).address
+
+    distance_km = DeliveryDistanceServices(api_key=GOOGLE_MAPS_API_KEY).get_distance_km(
+        restaurant_address, customer_address)
+
+    return cart_service.calculate_cart(cart_id, distance_km)
 
 @restaurant_router.post("/{restaurant_id}/cart/{cart_id}",
                         status_code=status.HTTP_201_CREATED)
 def add_menu_item_to_cart(cart_id: str,
                           payload: MenuItem,
-                          repo: CartRepo = Depends(create_cart_repo),
+                          cart_repo: CartRepo = Depends(create_cart_repo),
+                          restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
                           user_repo: UserRepo = Depends(create_user_repo),
                           user_id: str = Header(..., alias="user-id")):
     """Add a menu item to a user's cart"""
-    cart_service = CartServices(repo)
+    cart_service = CartServices(cart_repo)
+    restaurant_service = RestaurantServices(restaurant_repo)
+    user_service = UserServices(user_repo)
     authorization_service = AuthorizationServices(user_repo)
     authorization_service.authorize(user_id, "manage_own_cart")
     authorization_service.authorize_access(user_id, cart_service.fetch_cart(cart_id).user_id)
     cart_service.add_item_to_cart(cart_id, payload)
-    temp_dist = random.uniform(1.00, 20.00)
-    return cart_service.calculate_cart(cart_id, temp_dist)
+    cart = cart_service.fetch_cart(cart_id)
+
+    customer_address = user_service.get_user_by_id(user_id).address
+    restaurant_address = restaurant_service.fetch_restaurant(cart.restaurant_id).address
+
+    distance_km = DeliveryDistanceServices(api_key=GOOGLE_MAPS_API_KEY).get_distance_km(
+        restaurant_address, customer_address)
+
+    return cart_service.calculate_cart(cart_id, distance_km)
 
 @restaurant_router.post("/{restaurant_id}/rate", response_model=Rating,
                         status_code=status.HTTP_201_CREATED)
