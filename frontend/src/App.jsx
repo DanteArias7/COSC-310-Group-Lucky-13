@@ -57,6 +57,16 @@ export default function App() {
   ],
 });
 
+const [menuItemResponse, setMenuItemResponse] = useState(null);
+
+const [addMenuItemForm, setAddMenuItemForm] = useState({
+  restaurant_id: "",
+  name: "",
+  price: "",
+  description: "",
+  tags: "",
+});
+
 const [restaurantIdInput, setRestaurantIdInput] = useState("");
 const [loadedRestaurant, setLoadedRestaurant] = useState(null);
 
@@ -779,6 +789,102 @@ const handleDeleteRestaurant = async () => {
   }
 };
 
+const handleAddMenuItemFieldChange = (field, value) => {
+  setAddMenuItemForm((prev) => ({
+    ...prev,
+    [field]: value,
+  }));
+};
+
+const handleAddMenuItemToRestaurant = async (e) => {
+  e.preventDefault();
+  setError("");
+  setMenuItemResponse(null);
+
+  const restaurantId = addMenuItemForm.restaurant_id || loadedRestaurant?.id;
+
+  if (!restaurantId) {
+    return setError("Restaurant ID is required");
+  }
+
+  if (!addMenuItemForm.name.trim()) {
+    return setError("Menu item name is required");
+  }
+
+  const price = Number(addMenuItemForm.price);
+
+  if (addMenuItemForm.price === "" || isNaN(price)) {
+    return setError("Menu item price must be valid");
+  }
+
+  if (price < 0) {
+    return setError("Price cannot be negative");
+  }
+
+  if (!addMenuItemForm.description.trim()) {
+    return setError("Menu item description is required");
+  }
+
+  const payload = {
+    name: addMenuItemForm.name.trim(),
+    price,
+    description: addMenuItemForm.description.trim(),
+    tags: addMenuItemForm.tags
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean),
+  };
+
+  try {
+    const res = await fetch(
+      `http://127.0.0.1:8000/restaurants/${restaurantId}/menu`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.user_id,
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      let msg = "Failed to add menu item";
+
+      if (typeof data.detail === "string") {
+        msg = data.detail;
+      } else if (Array.isArray(data.detail)) {
+        msg = data.detail.map((x) => x.msg).join(", ");
+      } else if (data.detail) {
+        msg = JSON.stringify(data.detail);
+      }
+
+      throw new Error(msg);
+    }
+
+    setMenuItemResponse(data);
+
+    setAddMenuItemForm({
+      restaurant_id: restaurantId.toString(),
+      name: "",
+      price: "",
+      description: "",
+      tags: "",
+    });
+
+    if (loadedRestaurant) {
+      setLoadedRestaurant({
+        ...loadedRestaurant,
+        menu: [...(loadedRestaurant.menu || []), data],
+      });
+    }
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  }
+};
+
   if(!user) {
   return (
     <div style={{ padding: "2rem", fontFamily: "Arial" }}>
@@ -1080,6 +1186,19 @@ return (
       >
         Update Restaurant
       </button>
+      <button
+        onClick={() => {
+          setRestaurantTab("add-menu-item");
+          setAddMenuItemForm((prev) => ({
+            ...prev,
+            restaurant_id: loadedRestaurant?.id ? String(loadedRestaurant.id) : prev.restaurant_id,
+          }));
+        }}
+        style={{ marginLeft: "0.5rem" }}
+      >
+        Add Menu Item
+      </button>
+
       <button
         onClick={() => {
           setRestaurantTab("delete");
@@ -1468,6 +1587,90 @@ return (
           Update Restaurant
         </button>
       </form>
+    )}
+  </div>
+)}
+
+{restaurantTab === "add-menu-item" && (
+  <div>
+    <h3>Add Menu Item</h3>
+
+    <form onSubmit={handleAddMenuItemToRestaurant}>
+      <div>
+        <input
+          type="number"
+          min="1"
+          placeholder="Restaurant ID"
+          value={addMenuItemForm.restaurant_id}
+          onChange={(e) =>
+            handleAddMenuItemFieldChange("restaurant_id", e.target.value)
+          }
+        />
+      </div>
+
+      <div style={{ marginTop: "0.5rem" }}>
+        <input
+          placeholder="Menu item name"
+          value={addMenuItemForm.name}
+          onChange={(e) =>
+            handleAddMenuItemFieldChange("name", e.target.value)
+          }
+        />
+      </div>
+
+      <div style={{ marginTop: "0.5rem" }}>
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          placeholder="Price"
+          value={addMenuItemForm.price}
+          onKeyDown={(e) => {
+            if (e.key === "-" || e.key === "e") e.preventDefault();
+          }}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (Number(value) < 0) return;
+            handleAddMenuItemFieldChange("price", value);
+          }}
+        />
+      </div>
+
+      <div style={{ marginTop: "0.5rem" }}>
+        <input
+          placeholder="Description"
+          value={addMenuItemForm.description}
+          onChange={(e) =>
+            handleAddMenuItemFieldChange("description", e.target.value)
+          }
+        />
+      </div>
+
+      <div style={{ marginTop: "0.5rem" }}>
+        <input
+          placeholder="Tags (comma separated)"
+          value={addMenuItemForm.tags}
+          onChange={(e) =>
+            handleAddMenuItemFieldChange("tags", e.target.value)
+          }
+        />
+      </div>
+
+      <button type="submit" style={{ marginTop: "1rem" }}>
+        Add Menu Item
+      </button>
+    </form>
+
+    {menuItemResponse && (
+      <div style={{ marginTop: "1rem", color: "green" }}>
+        <p>Menu item added successfully.</p>
+        <p>ID: {menuItemResponse.id}</p>
+        <p>Name: {menuItemResponse.name}</p>
+        <p>Price: {menuItemResponse.price}</p>
+        <p>Description: {menuItemResponse.description}</p>
+        <p>Status: {menuItemResponse.status}</p>
+        <p>Tags: {(menuItemResponse.tags || []).join(", ")}</p>
+      </div>
     )}
   </div>
 )}
