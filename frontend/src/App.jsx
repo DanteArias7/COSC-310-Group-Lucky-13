@@ -1225,6 +1225,43 @@ const handleAddFavorite = async (e) => {
   }
 };
 
+const handleDeleteFavorite = async (favoriteId) => {
+  setError("");
+
+  try {
+    const res = await fetch(
+      `http://127.0.0.1:8000/favorites/${favoriteId}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.user_id,
+        },
+      }
+    );
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+
+      let msg = "Delete failed";
+
+      if (typeof data?.detail === "string") {
+        msg = data.detail;
+      } else if (Array.isArray(data?.detail)) {
+        msg = data.detail.map((x) => x.msg).join(", ");
+      } else if (data?.detail) {
+        msg = JSON.stringify(data.detail);
+      }
+
+      throw new Error(msg);
+    }
+
+    loadFavorites();
+
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  }
+};
 
   if(!user) {
   return (
@@ -2383,6 +2420,15 @@ return (
   >
     Add Favorite
   </button>
+  <button
+  onClick={() => {
+    setFavoriteTab("delete");
+    loadFavorites(); // load list to choose from
+  }}
+  style={{ marginLeft: "0.5rem" }}
+>
+  Delete Favorite
+</button>
     </div>
 
     {favoriteTab === "view" && (
@@ -2434,6 +2480,41 @@ return (
         Add Favorite
       </button>
     </form>
+  </div>
+)}
+{favoriteTab === "delete" && (
+  <div>
+    <h3>Delete Favorite</h3>
+
+    {favorites.length === 0 ? (
+      <p>No favorites to delete.</p>
+    ) : (
+      favorites.map((fav) => (
+        <div
+          key={fav.id}
+          style={{
+            border: "1px solid #ccc",
+            padding: "0.5rem",
+            marginTop: "0.5rem",
+          }}
+        >
+          <p>ID: {fav.id}</p>
+          <p>Restaurant: {fav.restaurant_name}</p>
+          <p>Menu Item: {fav.menu_item_name}</p>
+
+          <button
+            onClick={() => handleDeleteFavorite(fav.id)}
+            style={{
+              backgroundColor: "red",
+              color: "white",
+              marginTop: "0.5rem",
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      ))
+    )}
   </div>
 )}
   </div>
