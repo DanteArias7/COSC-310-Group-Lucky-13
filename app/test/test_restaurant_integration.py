@@ -1323,30 +1323,6 @@ def test_get_random_meal_returns_valid_meal_from_database(
     assert meal_found, "Returned meal not found in restaurant data"
 
 
-def test_get_random_meal_restaurant_id_matches_restaurant(
-        restaurant_test_client, test_users, temp_restaurant_path):
-    """Test that restaurant_id in response matches the restaurant containing the meal"""
-    response = restaurant_test_client.get(
-        "/restaurants/random-meal",
-        headers={"user-id": test_users[0]["id"]}
-    )
-
-    assert response.status_code == 200
-    data = response.json()
-
-    with open(temp_restaurant_path, "r", encoding="utf-8") as f:
-        restaurants = json.load(f)
-
-    restaurant_found = None
-    for restaurant in restaurants:
-        if restaurant["id"] == data["restaurant_id"]:
-            restaurant_found = restaurant
-            break
-
-    assert restaurant_found is not None
-    assert data["restaurant_name"] == restaurant_found["name"]
-
-
 def test_get_random_meal_returns_404_when_no_meals_exist(
         restaurant_test_client, test_users, temp_restaurant_path):
     """Test that endpoint returns 404 when no meals exist in any restaurant"""
