@@ -118,6 +118,9 @@ const [deleteMenuItemForm, setDeleteMenuItemForm] = useState({
 
 const [deleteMenuItemResponse, setDeleteMenuItemResponse] = useState(null);
 
+const [favorites, setFavorites] = useState([]);
+const [favoriteTab, setFavoriteTab] = useState("view");
+
 const convertApiHoursToFormHours = (hoursObj) => {
   const base = emptyHoursState();
 
@@ -218,6 +221,7 @@ const convertFormHoursToApiHours = (hoursObj) =>
 
       setResponse(data);
       setUser(data)
+      setFavorites([]);
       setTab("home");
 
     } catch (err) {
@@ -1100,6 +1104,71 @@ const loadMenuItemIntoDeleteForm = (menuItem) => {
   setRestaurantTab("delete-menu-item");
 };
 
+const getMenuItemName = async (restaurantId, menuItemId) => {
+  const res = await fetch(`http://127.0.0.1:8000/restaurants/${restaurantId}`, {
+    headers: {
+      "Content-Type": "application/json",
+      "user-id": user.user_id,
+    },
+  });
+
+  const data = await res.json();
+
+  const item = data.menu.find((i) => i.id === menuItemId);
+  return item ? item.name : "Unknown item";
+};
+
+const loadFavorites = async () => {
+  setFavorites([]);
+  try {
+    const res = await fetch("http://127.0.0.1:8000/favorites", {
+      headers: {
+        "Content-Type": "application/json",
+        "user-id": user.user_id,
+      },
+    });
+
+    const data = await res.json();
+
+if (!Array.isArray(data)) {
+  setFavorites([]);
+  return;
+}
+
+
+
+    const enriched = await Promise.all(
+      data.map(async (fav) => {
+        const res = await fetch(
+          `http://127.0.0.1:8000/restaurants/${fav.restaurant_id}`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              "user-id": user.user_id,
+            },
+          }
+        );
+
+        const restaurant = await res.json();
+
+        const item = restaurant.menu.find(
+          (i) => i.id === fav.menu_item_id
+        );
+
+        return {
+          ...fav,
+          menu_item_name: item?.name || "Unknown",
+          restaurant_name: restaurant.name || "Unknown",
+        };
+      })
+    );
+
+    setFavorites(enriched);
+  } catch (err) {
+    setError(err.message);
+  }
+};
+
   if(!user) {
   return (
     <div style={{ padding: "2rem", fontFamily: "Arial" }}>
@@ -1259,6 +1328,19 @@ return (
               Manage Restaurants
             </button>
           )}
+
+           {user.role === "customer" && (
+  <button
+    onClick={() => {
+      setTab("favorites");
+      setFavoriteTab(null);
+      setFavorites([]);
+    }}
+    style={{ marginLeft: "0.5rem" }}
+  >
+    Favorites
+  </button>
+)}
 
           <button
           onClick={() => setTab("notifications")}
@@ -2224,6 +2306,37 @@ return (
     )}
   </div>
 )}
+  </div>
+)}
+{tab === "favorites" && (
+  <div>
+    <h2>Favorites</h2>
+
+    {/* Sub-tab button */}
+    <div style={{ marginBottom: "1rem" }}>
+     <button onClick={() => {
+  setFavoriteTab("view");
+  loadFavorites(); // ← move it here
+}}>
+  View Favorites
+</button>
+    </div>
+
+    {favoriteTab === "view" && (
+      <div>
+        {favorites.length === 0 ? (
+          <p>No favorites yet.</p>
+        ) : (
+          favorites.map((fav) => (
+            <div key={fav.id}>
+              <p>ID: {fav.id}</p>
+              <p>Restaurant: {fav.restaurant_name}</p>
+              <p>Menu Item: {fav.menu_item_name}</p>
+            </div>
+          ))
+        )}
+      </div>
+    )}
   </div>
 )}
             {tab === "notifications" && (
