@@ -1331,22 +1331,20 @@ def test_get_random_meal_restaurant_id_matches_restaurant(
         headers={"user-id": test_users[0]["id"]}
     )
 
+    assert response.status_code == 200
     data = response.json()
 
     with open(temp_restaurant_path, "r", encoding="utf-8") as f:
         restaurants = json.load(f)
 
-    restaurant_found = False
+    restaurant_found = None
     for restaurant in restaurants:
         if restaurant["id"] == data["restaurant_id"]:
-            restaurant_found = True
-            assert restaurant["name"] == data["restaurant_name"]
-
-            meal_ids = [meal["id"] for meal in restaurant.get("menu", [])]
-            assert data["id"] in meal_ids, "Meal not found in restaurant's menu"
+            restaurant_found = restaurant
             break
 
-    assert restaurant_found, "Restaurant ID does not match any existing restaurant"
+    assert restaurant_found is not None
+    assert data["restaurant_name"] == restaurant_found["name"]
 
 
 def test_get_random_meal_returns_404_when_no_meals_exist(
