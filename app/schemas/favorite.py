@@ -2,7 +2,6 @@
 
 from pydantic import BaseModel
 
-
 class Favorite(BaseModel):
     """Favorite entity."""
     id: str
