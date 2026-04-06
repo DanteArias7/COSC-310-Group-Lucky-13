@@ -188,6 +188,20 @@ const convertFormHoursToApiHours = (hoursObj) =>
 
   const timeOptions = generateTimeOptions();
 
+  const [browseMenuData, setBrowseMenuData] = useState({
+  items: [],
+  total: 0,
+  page: 1,
+  size: 50,
+  pages: 1,
+});
+
+const [browseMenuSearch, setBrowseMenuSearch] = useState("");
+const [browseMenuTagsInput, setBrowseMenuTagsInput] = useState("");
+const [browseMenuPriceMin, setBrowseMenuPriceMin] = useState("");
+const [browseMenuPriceMax, setBrowseMenuPriceMax] = useState("");
+const [browseMenuLoading, setBrowseMenuLoading] = useState(false);
+
   useEffect(() => {
       if (!user) return; // only start after login
 
@@ -1347,6 +1361,7 @@ const loadBrowseRestaurants = async (page = 1) => {
   }
 };
 
+
 const loadBrowseRestaurantDetails = async (restaurantId) => {
   if (!user) return;
 
@@ -1354,6 +1369,18 @@ const loadBrowseRestaurantDetails = async (restaurantId) => {
   setCartResponse(null);
   setCartMessage("");
   setBrowseDetailLoading(true);
+
+  setBrowseMenuData({
+    items: [],
+    total: 0,
+    page: 1,
+    size: 50,
+    pages: 1,
+  });
+  setBrowseMenuSearch("");
+  setBrowseMenuTagsInput("");
+  setBrowseMenuPriceMin("");
+  setBrowseMenuPriceMax("");
 
   try {
     const res = await fetch(`http://127.0.0.1:8000/restaurants/${restaurantId}`, {
@@ -1381,6 +1408,7 @@ const loadBrowseRestaurantDetails = async (restaurantId) => {
     }
 
     setSelectedBrowseRestaurant(data);
+    await loadBrowseRestaurantMenu(restaurantId, 1);
   } catch (err) {
     setError(err.message || "Something went wrong");
   } finally {
@@ -1432,7 +1460,7 @@ const handleStartCart = async (restaurantId) => {
   }
 };
 
-// === ADD THIS near your other handler functions ===
+
 const handleAddItemToCart = async (menuItem) => {
   if (!user || user.role !== "customer") return;
 
@@ -1529,8 +1557,6 @@ const handleRemoveItemFromCart = async (menuItemId) => {
       throw new Error(msg);
     }
 
-    // Backend succeeded, so mirror its behavior locally:
-    // decrease quantity by 1, and remove only when quantity becomes 0
     setCartResponse((prev) => {
       if (!prev) return prev;
 
@@ -1560,8 +1586,7 @@ const handleRemoveItemFromCart = async (menuItemId) => {
         return sum + price * qty;
       }, 0);
 
-      // Keep existing fee/tax values since backend recalculates them randomly
-      // and does not return a body with 204.
+
       const deliveryFee = Number(prev.delivery_fee || 0);
       const taxRate = subtotal > 0 && Number(prev.subtotal || 0) > 0
         ? Number(prev.tax || 0) / Number(prev.subtotal || 1)
@@ -1583,6 +1608,76 @@ const handleRemoveItemFromCart = async (menuItemId) => {
     setError(err.message || "Something went wrong");
   } finally {
     setRemoveFromCartLoading(false);
+  }
+};
+
+const loadBrowseRestaurantMenu = async (restaurantId, page = 1) => {
+  if (!user) return;
+
+  setError("");
+  setBrowseMenuLoading(true);
+
+  try {
+    const params = new URLSearchParams();
+    params.append("page", String(page));
+
+    if (browseMenuSearch.trim()) {
+      params.append("search", browseMenuSearch.trim());
+    }
+
+    if (browseMenuPriceMin !== "") {
+      params.append("price_min", String(browseMenuPriceMin));
+    }
+
+    if (browseMenuPriceMax !== "") {
+      params.append("price_max", String(browseMenuPriceMax));
+    }
+
+    const tagList = browseMenuTagsInput
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+
+    tagList.forEach((tag) => params.append("tags", tag));
+
+    const res = await fetch(
+      `http://127.0.0.1:8000/restaurants/${restaurantId}/menu?${params.toString()}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.user_id,
+        },
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      let msg = "Failed to load restaurant menu";
+
+      if (typeof data.detail === "string") {
+        msg = data.detail;
+      } else if (Array.isArray(data.detail)) {
+        msg = data.detail.map((x) => x.msg).join(", ");
+      } else if (data.detail) {
+        msg = JSON.stringify(data.detail);
+      }
+
+      throw new Error(msg);
+    }
+
+    setBrowseMenuData({
+      items: data.items || [],
+      total: data.total || 0,
+      page: data.page || 1,
+      size: data.size || 50,
+      pages: data.pages || 1,
+    });
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  } finally {
+    setBrowseMenuLoading(false);
   }
 };
 
@@ -2999,49 +3094,159 @@ return (
                 </p>
               ))}
 
-              <h4 style={{ marginTop: "1rem" }}>Menu</h4>
-                {selectedBrowseRestaurant.menu?.length > 0 ? (
-                  selectedBrowseRestaurant.menu.map((item) => (
-                    <div
-                      key={item.id}
-                      style={{
-                        border: "1px solid #ccc",
-                        padding: "0.75rem",
-                        marginTop: "0.5rem",
-                      }}
-                    >
-                      <p><strong>ID:</strong> {item.id}</p>
-                      <p><strong>Name:</strong> {item.name}</p>
-                      <p><strong>Price:</strong> {item.price}</p>
-                      <p><strong>Description:</strong> {item.description}</p>
-                      <p><strong>Status:</strong> {item.status}</p>
-                      <p><strong>Tags:</strong> {(item.tags || []).join(", ")}</p>
+              <h4 style={{ marginTop: "1rem" }}>Browse Menu</h4>
 
-                      {/* === ADD THIS button inside each menu item card === */}
-                      <button
-                        type="button"
-                        disabled={
-                          addToCartLoading ||
-                          !cartResponse ||
-                          String(cartResponse.restaurant_id) !== String(selectedBrowseRestaurant.id)
-                        }
-                        onClick={() => handleAddItemToCart(item)}
-                        style={{ marginTop: "0.5rem" }}
-                      >
-                        Add To Cart
-                      </button>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  loadBrowseRestaurantMenu(selectedBrowseRestaurant.id, 1);
+                }}
+                style={{ marginBottom: "1rem" }}
+              >
+                <div>
+                  <input
+                    placeholder="Search menu items"
+                    value={browseMenuSearch}
+                    onChange={(e) => setBrowseMenuSearch(e.target.value)}
+                  />
+                </div>
 
-                      {!cartResponse ||
-                      String(cartResponse.restaurant_id) !== String(selectedBrowseRestaurant.id) ? (
-                        <p style={{ marginTop: "0.5rem", color: "gray" }}>
-                          Start a cart first before adding items.
-                        </p>
-                      ) : null}
-                    </div>
-                  ))
-                ) : (
-                  <p>No menu items.</p>
-                )}
+                <div style={{ marginTop: "0.5rem" }}>
+                  <input
+                    placeholder="Min price"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={browseMenuPriceMin}
+                    onChange={(e) => setBrowseMenuPriceMin(e.target.value)}
+                  />
+                </div>
+
+                <div style={{ marginTop: "0.5rem" }}>
+                  <input
+                    placeholder="Max price"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={browseMenuPriceMax}
+                    onChange={(e) => setBrowseMenuPriceMax(e.target.value)}
+                  />
+                </div>
+
+                <div style={{ marginTop: "0.5rem" }}>
+                  <input
+                    placeholder="Menu tags (comma separated)"
+                    value={browseMenuTagsInput}
+                    onChange={(e) => setBrowseMenuTagsInput(e.target.value)}
+                  />
+                </div>
+
+                <button type="submit" style={{ marginTop: "1rem" }}>
+                  Filter Menu
+                </button>
+
+                <button
+                  type="button"
+                  style={{ marginTop: "1rem", marginLeft: "0.5rem" }}
+                  onClick={() => {
+                    setBrowseMenuSearch("");
+                    setBrowseMenuTagsInput("");
+                    setBrowseMenuPriceMin("");
+                    setBrowseMenuPriceMax("");
+                    setBrowseMenuData({
+                      items: [],
+                      total: 0,
+                      page: 1,
+                      size: 50,
+                      pages: 1,
+                    });
+                    setTimeout(() => loadBrowseRestaurantMenu(selectedBrowseRestaurant.id, 1), 0);
+                  }}
+                >
+                  Clear Menu Filters
+                </button>
+              </form>
+
+    <h4 style={{ marginTop: "1rem" }}>Menu</h4>
+
+    {browseMenuLoading ? (
+      <p>Loading menu...</p>
+    ) : browseMenuData.items.length > 0 ? (
+      <div>
+        <p>
+          Showing menu page {browseMenuData.page} of {browseMenuData.pages} ({browseMenuData.total} total)
+        </p>
+
+        {browseMenuData.items.map((item) => (
+          <div
+            key={item.id}
+            style={{
+              border: "1px solid #ccc",
+              padding: "0.75rem",
+              marginTop: "0.5rem",
+            }}
+          >
+            <p><strong>ID:</strong> {item.id}</p>
+            <p><strong>Name:</strong> {item.name}</p>
+            <p><strong>Price:</strong> {item.price}</p>
+            <p><strong>Description:</strong> {item.description}</p>
+            <p><strong>Status:</strong> {item.status}</p>
+            <p><strong>Tags:</strong> {(item.tags || []).join(", ")}</p>
+
+            <button
+              type="button"
+              disabled={
+                addToCartLoading ||
+                !cartResponse ||
+                String(cartResponse.restaurant_id) !== String(selectedBrowseRestaurant.id)
+              }
+              onClick={() => handleAddItemToCart(item)}
+              style={{ marginTop: "0.5rem" }}
+            >
+              Add To Cart
+            </button>
+
+            {!cartResponse ||
+            String(cartResponse.restaurant_id) !== String(selectedBrowseRestaurant.id) ? (
+              <p style={{ marginTop: "0.5rem", color: "gray" }}>
+                Start a cart first before adding items.
+              </p>
+            ) : null}
+          </div>
+        ))}
+
+        <div style={{ marginTop: "1rem" }}>
+          <button
+            type="button"
+            disabled={browseMenuData.page <= 1}
+            onClick={() =>
+              loadBrowseRestaurantMenu(
+                selectedBrowseRestaurant.id,
+                browseMenuData.page - 1
+              )
+            }
+          >
+            Previous Menu Page
+          </button>
+
+          <button
+            type="button"
+            style={{ marginLeft: "0.5rem" }}
+            disabled={browseMenuData.page >= browseMenuData.pages}
+            onClick={() =>
+              loadBrowseRestaurantMenu(
+                selectedBrowseRestaurant.id,
+                browseMenuData.page + 1
+              )
+            }
+          >
+            Next Menu Page
+          </button>
+        </div>
+      </div>
+    ) : (
+      <p>No menu items found.</p>
+    )}
 
               <h4 style={{ marginTop: "1rem" }}>Ratings</h4>
               {selectedBrowseRestaurant.ratings?.length > 0 ? (
