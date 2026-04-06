@@ -125,6 +125,21 @@ const [favoriteForm, setFavoriteForm] = useState({
   menu_item_id: "",
 });
 
+const [browseData, setBrowseData] = useState({
+  items: [],
+  total: 0,
+  page: 1,
+  size: 50,
+  pages: 1,
+});
+
+const [browseSearch, setBrowseSearch] = useState("");
+const [browseTagsInput, setBrowseTagsInput] = useState("");
+const [browseLoading, setBrowseLoading] = useState(false);
+
+const [selectedBrowseRestaurant, setSelectedBrowseRestaurant] = useState(null);
+const [browseDetailLoading, setBrowseDetailLoading] = useState(false);
+
 const convertApiHoursToFormHours = (hoursObj) => {
   const base = emptyHoursState();
 
@@ -1263,6 +1278,107 @@ const handleDeleteFavorite = async (favoriteId) => {
   }
 };
 
+const loadBrowseRestaurants = async (page = 1) => {
+  if (!user || user.role !== "customer") return;
+
+  setError("");
+  setBrowseLoading(true);
+
+  try {
+    const params = new URLSearchParams();
+    params.append("page", String(page));
+
+    if (browseSearch.trim()) {
+      params.append("search", browseSearch.trim());
+    }
+
+    const tagList = browseTagsInput
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+
+    tagList.forEach((tag) => params.append("tags", tag));
+
+    const res = await fetch(
+      `http://127.0.0.1:8000/restaurants/browse?${params.toString()}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.user_id,
+        },
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      let msg = "Failed to browse restaurants";
+
+      if (typeof data.detail === "string") {
+        msg = data.detail;
+      } else if (Array.isArray(data.detail)) {
+        msg = data.detail.map((x) => x.msg).join(", ");
+      } else if (data.detail) {
+        msg = JSON.stringify(data.detail);
+      }
+
+      throw new Error(msg);
+    }
+
+    setBrowseData({
+      items: data.items || [],
+      total: data.total || 0,
+      page: data.page || 1,
+      size: data.size || 50,
+      pages: data.pages || 1,
+    });
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  } finally {
+    setBrowseLoading(false);
+  }
+};
+
+const loadBrowseRestaurantDetails = async (restaurantId) => {
+  if (!user) return;
+
+  setError("");
+  setBrowseDetailLoading(true);
+
+  try {
+    const res = await fetch(`http://127.0.0.1:8000/restaurants/${restaurantId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "user-id": user.user_id,
+      },
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      let msg = "Failed to load restaurant details";
+
+      if (typeof data.detail === "string") {
+        msg = data.detail;
+      } else if (Array.isArray(data.detail)) {
+        msg = data.detail.map((x) => x.msg).join(", ");
+      } else if (data.detail) {
+        msg = JSON.stringify(data.detail);
+      }
+
+      throw new Error(msg);
+    }
+
+    setSelectedBrowseRestaurant(data);
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  } finally {
+    setBrowseDetailLoading(false);
+  }
+};
+
   if(!user) {
   return (
     <div style={{ padding: "2rem", fontFamily: "Arial" }}>
@@ -1423,18 +1539,31 @@ return (
             </button>
           )}
 
-           {user.role === "customer" && (
-  <button
-    onClick={() => {
-      setTab("favorites");
-      setFavoriteTab(null);
-      setFavorites([]);
-    }}
-    style={{ marginLeft: "0.5rem" }}
-  >
-    Favorites
-  </button>
-)}
+            {user.role === "customer" && (
+            <button
+            onClick={() => {
+              setTab("browse");
+              setSelectedBrowseRestaurant(null);
+              loadBrowseRestaurants(1);
+            }}
+            style={{ marginLeft: "0.5rem" }}
+          >
+            Browse Restaurants
+          </button>
+          )}
+
+            {user.role === "customer" && (
+          <button
+          onClick={() => {
+          setTab("favorites");
+          setFavoriteTab(null);
+          setFavorites([]);
+          }}
+          style={{ marginLeft: "0.5rem" }}
+          >
+          Favorites
+          </button>
+          )}
 
           <button
           onClick={() => setTab("notifications")}
@@ -2519,6 +2648,194 @@ return (
 )}
   </div>
 )}
+
+      {tab === "browse" && user.role === "customer" && (
+        <div>
+          <h2>Browse Restaurants</h2>
+
+          <form
+            onSubmit={(e) => {
+            e.preventDefault();
+            setSelectedBrowseRestaurant(null);
+            loadBrowseRestaurants(1);
+          }}
+            style={{ marginBottom: "1rem" }}
+          >
+            <div>
+              <input
+                placeholder="Search by restaurant name"
+                value={browseSearch}
+                onChange={(e) => setBrowseSearch(e.target.value)}
+              />
+            </div>
+
+            <div style={{ marginTop: "0.5rem" }}>
+              <input
+                placeholder="Tags (comma separated)"
+                value={browseTagsInput}
+                onChange={(e) => setBrowseTagsInput(e.target.value)}
+              />
+            </div>
+
+            <button type="submit" style={{ marginTop: "1rem" }}>
+              Search
+            </button>
+
+            <button
+              type="button"
+              style={{ marginTop: "1rem", marginLeft: "0.5rem" }}
+              onClick={() => {
+              setBrowseSearch("");
+              setBrowseTagsInput("");
+              setSelectedBrowseRestaurant(null);
+              setBrowseData({
+                items: [],
+                total: 0,
+                page: 1,
+                size: 50,
+                pages: 1,
+              });
+              loadBrowseRestaurants(1);
+            }}
+            >
+              Clear Filters
+            </button>
+          </form>
+
+          {browseLoading ? (
+            <p>Loading restaurants...</p>
+          ) : browseData.items.length === 0 ? (
+            <p>No restaurants found.</p>
+          ) : (
+            <div>
+              <p>
+                Showing page {browseData.page} of {browseData.pages} ({browseData.total} total)
+              </p>
+
+              {browseData.items.map((restaurant) => (
+                <div
+                  key={restaurant.id}
+                  onClick={() => loadBrowseRestaurantDetails(restaurant.id)}
+                  style={{
+                    border: "1px solid #ccc",
+                    padding: "1rem",
+                    marginTop: "0.75rem",
+                    cursor: "pointer",
+                  }}
+                >
+                  <p><strong>ID:</strong> {restaurant.id}</p>
+                  <p><strong>Name:</strong> {restaurant.name}</p>
+                  <p><strong>Address:</strong> {restaurant.address}</p>
+                  <p><strong>Today's Hours:</strong> {restaurant.todays_hours}</p>
+                  <p><strong>Tags:</strong> {(restaurant.tags || []).join(", ")}</p>
+                  <p>
+                    <strong>Average Rating:</strong>{" "}
+                    {restaurant.average_rating ?? "No ratings yet"}
+                  </p>
+                  <p style={{ marginTop: "0.5rem", color: "blue" }}>
+                    Click to view full restaurant details
+                  </p>
+                </div>
+              ))}
+
+              <div style={{ marginTop: "1rem" }}>
+                <button
+                  type="button"
+                  disabled={browseData.page <= 1}
+                  onClick={() => loadBrowseRestaurants(browseData.page - 1)}
+                >
+                  Previous
+                </button>
+
+                <button
+                  type="button"
+                  style={{ marginLeft: "0.5rem" }}
+                  disabled={browseData.page >= browseData.pages}
+                  onClick={() => loadBrowseRestaurants(browseData.page + 1)}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+
+                    {browseDetailLoading && (
+            <p style={{ marginTop: "1rem" }}>Loading restaurant details...</p>
+          )}
+
+          {selectedBrowseRestaurant && !browseDetailLoading && (
+            <div
+              style={{
+                marginTop: "1.5rem",
+                border: "2px solid #999",
+                padding: "1rem",
+              }}
+            >
+              <h3>Restaurant Details</h3>
+
+              <p><strong>ID:</strong> {selectedBrowseRestaurant.id}</p>
+              <p><strong>Owner User ID:</strong> {selectedBrowseRestaurant.user_id}</p>
+              <p><strong>Name:</strong> {selectedBrowseRestaurant.name}</p>
+              <p><strong>Phone:</strong> {selectedBrowseRestaurant.phone_number}</p>
+              <p><strong>Address:</strong> {selectedBrowseRestaurant.address}</p>
+              <p><strong>Tags:</strong> {(selectedBrowseRestaurant.tags || []).join(", ")}</p>
+              <p>
+                <strong>Average Rating:</strong>{" "}
+                {selectedBrowseRestaurant.average_rating ?? "No ratings yet"}
+              </p>
+
+              <h4 style={{ marginTop: "1rem" }}>Hours</h4>
+              {Object.entries(selectedBrowseRestaurant.hours || {}).map(([day, value]) => (
+                <p key={day}>
+                  <strong>{day}:</strong> {value}
+                </p>
+              ))}
+
+              <h4 style={{ marginTop: "1rem" }}>Menu</h4>
+              {selectedBrowseRestaurant.menu?.length > 0 ? (
+                selectedBrowseRestaurant.menu.map((item) => (
+                  <div
+                    key={item.id}
+                    style={{
+                      border: "1px solid #ccc",
+                      padding: "0.75rem",
+                      marginTop: "0.5rem",
+                    }}
+                  >
+                    <p><strong>ID:</strong> {item.id}</p>
+                    <p><strong>Name:</strong> {item.name}</p>
+                    <p><strong>Price:</strong> {item.price}</p>
+                    <p><strong>Description:</strong> {item.description}</p>
+                    <p><strong>Status:</strong> {item.status}</p>
+                    <p><strong>Tags:</strong> {(item.tags || []).join(", ")}</p>
+                  </div>
+                ))
+              ) : (
+                <p>No menu items.</p>
+              )}
+
+              <h4 style={{ marginTop: "1rem" }}>Ratings</h4>
+              {selectedBrowseRestaurant.ratings?.length > 0 ? (
+                selectedBrowseRestaurant.ratings.map((rating, index) => (
+                  <div
+                    key={rating.id || index}
+                    style={{
+                      border: "1px solid #ccc",
+                      padding: "0.75rem",
+                      marginTop: "0.5rem",
+                    }}
+                  >
+                    <p>{JSON.stringify(rating)}</p>
+                  </div>
+                ))
+              ) : (
+                <p>No ratings yet.</p>
+              )}
+            </div>
+          )}
+
+        </div>
+      )}
             {tab === "notifications" && (
         <div>
           <h2>Notifications</h2>
