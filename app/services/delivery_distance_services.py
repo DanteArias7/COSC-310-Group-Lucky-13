@@ -1,3 +1,4 @@
+"""Service for calculating delivery distances using the Google Maps Routes API."""
 import os
 import httpx
 from fastapi import HTTPException
@@ -6,7 +7,10 @@ from fastapi import HTTPException
 GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
 GOOGLE_ROUTES_URL = "https://routes.googleapis.com/directions/v2:computeRoutes"
 
+# pylint: disable=too-few-public-methods
 class DeliveryDistanceServices:
+    """Handles driving distance calculations between two addresses via Google Maps."""
+
     def __init__(self, api_key: str):
         self.api_key = api_key
 
