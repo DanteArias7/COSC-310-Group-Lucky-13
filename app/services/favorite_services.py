@@ -19,7 +19,7 @@ class FavoriteServices:
         self.restaurant_service = restaurant_service
 
     def validate_favorite_not_duplicate(self, payload: Favorite) -> None:
-        """Ensures the favorite odes not already exist
+        """Ensures the favorite item not already exist
 
         Args:
             payload (Favorite): The favorite to be added
@@ -59,7 +59,7 @@ class FavoriteServices:
         for item in restaurant.menu:
             if item.id == payload.menu_item_id:
                 break
-
+        else:
             raise HTTPException(status_code=404, detail="Menu item not found")
 
         new_favorite = payload.model_dump()

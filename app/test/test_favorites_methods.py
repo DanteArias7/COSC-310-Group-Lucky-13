@@ -91,6 +91,25 @@ def test_add_favorite_success(favorite_service, mocked_repo, favorite_payload):
     assert result["menu_item_id"] == "m1"
     mocked_repo.save_all_favorites.assert_called_once()
 
+def test_add_favorite_item_not_first_in_menu(favorite_service, mocked_repo,
+                                             favorite_payload, mocker):
+    """
+    Spec: Adding a menu item that is not the first in the menu should succeed
+    Input: valid restaurant id and menu item id that is not the first in the menu.
+    Expected behavior: Favorite is added successfully and returned.
+    """
+    mocked_repo.load_all_favorites.return_value = []
+
+    restaurant = mocker.Mock()
+    restaurant.menu = [mocker.Mock(id="different-id"), mocker.Mock(id="m1")]
+    favorite_service.restaurant_service.fetch_restaurant.return_value = restaurant
+
+    result = favorite_service.add_favorite(favorite_payload)
+
+    assert result["menu_item_id"] == "m1"
+    mocked_repo.save_all_favorites.assert_called_once()
+
+
 def test_add_favorite_invalid_menu_item(favorite_service, mocked_repo, favorite_payload, mocker):
     """
     Spec: Invalid menu item should raise 404
@@ -184,7 +203,7 @@ def test_get_favorites_by_user_id_no_favorites(favorite_service, mocked_repo, te
     """
     Spec: Getting favorites for a user with no favorites should return empty list
     Input: valid user id with no favorites.
-    Expected behavior: Empty list is returned.
+    Expected behavior: HTTPException with status code 404 is raised.
     """
 
     mocked_repo.load_all_favorites.return_value = []
