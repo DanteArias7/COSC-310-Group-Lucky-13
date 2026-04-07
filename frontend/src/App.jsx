@@ -98,64 +98,96 @@ export default function App() {
     Friday: { open: "", close: "", closed: false },
     Saturday: { open: "", close: "", closed: false },
     Sunday: { open: "", close: "", closed: false },
-  });
+  },
+});
 
-  const [updateMenuItemResponse, setUpdateMenuItemResponse] = useState(null);
+const emptyHoursState = () => ({
+  Monday: { open: "", close: "", closed: false },
+  Tuesday: { open: "", close: "", closed: false },
+  Wednesday: { open: "", close: "", closed: false },
+  Thursday: { open: "", close: "", closed: false },
+  Friday: { open: "", close: "", closed: false },
+  Saturday: { open: "", close: "", closed: false },
+  Sunday: { open: "", close: "", closed: false },
+});
 
-  const [updateMenuItemForm, setUpdateMenuItemForm] = useState({
-    restaurant_id: "",
-    menu_item_id: "",
-    name: "",
-    price: "",
-    description: "",
-    tags: "",
-    item_status: "",
-  });
+const [updateMenuItemResponse, setUpdateMenuItemResponse] = useState(null);
 
-  const [confirmDeleteMenuItem, setConfirmDeleteMenuItem] = useState(false);
+const [updateMenuItemForm, setUpdateMenuItemForm] = useState({
+  restaurant_id: "",
+  menu_item_id: "",
+  name: "",
+  price: "",
+  description: "",
+  tags: "",
+  item_status: "",
+});
 
-  const [deleteMenuItemForm, setDeleteMenuItemForm] = useState({
-    restaurant_id: "",
-    menu_item_id: "",
-  });
+const [confirmDeleteMenuItem, setConfirmDeleteMenuItem] = useState(false);
 
-  const [deleteMenuItemResponse, setDeleteMenuItemResponse] = useState(null);
+const [deleteMenuItemForm, setDeleteMenuItemForm] = useState({
+  restaurant_id: "",
+  menu_item_id: "",
+});
 
-  const [favorites, setFavorites] = useState([]);
-  const [favoriteTab, setFavoriteTab] = useState("view");
-  const [favoriteForm, setFavoriteForm] = useState({
-    restaurant_id: "",
-    menu_item_id: "",
-  });
+const [deleteMenuItemResponse, setDeleteMenuItemResponse] = useState(null);
 
-  const convertApiHoursToFormHours = (hoursObj) => {
-    const base = emptyHoursState();
+const [favorites, setFavorites] = useState([]);
+const [favoriteTab, setFavoriteTab] = useState("view");
+const [favoriteForm, setFavoriteForm] = useState({
+  restaurant_id: "",
+  menu_item_id: "",
+});
 
-    for (const day of Object.keys(base)) {
-      const value = hoursObj?.[day];
+const [browseData, setBrowseData] = useState({
+  items: [],
+  total: 0,
+  page: 1,
+  size: 50,
+  pages: 1,
+});
 
-      if (!value || value === "Closed") {
-        base[day] = { open: "", close: "", closed: true };
-      } else {
-        const [open, close] = value.split("-");
-        base[day] = {
-          open: open || "",
-          close: close || "",
-          closed: false,
-        };
-      }
+const [browseSearch, setBrowseSearch] = useState("");
+const [browseTagsInput, setBrowseTagsInput] = useState("");
+const [browseLoading, setBrowseLoading] = useState(false);
+
+const [selectedBrowseRestaurant, setSelectedBrowseRestaurant] = useState(null);
+const [browseDetailLoading, setBrowseDetailLoading] = useState(false);
+
+const [cartResponse, setCartResponse] = useState(null);
+const [cartLoading, setCartLoading] = useState(false);
+
+const convertApiHoursToFormHours = (hoursObj) => {
+  const base = emptyHoursState();
+
+  for (const day of Object.keys(base)) {
+    const value = hoursObj?.[day];
+
+    if (!value || value === "Closed") {
+      base[day] = { open: "", close: "", closed: true };
+    } else {
+      const [open, close] = value.split("-");
+      base[day] = {
+        open: open || "",
+        close: close || "",
+        closed: false,
+      };
     }
 
     return base;
   };
 
-  const convertFormHoursToApiHours = (hoursObj) =>
-    Object.fromEntries(
-      Object.entries(hoursObj).map(([day, val]) => [
-        day,
-        val.closed ? "Closed" : `${val.open}-${val.close}`,
-      ])
-    );
+const [addToCartLoading, setAddToCartLoading] = useState(false);
+const [cartMessage, setCartMessage] = useState("");
+const [removeFromCartLoading, setRemoveFromCartLoading] = useState(false);
+
+const convertFormHoursToApiHours = (hoursObj) =>
+  Object.fromEntries(
+    Object.entries(hoursObj).map(([day, val]) => [
+      day,
+      val.closed ? "Closed" : `${val.open}-${val.close}`,
+    ])
+  );
 
   const generateTimeOptions = () => {
     const times = [];
@@ -168,6 +200,28 @@ export default function App() {
   };
 
   const timeOptions = generateTimeOptions();
+
+  const [browseMenuData, setBrowseMenuData] = useState({
+  items: [],
+  total: 0,
+  page: 1,
+  size: 50,
+  pages: 1,
+});
+
+const [browseMenuSearch, setBrowseMenuSearch] = useState("");
+const [browseMenuTagsInput, setBrowseMenuTagsInput] = useState("");
+const [browseMenuPriceMin, setBrowseMenuPriceMin] = useState("");
+const [browseMenuPriceMax, setBrowseMenuPriceMax] = useState("");
+const [browseMenuLoading, setBrowseMenuLoading] = useState(false);
+
+const [ratingForm, setRatingForm] = useState({
+  rating: "5.0",
+  review: "",
+});
+
+const [ratingLoading, setRatingLoading] = useState(false);
+const [ratingResponse, setRatingResponse] = useState(null);
 
   useEffect(() => {
     if (!user) return; // only start after login
@@ -1286,8 +1340,493 @@ export default function App() {
         }
       );
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
+const loadBrowseRestaurants = async (page = 1) => {
+  if (!user || user.role !== "customer") return;
+
+  setError("");
+  setBrowseLoading(true);
+
+  try {
+    const params = new URLSearchParams();
+    params.append("page", String(page));
+
+    if (browseSearch.trim()) {
+      params.append("search", browseSearch.trim());
+    }
+
+    const tagList = browseTagsInput
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+
+    tagList.forEach((tag) => params.append("tags", tag));
+
+    const res = await fetch(
+      `http://127.0.0.1:8000/restaurants/browse?${params.toString()}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.user_id,
+        },
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      let msg = "Failed to browse restaurants";
+
+      if (typeof data.detail === "string") {
+        msg = data.detail;
+      } else if (Array.isArray(data.detail)) {
+        msg = data.detail.map((x) => x.msg).join(", ");
+      } else if (data.detail) {
+        msg = JSON.stringify(data.detail);
+      }
+
+      throw new Error(msg);
+    }
+
+    setBrowseData({
+      items: data.items || [],
+      total: data.total || 0,
+      page: data.page || 1,
+      size: data.size || 50,
+      pages: data.pages || 1,
+    });
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  } finally {
+    setBrowseLoading(false);
+  }
+};
+
+
+const loadBrowseRestaurantDetails = async (restaurantId) => {
+  if (!user) return;
+
+  setError("");
+  setCartResponse(null);
+  setCartMessage("");
+  setBrowseDetailLoading(true);
+
+  setBrowseMenuData({
+    items: [],
+    total: 0,
+    page: 1,
+    size: 50,
+    pages: 1,
+  });
+  setBrowseMenuSearch("");
+  setBrowseMenuTagsInput("");
+  setBrowseMenuPriceMin("");
+  setBrowseMenuPriceMax("");
+
+  setRatingResponse(null);
+setRatingForm({
+  rating: "5.0",
+  review: "",
+});
+
+  try {
+    const res = await fetch(`http://127.0.0.1:8000/restaurants/${restaurantId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "user-id": user.user_id,
+      },
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      let msg = "Failed to load restaurant details";
+
+      if (typeof data.detail === "string") {
+        msg = data.detail;
+      } else if (Array.isArray(data.detail)) {
+        msg = data.detail.map((x) => x.msg).join(", ");
+      } else if (data.detail) {
+        msg = JSON.stringify(data.detail);
+      }
+
+      throw new Error(msg);
+    }
+
+    setSelectedBrowseRestaurant(data);
+    await loadBrowseRestaurantMenu(restaurantId, 1);
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  } finally {
+    setBrowseDetailLoading(false);
+  }
+};
+
+const handleStartCart = async (restaurantId) => {
+  if (!user || user.role !== "customer") return;
+
+  setError("");
+  setCartMessage("");
+  setCartResponse(null);
+  setCartLoading(true);
+
+  try {
+    const res = await fetch(
+      `http://127.0.0.1:8000/restaurants/${restaurantId}/cart`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.user_id,
+        },
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      let msg = "Failed to start cart";
+
+      if (typeof data.detail === "string") {
+        msg = data.detail;
+      } else if (Array.isArray(data.detail)) {
+        msg = data.detail.map((x) => x.msg).join(", ");
+      } else if (data.detail) {
+        msg = JSON.stringify(data.detail);
+      }
+
+      throw new Error(msg);
+    }
+
+    setCartResponse(data);
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  } finally {
+    setCartLoading(false);
+  }
+};
+
+
+const handleAddItemToCart = async (menuItem) => {
+  if (!user || user.role !== "customer") return;
+
+  if (!cartResponse?.id) {
+    return setError("Start a cart first for this restaurant");
+  }
+
+  setError("");
+  setCartMessage("");
+  setAddToCartLoading(true);
+
+  try {
+    const payload = {
+  ...menuItem,
+};
+
+    const res = await fetch(
+  `http://127.0.0.1:8000/restaurants/${selectedBrowseRestaurant.id}/cart/${cartResponse.id}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.user_id,
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      let msg = "Failed to add item to cart";
+
+      if (typeof data.detail === "string") {
+        msg = data.detail;
+      } else if (Array.isArray(data.detail)) {
+        msg = data.detail.map((x) => x.msg).join(", ");
+      } else if (data.detail) {
+        msg = JSON.stringify(data.detail);
+      }
+
+      throw new Error(msg);
+    }
+
+    setCartResponse(data);
+    setCartMessage(`${menuItem.name} added to cart.`);
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  } finally {
+    setAddToCartLoading(false);
+  }
+};
+
+const handleRemoveItemFromCart = async (menuItemId) => {
+  if (!user || user.role !== "customer") return;
+
+  if (!cartResponse?.id) {
+    return setError("No active cart found");
+  }
+
+  if (!selectedBrowseRestaurant?.id) {
+    return setError("Load a restaurant first");
+  }
+
+  setError("");
+  setCartMessage("");
+  setRemoveFromCartLoading(true);
+
+  try {
+    const res = await fetch(
+      `http://127.0.0.1:8000/restaurants/${selectedBrowseRestaurant.id}/cart/${cartResponse.id}/${menuItemId}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.user_id,
+        },
+      }
+    );
+
+    if (!res.ok) {
+      let msg = "Failed to remove item from cart";
+
+      const data = await res.json().catch(() => null);
+
+      if (typeof data?.detail === "string") {
+        msg = data.detail;
+      } else if (Array.isArray(data?.detail)) {
+        msg = data.detail.map((x) => x.msg).join(", ");
+      } else if (data?.detail) {
+        msg = JSON.stringify(data.detail);
+      }
+
+      throw new Error(msg);
+    }
+
+    setCartResponse((prev) => {
+      if (!prev) return prev;
+
+      const updatedItems = (prev.cart_items || [])
+        .map((cartItem) => {
+          if (String(cartItem.item?.id) !== String(menuItemId)) {
+            return cartItem;
+          }
+
+          const currentQty = Number(cartItem.quantity || 0);
+          const nextQty = currentQty - 1;
+
+          if (nextQty <= 0) {
+            return null;
+          }
+
+          return {
+            ...cartItem,
+            quantity: nextQty,
+          };
+        })
+        .filter(Boolean);
+
+      const subtotal = updatedItems.reduce((sum, cartItem) => {
+        const price = Number(cartItem.item?.price || 0);
+        const qty = Number(cartItem.quantity || 0);
+        return sum + price * qty;
+      }, 0);
+
+
+      const deliveryFee = Number(prev.delivery_fee || 0);
+      const taxRate = subtotal > 0 && Number(prev.subtotal || 0) > 0
+        ? Number(prev.tax || 0) / Number(prev.subtotal || 1)
+        : 0;
+      const tax = subtotal * taxRate;
+      const total = subtotal + deliveryFee + tax;
+
+      return {
+        ...prev,
+        cart_items: updatedItems,
+        subtotal: Number(subtotal.toFixed(2)),
+        tax: Number(tax.toFixed(2)),
+        total: Number(total.toFixed(2)),
+      };
+    });
+
+    setCartMessage("Item quantity updated.");
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  } finally {
+    setRemoveFromCartLoading(false);
+  }
+};
+
+const loadBrowseRestaurantMenu = async (restaurantId, page = 1) => {
+  if (!user) return;
+
+  setError("");
+  setBrowseMenuLoading(true);
+
+  try {
+    const params = new URLSearchParams();
+    params.append("page", String(page));
+
+    if (browseMenuSearch.trim()) {
+      params.append("search", browseMenuSearch.trim());
+    }
+
+    if (browseMenuPriceMin !== "") {
+      params.append("price_min", String(browseMenuPriceMin));
+    }
+
+    if (browseMenuPriceMax !== "") {
+      params.append("price_max", String(browseMenuPriceMax));
+    }
+
+    const tagList = browseMenuTagsInput
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+
+    tagList.forEach((tag) => params.append("tags", tag));
+
+    const res = await fetch(
+      `http://127.0.0.1:8000/restaurants/${restaurantId}/menu?${params.toString()}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.user_id,
+        },
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      let msg = "Failed to load restaurant menu";
+
+      if (typeof data.detail === "string") {
+        msg = data.detail;
+      } else if (Array.isArray(data.detail)) {
+        msg = data.detail.map((x) => x.msg).join(", ");
+      } else if (data.detail) {
+        msg = JSON.stringify(data.detail);
+      }
+
+      throw new Error(msg);
+    }
+
+    setBrowseMenuData({
+      items: data.items || [],
+      total: data.total || 0,
+      page: data.page || 1,
+      size: data.size || 50,
+      pages: data.pages || 1,
+    });
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  } finally {
+    setBrowseMenuLoading(false);
+  }
+};
+
+// === ADD THIS near your other handler functions ===
+const handleAddRating = async (e) => {
+  e.preventDefault();
+
+  if (!user || user.role !== "customer") return;
+
+  if (!selectedBrowseRestaurant?.id) {
+    return setError("Load a restaurant first");
+  }
+
+  if (!ratingForm.review.trim()) {
+    return setError("Review is required");
+  }
+
+  const numericRating = Number(ratingForm.rating);
+
+  if (isNaN(numericRating) || numericRating < 0.5 || numericRating > 5.0) {
+    return setError("Rating must be between 0.5 and 5.0");
+  }
+
+  setError("");
+  setRatingResponse(null);
+  setRatingLoading(true);
+
+  try {
+    const payload = {
+      customer_id: user.user_id,
+      rating: numericRating,
+      review: ratingForm.review.trim(),
+    };
+
+    const res = await fetch(
+      `http://127.0.0.1:8000/restaurants/${selectedBrowseRestaurant.id}/rate`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.user_id,
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      let msg = "Failed to add rating";
+
+      if (typeof data.detail === "string") {
+        msg = data.detail;
+      } else if (Array.isArray(data.detail)) {
+        msg = data.detail.map((x) => x.msg).join(", ");
+      } else if (data.detail) {
+        msg = JSON.stringify(data.detail);
+      }
+
+      throw new Error(msg);
+    }
+
+    setRatingResponse(data);
+
+    setRatingForm({
+      rating: "5.0",
+      review: "",
+    });
+
+    // Update selected restaurant locally so the new rating appears immediately
+    setSelectedBrowseRestaurant((prev) => {
+      if (!prev) return prev;
+
+      const existingRatings = prev.ratings || [];
+      const updatedRatings = [...existingRatings, data];
+
+      const validRatings = updatedRatings
+        .map((r) => Number(r.rating))
+        .filter((n) => !isNaN(n));
+
+      const average =
+        validRatings.length > 0
+          ? validRatings.reduce((sum, n) => sum + n, 0) / validRatings.length
+          : null;
+
+      return {
+        ...prev,
+        ratings: updatedRatings,
+        average_rating: average !== null ? Number(average.toFixed(2)) : null,
+      };
+    });
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  } finally {
+    setRatingLoading(false);
+  }
+};
+
+  if(!user) {
+  return (
+    <div style={{ padding: "2rem", fontFamily: "Arial" }}>
+      <h1>Login</h1>
 
         let msg = "Delete failed";
 
@@ -1457,17 +1996,44 @@ export default function App() {
           Account
         </button>
 
-        {user.role === "restaurant_owner" && (
-          <button
+          {user.role === "restaurant_owner" && (
+            <button
+              onClick={() => {
+                setTab("manage-restaurants");
+                setRestaurantTab("create");
+              }}
+              style={{ marginLeft: "0.5rem" }}
+            >
+              Manage Restaurants
+            </button>
+          )}
+
+            {user.role === "customer" && (
+            <button
             onClick={() => {
-              setTab("manage-restaurants");
-              setRestaurantTab("create");
+              setTab("browse");
+              setSelectedBrowseRestaurant(null);
+              setCartResponse(null);
+              loadBrowseRestaurants(1);
             }}
             style={{ marginLeft: "0.5rem" }}
           >
-            Manage Restaurants
+            Browse Restaurants
           </button>
-        )}
+          )}
+
+            {user.role === "customer" && (
+          <button
+          onClick={() => {
+          setTab("favorites");
+          setFavoriteTab(null);
+          setFavorites([]);
+          }}
+          style={{ marginLeft: "0.5rem" }}
+          >
+          Favorites
+          </button>
+          )}
 
         {user.role === "customer" && (
           <button
@@ -2607,8 +3173,458 @@ export default function App() {
             </div>
           )}
         </div>
+      ))
+    )}
+  </div>
+)}
+  </div>
+)}
+
+      {tab === "browse" && user.role === "customer" && (
+        <div>
+          <h2>Browse Restaurants</h2>
+
+          <form
+            onSubmit={(e) => {
+            e.preventDefault();
+            setSelectedBrowseRestaurant(null);
+            loadBrowseRestaurants(1);
+          }}
+            style={{ marginBottom: "1rem" }}
+          >
+            <div>
+              <input
+                placeholder="Search by restaurant name"
+                value={browseSearch}
+                onChange={(e) => setBrowseSearch(e.target.value)}
+              />
+            </div>
+
+            <div style={{ marginTop: "0.5rem" }}>
+              <input
+                placeholder="Tags (comma separated)"
+                value={browseTagsInput}
+                onChange={(e) => setBrowseTagsInput(e.target.value)}
+              />
+            </div>
+
+            <button type="submit" style={{ marginTop: "1rem" }}>
+              Search
+            </button>
+
+            <button
+              type="button"
+              style={{ marginTop: "1rem", marginLeft: "0.5rem" }}
+              onClick={() => {
+              setBrowseSearch("");
+              setBrowseTagsInput("");
+              setSelectedBrowseRestaurant(null);
+              setBrowseData({
+                items: [],
+                total: 0,
+                page: 1,
+                size: 50,
+                pages: 1,
+              });
+              loadBrowseRestaurants(1);
+            }}
+            >
+              Clear Filters
+            </button>
+          </form>
+
+          {browseLoading ? (
+            <p>Loading restaurants...</p>
+          ) : browseData.items.length === 0 ? (
+            <p>No restaurants found.</p>
+          ) : (
+            <div>
+              <p>
+                Showing page {browseData.page} of {browseData.pages} ({browseData.total} total)
+              </p>
+
+              {browseData.items.map((restaurant) => (
+                <div
+                  key={restaurant.id}
+                  onClick={() => loadBrowseRestaurantDetails(restaurant.id)}
+                  style={{
+                    border: "1px solid #ccc",
+                    padding: "1rem",
+                    marginTop: "0.75rem",
+                    cursor: "pointer",
+                  }}
+                >
+                  <p><strong>ID:</strong> {restaurant.id}</p>
+                  <p><strong>Name:</strong> {restaurant.name}</p>
+                  <p><strong>Address:</strong> {restaurant.address}</p>
+                  <p><strong>Today's Hours:</strong> {restaurant.todays_hours}</p>
+                  <p><strong>Tags:</strong> {(restaurant.tags || []).join(", ")}</p>
+                  <p>
+                    <strong>Average Rating:</strong>{" "}
+                    {restaurant.average_rating ?? "No ratings yet"}
+                  </p>
+                  <p style={{ marginTop: "0.5rem", color: "blue" }}>
+                    Click to view full restaurant details
+                  </p>
+                </div>
+              ))}
+
+              <div style={{ marginTop: "1rem" }}>
+                <button
+                  type="button"
+                  disabled={browseData.page <= 1}
+                  onClick={() => loadBrowseRestaurants(browseData.page - 1)}
+                >
+                  Previous
+                </button>
+
+                <button
+                  type="button"
+                  style={{ marginLeft: "0.5rem" }}
+                  disabled={browseData.page >= browseData.pages}
+                  onClick={() => loadBrowseRestaurants(browseData.page + 1)}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+
+                    {browseDetailLoading && (
+            <p style={{ marginTop: "1rem" }}>Loading restaurant details...</p>
+          )}
+
+          {selectedBrowseRestaurant && !browseDetailLoading && (
+            <div
+              style={{
+                marginTop: "1.5rem",
+                border: "2px solid #999",
+                padding: "1rem",
+              }}
+            >
+              <h3>Restaurant Details</h3>
+
+              <p><strong>ID:</strong> {selectedBrowseRestaurant.id}</p>
+              <p><strong>Owner User ID:</strong> {selectedBrowseRestaurant.user_id}</p>
+              <p><strong>Name:</strong> {selectedBrowseRestaurant.name}</p>
+              <p><strong>Phone:</strong> {selectedBrowseRestaurant.phone_number}</p>
+              <p><strong>Address:</strong> {selectedBrowseRestaurant.address}</p>
+              <p><strong>Tags:</strong> {(selectedBrowseRestaurant.tags || []).join(", ")}</p>
+              <p>
+                <strong>Average Rating:</strong>{" "}
+                {selectedBrowseRestaurant.average_rating ?? "No ratings yet"}
+              </p>
+
+                  {/* === ADD THIS inside the selectedBrowseRestaurant details block === */}
+    <h4 style={{ marginTop: "1rem" }}>Leave a Rating</h4>
+
+    <form onSubmit={handleAddRating}>
+      <div>
+        <select
+          value={ratingForm.rating}
+          onChange={(e) =>
+            setRatingForm((prev) => ({
+              ...prev,
+              rating: e.target.value,
+            }))
+          }
+        >
+          <option value="0.5">0.5</option>
+          <option value="1.0">1.0</option>
+          <option value="1.5">1.5</option>
+          <option value="2.0">2.0</option>
+          <option value="2.5">2.5</option>
+          <option value="3.0">3.0</option>
+          <option value="3.5">3.5</option>
+          <option value="4.0">4.0</option>
+          <option value="4.5">4.5</option>
+          <option value="5.0">5.0</option>
+        </select>
+      </div>
+
+      <div style={{ marginTop: "0.5rem" }}>
+        <textarea
+          placeholder="Write your review"
+          value={ratingForm.review}
+          onChange={(e) =>
+            setRatingForm((prev) => ({
+              ...prev,
+              review: e.target.value,
+            }))
+          }
+          rows={4}
+          style={{ width: "100%", maxWidth: "500px" }}
+        />
+      </div>
+
+      <button type="submit" style={{ marginTop: "1rem" }} disabled={ratingLoading}>
+        {ratingLoading ? "Submitting Rating..." : "Submit Rating"}
+      </button>
+    </form>
+
+    {ratingResponse && (
+      <div style={{ marginTop: "1rem", color: "green" }}>
+        <p>Rating submitted successfully.</p>
+        <p><strong>Rating ID:</strong> {ratingResponse.id}</p>
+        <p><strong>Customer ID:</strong> {ratingResponse.customer_id}</p>
+        <p><strong>Rating:</strong> {ratingResponse.rating}</p>
+        <p><strong>Review:</strong> {ratingResponse.review}</p>
+      </div>
+    )}
+              <h4 style={{ marginTop: "1rem" }}>Hours</h4>
+              {Object.entries(selectedBrowseRestaurant.hours || {}).map(([day, value]) => (
+                <p key={day}>
+                  <strong>{day}:</strong> {value}
+                </p>
+              ))}
+
+              <h4 style={{ marginTop: "1rem" }}>Browse Menu</h4>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  loadBrowseRestaurantMenu(selectedBrowseRestaurant.id, 1);
+                }}
+                style={{ marginBottom: "1rem" }}
+              >
+                <div>
+                  <input
+                    placeholder="Search menu items"
+                    value={browseMenuSearch}
+                    onChange={(e) => setBrowseMenuSearch(e.target.value)}
+                  />
+                </div>
+
+                <div style={{ marginTop: "0.5rem" }}>
+                  <input
+                    placeholder="Min price"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={browseMenuPriceMin}
+                    onChange={(e) => setBrowseMenuPriceMin(e.target.value)}
+                  />
+                </div>
+
+                <div style={{ marginTop: "0.5rem" }}>
+                  <input
+                    placeholder="Max price"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={browseMenuPriceMax}
+                    onChange={(e) => setBrowseMenuPriceMax(e.target.value)}
+                  />
+                </div>
+
+                <div style={{ marginTop: "0.5rem" }}>
+                  <input
+                    placeholder="Menu tags (comma separated)"
+                    value={browseMenuTagsInput}
+                    onChange={(e) => setBrowseMenuTagsInput(e.target.value)}
+                  />
+                </div>
+
+                <button type="submit" style={{ marginTop: "1rem" }}>
+                  Filter Menu
+                </button>
+
+                <button
+                  type="button"
+                  style={{ marginTop: "1rem", marginLeft: "0.5rem" }}
+                  onClick={() => {
+                    setBrowseMenuSearch("");
+                    setBrowseMenuTagsInput("");
+                    setBrowseMenuPriceMin("");
+                    setBrowseMenuPriceMax("");
+                    setBrowseMenuData({
+                      items: [],
+                      total: 0,
+                      page: 1,
+                      size: 50,
+                      pages: 1,
+                    });
+                    setTimeout(() => loadBrowseRestaurantMenu(selectedBrowseRestaurant.id, 1), 0);
+                  }}
+                >
+                  Clear Menu Filters
+                </button>
+              </form>
+
+    <h4 style={{ marginTop: "1rem" }}>Menu</h4>
+
+    {browseMenuLoading ? (
+      <p>Loading menu...</p>
+    ) : browseMenuData.items.length > 0 ? (
+      <div>
+        <p>
+          Showing menu page {browseMenuData.page} of {browseMenuData.pages} ({browseMenuData.total} total)
+        </p>
+
+        {browseMenuData.items.map((item) => (
+          <div
+            key={item.id}
+            style={{
+              border: "1px solid #ccc",
+              padding: "0.75rem",
+              marginTop: "0.5rem",
+            }}
+          >
+            <p><strong>ID:</strong> {item.id}</p>
+            <p><strong>Name:</strong> {item.name}</p>
+            <p><strong>Price:</strong> {item.price}</p>
+            <p><strong>Description:</strong> {item.description}</p>
+            <p><strong>Status:</strong> {item.status}</p>
+            <p><strong>Tags:</strong> {(item.tags || []).join(", ")}</p>
+
+            <button
+              type="button"
+              disabled={
+                addToCartLoading ||
+                !cartResponse ||
+                String(cartResponse.restaurant_id) !== String(selectedBrowseRestaurant.id)
+              }
+              onClick={() => handleAddItemToCart(item)}
+              style={{ marginTop: "0.5rem" }}
+            >
+              Add To Cart
+            </button>
+
+            {!cartResponse ||
+            String(cartResponse.restaurant_id) !== String(selectedBrowseRestaurant.id) ? (
+              <p style={{ marginTop: "0.5rem", color: "gray" }}>
+                Start a cart first before adding items.
+              </p>
+            ) : null}
+          </div>
+        ))}
+
+        <div style={{ marginTop: "1rem" }}>
+          <button
+            type="button"
+            disabled={browseMenuData.page <= 1}
+            onClick={() =>
+              loadBrowseRestaurantMenu(
+                selectedBrowseRestaurant.id,
+                browseMenuData.page - 1
+              )
+            }
+          >
+            Previous Menu Page
+          </button>
+
+          <button
+            type="button"
+            style={{ marginLeft: "0.5rem" }}
+            disabled={browseMenuData.page >= browseMenuData.pages}
+            onClick={() =>
+              loadBrowseRestaurantMenu(
+                selectedBrowseRestaurant.id,
+                browseMenuData.page + 1
+              )
+            }
+          >
+            Next Menu Page
+          </button>
+        </div>
+      </div>
+    ) : (
+      <p>No menu items found.</p>
+    )}
+
+               <h4 style={{ marginTop: "1rem" }}>Ratings</h4>
+    {selectedBrowseRestaurant.ratings?.length > 0 ? (
+      selectedBrowseRestaurant.ratings.map((rating) => (
+        <div
+          key={rating.id}
+          style={{
+            border: "1px solid #ccc",
+            padding: "0.75rem",
+            marginTop: "0.5rem",
+          }}
+        >
+          <p><strong>ID:</strong> {rating.id}</p>
+          <p><strong>Customer ID:</strong> {rating.customer_id}</p>
+          <p><strong>Rating:</strong> {rating.rating}</p>
+          <p><strong>Review:</strong> {rating.review}</p>
+        </div>
+      ))
+    ) : (
+      <p>No ratings yet.</p>
+    )}
+            </div>
+          )}
+
+             <div style={{ marginTop: "1rem" }}>
+      <button
+        type="button"
+        onClick={() => handleStartCart(selectedBrowseRestaurant.id)}
+        disabled={cartLoading}
+      >
+        {cartLoading ? "Starting Cart..." : "Start Cart"}
+      </button>
+    </div>
+
+    {cartResponse && String(cartResponse.restaurant_id) === String(selectedBrowseRestaurant.id) && (
+      <div style={{ marginTop: "1rem", color: "green" }}>
+        <p>Cart started successfully.</p>
+        <p><strong>Cart ID:</strong> {cartResponse.id}</p>
+        <p><strong>User ID:</strong> {cartResponse.user_id}</p>
+        <p><strong>Restaurant ID:</strong> {cartResponse.restaurant_id}</p>
+        <p><strong>Subtotal:</strong> {cartResponse.subtotal}</p>
+        <p><strong>Delivery Fee:</strong> {cartResponse.delivery_fee}</p>
+        <p><strong>Tax:</strong> {cartResponse.tax}</p>
+        <p><strong>Total:</strong> {cartResponse.total}</p>
+        <p><strong>Items in Cart:</strong> {(cartResponse.cart_items || []).length}</p>
+      </div>
+    )}
+    {cartMessage && (
+  <p style={{ marginTop: "0.5rem", color: "green" }}>{cartMessage}</p>
+)}
+
+{cartResponse && String(cartResponse.restaurant_id) === String(selectedBrowseRestaurant.id) && (
+  <div style={{ marginTop: "1rem" }}>
+    <h4>Current Cart</h4>
+    <p><strong>Cart ID:</strong> {cartResponse.id}</p>
+    <p><strong>Subtotal:</strong> {cartResponse.subtotal}</p>
+    <p><strong>Delivery Fee:</strong> {cartResponse.delivery_fee}</p>
+    <p><strong>Tax:</strong> {cartResponse.tax}</p>
+    <p><strong>Total:</strong> {cartResponse.total}</p>
+
+    {(cartResponse.cart_items || []).length > 0 ? (
+  cartResponse.cart_items.map((cartItem, index) => (
+    <div
+      key={cartItem.item?.id || index}
+      style={{
+        border: "1px solid #ccc",
+        padding: "0.5rem",
+        marginTop: "0.5rem",
+      }}
+    >
+      <p><strong>Name:</strong> {cartItem.item?.name}</p>
+      <p><strong>Price:</strong> {cartItem.item?.price}</p>
+      <p><strong>Quantity:</strong> {cartItem.quantity}</p>
+      <p><strong>Menu Item ID:</strong> {cartItem.item?.id}</p>
+
+      <button
+        type="button"
+        onClick={() => handleRemoveItemFromCart(cartItem.item?.id)}
+        disabled={removeFromCartLoading}
+        style={{ marginTop: "0.5rem", backgroundColor: "red", color: "white" }}
+      >
+        {removeFromCartLoading ? "Removing..." : "Remove From Cart"}
+      </button>
+    </div>
+  ))
+) : (
+  <p>No items in cart yet.</p>
+)}
+  </div>
+)}
+
+        </div>
       )}
-      {tab === "notifications" && (
+            {tab === "notifications" && (
         <div>
           <h2>Notifications</h2>
 
