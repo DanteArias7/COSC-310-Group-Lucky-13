@@ -140,6 +140,9 @@ const [browseLoading, setBrowseLoading] = useState(false);
 const [selectedBrowseRestaurant, setSelectedBrowseRestaurant] = useState(null);
 const [browseDetailLoading, setBrowseDetailLoading] = useState(false);
 
+const [cartResponse, setCartResponse] = useState(null);
+const [cartLoading, setCartLoading] = useState(false);
+
 const convertApiHoursToFormHours = (hoursObj) => {
   const base = emptyHoursState();
 
@@ -1344,6 +1347,7 @@ const loadBrowseRestaurantDetails = async (restaurantId) => {
   if (!user) return;
 
   setError("");
+  setCartResponse(null);
   setBrowseDetailLoading(true);
 
   try {
@@ -1376,6 +1380,49 @@ const loadBrowseRestaurantDetails = async (restaurantId) => {
     setError(err.message || "Something went wrong");
   } finally {
     setBrowseDetailLoading(false);
+  }
+};
+
+const handleStartCart = async (restaurantId) => {
+  if (!user || user.role !== "customer") return;
+
+  setError("");
+  setCartResponse(null);
+  setCartLoading(true);
+
+  try {
+    const res = await fetch(
+      `http://127.0.0.1:8000/restaurants/${restaurantId}/cart`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.user_id,
+        },
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      let msg = "Failed to start cart";
+
+      if (typeof data.detail === "string") {
+        msg = data.detail;
+      } else if (Array.isArray(data.detail)) {
+        msg = data.detail.map((x) => x.msg).join(", ");
+      } else if (data.detail) {
+        msg = JSON.stringify(data.detail);
+      }
+
+      throw new Error(msg);
+    }
+
+    setCartResponse(data);
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  } finally {
+    setCartLoading(false);
   }
 };
 
@@ -1544,6 +1591,7 @@ return (
             onClick={() => {
               setTab("browse");
               setSelectedBrowseRestaurant(null);
+              setCartResponse(null);
               loadBrowseRestaurants(1);
             }}
             style={{ marginLeft: "0.5rem" }}
@@ -2833,6 +2881,30 @@ return (
               )}
             </div>
           )}
+
+             <div style={{ marginTop: "1rem" }}>
+      <button
+        type="button"
+        onClick={() => handleStartCart(selectedBrowseRestaurant.id)}
+        disabled={cartLoading}
+      >
+        {cartLoading ? "Starting Cart..." : "Start Cart"}
+      </button>
+    </div>
+
+    {cartResponse && String(cartResponse.restaurant_id) === String(selectedBrowseRestaurant.id) && (
+      <div style={{ marginTop: "1rem", color: "green" }}>
+        <p>Cart started successfully.</p>
+        <p><strong>Cart ID:</strong> {cartResponse.id}</p>
+        <p><strong>User ID:</strong> {cartResponse.user_id}</p>
+        <p><strong>Restaurant ID:</strong> {cartResponse.restaurant_id}</p>
+        <p><strong>Subtotal:</strong> {cartResponse.subtotal}</p>
+        <p><strong>Delivery Fee:</strong> {cartResponse.delivery_fee}</p>
+        <p><strong>Tax:</strong> {cartResponse.tax}</p>
+        <p><strong>Total:</strong> {cartResponse.total}</p>
+        <p><strong>Items in Cart:</strong> {(cartResponse.cart_items || []).length}</p>
+      </div>
+    )}
 
         </div>
       )}
