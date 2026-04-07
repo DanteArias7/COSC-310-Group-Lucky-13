@@ -13,6 +13,7 @@ from app.services.authorization_services import AuthorizationServices
 from app.services.order_services import OrderServices
 from app.schemas.payment import Payment, PaymentResult
 from app.services.restaurant_services import RestaurantServices
+from app.services.user_services import UserServices
 
 ORDER_DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "orders.csv"
 
@@ -90,6 +91,11 @@ def get_all_orders_for_a_user(order_repo: OrderRepo = Depends(create_order_repo)
     Returns: List of order objects pertaining to the given user"""
     order_service = OrderServices(order_repo)
     authorization_service = AuthorizationServices(user_repo)
+
+    user_service = UserServices(user_repo)
+    user = user_service.get_user_by_id(user_id)
+    if user.role == "admin":
+        return order_service.repo.load_all_orders()
     authorization_service.authorize(user_id, "view_own_orders")
     return order_service.get_orders_by_user_id(user_id)
 
