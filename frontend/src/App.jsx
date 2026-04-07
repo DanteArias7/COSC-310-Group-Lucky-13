@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import {PieChart, Pie, Cell, Tooltip, Legend, LineChart, Line, XAxis, YAxis} from 'recharts';
+import {PieChart, Pie, Cell, Tooltip, Legend, LineChart, Line, XAxis, YAxis, BarChart, Bar} from 'recharts';
 
 export default function App() {
   const [identifier, setIdentifier] = useState("");
@@ -129,6 +129,7 @@ const [favoriteForm, setFavoriteForm] = useState({
 const [orders, setOrders] = useState([]);
 const [orderStats, setOrderStats] = useState([]);
 const [orderTrend, setOrderTrend] = useState([]);
+const [restaurantStats, setRestaurantStats] = useState([]);
 
 const [browseData, setBrowseData] = useState({
   items: [],
@@ -1361,9 +1362,27 @@ const trendData = Object.entries(dateCounts)
 
 setOrderTrend(trendData);
 
+
+  const restaurantCounts = {};
+
+data.forEach((order) => {
+  restaurantCounts[order.restaurant_id] =
+    (restaurantCounts[order.restaurant_id] || 0) + 1;
+});
+
+const restaurantData = Object.entries(restaurantCounts).map(
+  ([id, count]) => ({
+    restaurant: id,
+    orders: count,
+  })
+);
+setRestaurantStats(restaurantData);
+
   } catch (err) {
     setError(err.message || "Something went wrong");
   }
+
+
 };
 
 
@@ -3632,6 +3651,24 @@ return (
           <Line type="monotone" dataKey="count" />
         </LineChart>
       </div>
+      <div
+  style={{
+    padding: "1rem",
+    border: "1px solid #444",
+    borderRadius: "10px",
+    backgroundColor: "#111",
+  }}
+>
+  <h4 style={{ textAlign: "center" }}>Top Restaurants</h4>
+
+  <BarChart width={400} height={300} data={restaurantStats}>
+    <XAxis dataKey="restaurant" />
+    <YAxis />
+    <Tooltip />
+    <Legend />
+    <Bar dataKey="orders" fill="#8884d8"/>
+  </BarChart>
+</div>
     </div>
   )}
 </div>
