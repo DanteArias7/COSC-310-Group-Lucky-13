@@ -202,6 +202,14 @@ const [browseMenuPriceMin, setBrowseMenuPriceMin] = useState("");
 const [browseMenuPriceMax, setBrowseMenuPriceMax] = useState("");
 const [browseMenuLoading, setBrowseMenuLoading] = useState(false);
 
+const [ratingForm, setRatingForm] = useState({
+  rating: "5.0",
+  review: "",
+});
+
+const [ratingLoading, setRatingLoading] = useState(false);
+const [ratingResponse, setRatingResponse] = useState(null);
+
   useEffect(() => {
       if (!user) return; // only start after login
 
@@ -1382,6 +1390,12 @@ const loadBrowseRestaurantDetails = async (restaurantId) => {
   setBrowseMenuPriceMin("");
   setBrowseMenuPriceMax("");
 
+  setRatingResponse(null);
+setRatingForm({
+  rating: "5.0",
+  review: "",
+});
+
   try {
     const res = await fetch(`http://127.0.0.1:8000/restaurants/${restaurantId}`, {
       method: "GET",
@@ -1678,6 +1692,101 @@ const loadBrowseRestaurantMenu = async (restaurantId, page = 1) => {
     setError(err.message || "Something went wrong");
   } finally {
     setBrowseMenuLoading(false);
+  }
+};
+
+// === ADD THIS near your other handler functions ===
+const handleAddRating = async (e) => {
+  e.preventDefault();
+
+  if (!user || user.role !== "customer") return;
+
+  if (!selectedBrowseRestaurant?.id) {
+    return setError("Load a restaurant first");
+  }
+
+  if (!ratingForm.review.trim()) {
+    return setError("Review is required");
+  }
+
+  const numericRating = Number(ratingForm.rating);
+
+  if (isNaN(numericRating) || numericRating < 0.5 || numericRating > 5.0) {
+    return setError("Rating must be between 0.5 and 5.0");
+  }
+
+  setError("");
+  setRatingResponse(null);
+  setRatingLoading(true);
+
+  try {
+    const payload = {
+      customer_id: user.user_id,
+      rating: numericRating,
+      review: ratingForm.review.trim(),
+    };
+
+    const res = await fetch(
+      `http://127.0.0.1:8000/restaurants/${selectedBrowseRestaurant.id}/rate`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.user_id,
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      let msg = "Failed to add rating";
+
+      if (typeof data.detail === "string") {
+        msg = data.detail;
+      } else if (Array.isArray(data.detail)) {
+        msg = data.detail.map((x) => x.msg).join(", ");
+      } else if (data.detail) {
+        msg = JSON.stringify(data.detail);
+      }
+
+      throw new Error(msg);
+    }
+
+    setRatingResponse(data);
+
+    setRatingForm({
+      rating: "5.0",
+      review: "",
+    });
+
+    // Update selected restaurant locally so the new rating appears immediately
+    setSelectedBrowseRestaurant((prev) => {
+      if (!prev) return prev;
+
+      const existingRatings = prev.ratings || [];
+      const updatedRatings = [...existingRatings, data];
+
+      const validRatings = updatedRatings
+        .map((r) => Number(r.rating))
+        .filter((n) => !isNaN(n));
+
+      const average =
+        validRatings.length > 0
+          ? validRatings.reduce((sum, n) => sum + n, 0) / validRatings.length
+          : null;
+
+      return {
+        ...prev,
+        ratings: updatedRatings,
+        average_rating: average !== null ? Number(average.toFixed(2)) : null,
+      };
+    });
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  } finally {
+    setRatingLoading(false);
   }
 };
 
@@ -3087,6 +3196,62 @@ return (
                 {selectedBrowseRestaurant.average_rating ?? "No ratings yet"}
               </p>
 
+                  {/* === ADD THIS inside the selectedBrowseRestaurant details block === */}
+    <h4 style={{ marginTop: "1rem" }}>Leave a Rating</h4>
+
+    <form onSubmit={handleAddRating}>
+      <div>
+        <select
+          value={ratingForm.rating}
+          onChange={(e) =>
+            setRatingForm((prev) => ({
+              ...prev,
+              rating: e.target.value,
+            }))
+          }
+        >
+          <option value="0.5">0.5</option>
+          <option value="1.0">1.0</option>
+          <option value="1.5">1.5</option>
+          <option value="2.0">2.0</option>
+          <option value="2.5">2.5</option>
+          <option value="3.0">3.0</option>
+          <option value="3.5">3.5</option>
+          <option value="4.0">4.0</option>
+          <option value="4.5">4.5</option>
+          <option value="5.0">5.0</option>
+        </select>
+      </div>
+
+      <div style={{ marginTop: "0.5rem" }}>
+        <textarea
+          placeholder="Write your review"
+          value={ratingForm.review}
+          onChange={(e) =>
+            setRatingForm((prev) => ({
+              ...prev,
+              review: e.target.value,
+            }))
+          }
+          rows={4}
+          style={{ width: "100%", maxWidth: "500px" }}
+        />
+      </div>
+
+      <button type="submit" style={{ marginTop: "1rem" }} disabled={ratingLoading}>
+        {ratingLoading ? "Submitting Rating..." : "Submit Rating"}
+      </button>
+    </form>
+
+    {ratingResponse && (
+      <div style={{ marginTop: "1rem", color: "green" }}>
+        <p>Rating submitted successfully.</p>
+        <p><strong>Rating ID:</strong> {ratingResponse.id}</p>
+        <p><strong>Customer ID:</strong> {ratingResponse.customer_id}</p>
+        <p><strong>Rating:</strong> {ratingResponse.rating}</p>
+        <p><strong>Review:</strong> {ratingResponse.review}</p>
+      </div>
+    )}
               <h4 style={{ marginTop: "1rem" }}>Hours</h4>
               {Object.entries(selectedBrowseRestaurant.hours || {}).map(([day, value]) => (
                 <p key={day}>
@@ -3248,23 +3413,26 @@ return (
       <p>No menu items found.</p>
     )}
 
-              <h4 style={{ marginTop: "1rem" }}>Ratings</h4>
-              {selectedBrowseRestaurant.ratings?.length > 0 ? (
-                selectedBrowseRestaurant.ratings.map((rating, index) => (
-                  <div
-                    key={rating.id || index}
-                    style={{
-                      border: "1px solid #ccc",
-                      padding: "0.75rem",
-                      marginTop: "0.5rem",
-                    }}
-                  >
-                    <p>{JSON.stringify(rating)}</p>
-                  </div>
-                ))
-              ) : (
-                <p>No ratings yet.</p>
-              )}
+               <h4 style={{ marginTop: "1rem" }}>Ratings</h4>
+    {selectedBrowseRestaurant.ratings?.length > 0 ? (
+      selectedBrowseRestaurant.ratings.map((rating) => (
+        <div
+          key={rating.id}
+          style={{
+            border: "1px solid #ccc",
+            padding: "0.75rem",
+            marginTop: "0.5rem",
+          }}
+        >
+          <p><strong>ID:</strong> {rating.id}</p>
+          <p><strong>Customer ID:</strong> {rating.customer_id}</p>
+          <p><strong>Rating:</strong> {rating.rating}</p>
+          <p><strong>Review:</strong> {rating.review}</p>
+        </div>
+      ))
+    ) : (
+      <p>No ratings yet.</p>
+    )}
             </div>
           )}
 
