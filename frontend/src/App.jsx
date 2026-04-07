@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import {PieChart, Pie, Cell, Tooltip, Legend} from 'recharts';
 
 export default function App() {
   const [identifier, setIdentifier] = useState("");
@@ -124,6 +125,9 @@ const [favoriteForm, setFavoriteForm] = useState({
   restaurant_id: "",
   menu_item_id: "",
 });
+
+const [orders, setOrders] = useState([]);
+const [orderStats, setOrderStats] = useState([]);
 
 const convertApiHoursToFormHours = (hoursObj) => {
   const base = emptyHoursState();
@@ -1263,6 +1267,46 @@ const handleDeleteFavorite = async (favoriteId) => {
   }
 };
 
+const loadAdminData = async () => {
+  setError("");
+
+  try {
+    const res = await fetch("http://127.0.0.1:8000/orders", {
+      headers: {
+        "Content-Type": "application/json",
+        "user-id": user.user_id,
+      },
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error("Failed to load orders");
+    }
+
+    setOrders(data);
+
+    // 🔥 Count order statuses
+    const counts = {};
+
+    data.forEach((order) => {
+      counts[order.status] = (counts[order.status] || 0) + 1;
+    });
+
+    const formatted = Object.entries(counts).map(([status, count]) => ({
+      name: status,
+      value: count,
+    }));
+
+    setOrderStats(formatted);
+
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  }
+};
+
+
+
   if(!user) {
   return (
     <div style={{ padding: "2rem", fontFamily: "Arial" }}>
@@ -1435,6 +1479,16 @@ return (
     Favorites
   </button>
 )}
+
+{user.role === "admin" && (
+  <button
+    onClick={() => setTab("admin")}
+    style={{ marginLeft: "0.5rem" }}
+  >
+    Dashboard
+  </button>
+)}
+
 
           <button
           onClick={() => setTab("notifications")}
@@ -2519,6 +2573,40 @@ return (
 )}
   </div>
 )}
+
+{tab === "admin" && user.role === "admin" && (
+  <div>
+    <h2>Admin Dashboard</h2>
+
+    <button onClick={loadAdminData} style={{ marginBottom: "1rem" }}>
+      Load Analytics
+    </button>
+
+    {orderStats.length === 0 ? (
+      <p>No data yet. Click "Load Analytics".</p>
+    ) : (
+      <PieChart width={400} height={400}>
+        <Pie
+          data={orderStats}
+          dataKey="value"
+          nameKey="name"
+          outerRadius={120}
+           label
+        >
+          {orderStats.map((entry, index) => (
+            <Cell
+              key={index}
+              fill={["#0088FE", "#00C49F", "#FFBB28", "#FF8042"][index % 4]}
+            />
+          ))}
+        </Pie>
+        <Tooltip />
+        <Legend />
+      </PieChart>
+    )}
+  </div>
+)}
+
             {tab === "notifications" && (
         <div>
           <h2>Notifications</h2>
