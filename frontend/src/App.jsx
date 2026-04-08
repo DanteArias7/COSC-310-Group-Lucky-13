@@ -14,6 +14,8 @@ export default function App() {
   const [createResponse, setCreateResponse] = useState(null);
   const [restaurantTab, setRestaurantTab] = useState("create");
   const [confirmDeleteRestaurant, setConfirmDeleteRestaurant] = useState(false);
+  const [randomMeal, setRandomMeal] = useState(null);
+  const [randomMealLoading, setRandomMealLoading] = useState(false);
   const [createForm, setCreateForm] = useState({
     name: "",
     email: "",
@@ -130,13 +132,6 @@ const [orders, setOrders] = useState([]);
 const [orderStats, setOrderStats] = useState([]);
 const [orderTrend, setOrderTrend] = useState([]);
 const [restaurantStats, setRestaurantStats] = useState([]);
-const [adminTab, setAdminTab] = useState("analytics");
-const [adminRestaurantId, setAdminRestaurantId] = useState("");
-const [adminDeleteConfirm, setAdminDeleteConfirm] = useState(false);
-const [adminDeleteResponse, setAdminDeleteResponse] = useState(null);
-const [adminUserId, setAdminUserId] = useState("");
-const [adminUserDeleteConfirm, setAdminUserDeleteConfirm] = useState(false);
-const [adminUserDeleteResponse, setAdminUserDeleteResponse] = useState(null);
 
 const [myOrders, setMyOrders] = useState([]);
 const [myOrdersLoading, setMyOrdersLoading] = useState(false);
@@ -151,6 +146,7 @@ const [paymentForm, setPaymentForm] = useState({
 const [paymentLoading, setPaymentLoading] = useState(false);
 const [paymentResponse, setPaymentResponse] = useState(null);
 
+// --- Restaurant Owner: Manage Orders ---
 const [restaurantOrders, setRestaurantOrders] = useState([]);
 const [restaurantOrdersLoading, setRestaurantOrdersLoading] = useState(false);
 const [restaurantOrdersRestaurantId, setRestaurantOrdersRestaurantId] = useState("");
@@ -161,6 +157,7 @@ const [restaurantOrderStatusForm, setRestaurantOrderStatusForm] = useState({
 const [restaurantOrderStatusResponse, setRestaurantOrderStatusResponse] = useState(null);
 const [restaurantOrderStatusLoading, setRestaurantOrderStatusLoading] = useState(false);
 
+// --- Delivery Driver: Deliveries ---
 const [driverTab, setDriverTab] = useState("available");
 const [availableOrders, setAvailableOrders] = useState([]);
 const [availableOrdersLoading, setAvailableOrdersLoading] = useState(false);
@@ -260,7 +257,7 @@ const [ratingLoading, setRatingLoading] = useState(false);
 const [ratingResponse, setRatingResponse] = useState(null);
 
   useEffect(() => {
-      if (!user) return; 
+      if (!user) return; // only start after login
 
       const es = new EventSource(
         `http://127.0.0.1:8000/notifications/stream?user_id=${user.user_id}`
@@ -277,7 +274,7 @@ const [ratingResponse, setRatingResponse] = useState(null);
       };
 
       return () => {
-        es.close(); 
+        es.close(); // cleanup on logout/unmount
       };
     }, [user]);
 
@@ -530,6 +527,42 @@ const handleRestaurantFieldChange = (field, value) => {
     ...prev,
     [field]: value,
   }));
+};
+
+const handleGetRandomMeal = async () => {
+  if (!user || user.role !== "customer") {
+    setError("Only customers can get random meal suggestions");
+    return;
+  }
+  setError("");
+  setRandomMeal(null);
+  setRandomMealLoading(true);
+  try {
+    const res = await fetch("http://127.0.0.1:8000/restaurants/random-meal", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "user-id": user.user_id,
+      },
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      let msg = "Failed to get random meal";
+      if (typeof data.detail === "string") {
+        msg = data.detail;
+      } else if (Array.isArray(data.detail)) {
+        msg = data.detail.map((x) => x.msg).join(", ");
+      } else if (data.detail) {
+        msg = JSON.stringify(data.detail);
+      }
+      throw new Error(msg);
+    }
+    setRandomMeal(data);
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  } finally {
+    setRandomMealLoading(false);
+  }
 };
 
 const handleMenuItemChange = (index, field, value) => {
@@ -1386,7 +1419,7 @@ const handlePlaceOrder = async () => {
     }
 
     setPlaceOrderResponse(data);
-    setCartResponse(null); 
+    setCartResponse(null); // clear cart after placing
   } catch (err) {
     setError(err.message || "Something went wrong");
   } finally {
@@ -1394,6 +1427,10 @@ const handlePlaceOrder = async () => {
   }
 };
 
+// ----------------------------------------------------------
+// CUSTOMER: Load my orders
+// Endpoint: GET /orders/user/{user_id}
+// ----------------------------------------------------------
 const loadMyOrders = async () => {
   if (!user) return;
   setError("");
@@ -1411,6 +1448,7 @@ const loadMyOrders = async () => {
     const data = await res.json();
 
     if (!res.ok) {
+      // 404 just means no orders yet — treat as empty list
       if (res.status === 404) { setMyOrders([]); return; }
       let msg = "Failed to load your orders";
       if (typeof data.detail === "string") msg = data.detail;
@@ -1427,6 +1465,10 @@ const loadMyOrders = async () => {
   }
 };
 
+// ----------------------------------------------------------
+// CUSTOMER: Simulate payment for a Pending order
+// Endpoint: POST /orders/{order_id}/pay
+// ----------------------------------------------------------
 const handlePayOrder = async (e) => {
   e.preventDefault();
   if (!user) return;
@@ -1469,7 +1511,7 @@ const handlePayOrder = async (e) => {
     setPaymentResponse(data);
     setPaymentForm({ card_number: "", cvv: "", expiration_date: "" });
     setSelectedPayOrderId("");
-    await loadMyOrders();
+    await loadMyOrders(); // refresh order list to show updated status
   } catch (err) {
     setError(err.message || "Something went wrong");
   } finally {
@@ -1477,6 +1519,10 @@ const handlePayOrder = async (e) => {
   }
 };
 
+// ----------------------------------------------------------
+// RESTAURANT OWNER: Load orders for a restaurant
+// Endpoint: GET /orders/restaurant/{restaurant_id}
+// ----------------------------------------------------------
 const loadRestaurantOrders = async (restaurantId) => {
   if (!user || user.role !== "restaurant_owner") return;
   setError("");
@@ -1512,6 +1558,11 @@ const loadRestaurantOrders = async (restaurantId) => {
   }
 };
 
+// ----------------------------------------------------------
+// RESTAURANT OWNER: Update order status (accept / prepare / ready)
+// Endpoint: PATCH /orders/{order_id}/restaurant-status
+//           body: { status: "Accepted_by_restaurant" | "Preparing" | "Ready_for_pickup" }
+// ----------------------------------------------------------
 const handleUpdateRestaurantStatus = async (e) => {
   e.preventDefault();
   if (!user || user.role !== "restaurant_owner") return;
@@ -1541,6 +1592,7 @@ const handleUpdateRestaurantStatus = async (e) => {
     }
 
     setRestaurantOrderStatusResponse(data);
+    // Refresh the restaurant order list if a restaurant is already loaded
     if (restaurantOrdersRestaurantId.trim()) {
       await loadRestaurantOrders(restaurantOrdersRestaurantId);
     }
@@ -1551,6 +1603,10 @@ const handleUpdateRestaurantStatus = async (e) => {
   }
 };
 
+// ----------------------------------------------------------
+// DELIVERY DRIVER: Load available orders (unassigned, correct status)
+// Endpoint: GET /orders/available
+// ----------------------------------------------------------
 const loadAvailableOrders = async () => {
   if (!user || user.role !== "delivery_driver") return;
   setError("");
@@ -1583,6 +1639,11 @@ const loadAvailableOrders = async () => {
   }
 };
 
+// ----------------------------------------------------------
+// DELIVERY DRIVER: Accept a delivery (self-assign to order)
+// Endpoint: PATCH /orders/{order_id}/accept-delivery
+//           driver_id is sent via the "user-id" header
+// ----------------------------------------------------------
 const handleAcceptDelivery = async (orderId) => {
   if (!user || user.role !== "delivery_driver") return;
   setError("");
@@ -1610,6 +1671,7 @@ const handleAcceptDelivery = async (orderId) => {
       throw new Error(msg);
     }
 
+    // Refresh both lists after accepting
     await loadAvailableOrders();
     await loadAssignedOrders();
   } catch (err) {
@@ -1619,6 +1681,10 @@ const handleAcceptDelivery = async (orderId) => {
   }
 };
 
+// ----------------------------------------------------------
+// DELIVERY DRIVER: Load orders assigned to this driver
+// Endpoint: GET /orders/assigned  (user-id resolved from header)
+// ----------------------------------------------------------
 const loadAssignedOrders = async () => {
   if (!user || user.role !== "delivery_driver") return;
   setError("");
@@ -1652,6 +1718,11 @@ const loadAssignedOrders = async () => {
   }
 };
 
+// ----------------------------------------------------------
+// DELIVERY DRIVER: Update delivery status (In_transit / Complete / Cancelled)
+// Endpoint: PATCH /orders/{order_id}/delivery-status
+//           body: { status: "In_transit" | "Complete" | "Cancelled" }
+// ----------------------------------------------------------
 const handleUpdateDeliveryStatus = async (e) => {
   e.preventDefault();
   if (!user || user.role !== "delivery_driver") return;
@@ -1684,7 +1755,7 @@ const handleUpdateDeliveryStatus = async (e) => {
     }
 
     setDeliveryStatusResponse(data);
-    await loadAssignedOrders();
+    await loadAssignedOrders(); // refresh assigned orders list
   } catch (err) {
     setError(err.message || "Something went wrong");
   } finally {
@@ -1711,6 +1782,7 @@ const loadAdminData = async () => {
 
     setOrders(data);
 
+    // 🔥 Count order statuses
     const counts = {};
 
     data.forEach((order) => {
@@ -1763,51 +1835,7 @@ setRestaurantStats(restaurantData);
 
 };
 
-const handleAdminDeleteRestaurant = async () => {
-  try {
-    const res = await fetch(
-      `http://127.0.0.1:8000/restaurants/${adminRestaurantId}`,
-      {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          "user-id": user.user_id,
-        },
-      }
-    );
 
-    if (!res.ok) throw new Error("Delete failed");
-
-    alert("Deleted successfully");
-    setAdminRestaurantId("");
-    setAdminDeleteConfirm(false);
-  } catch (err) {
-    setError(err.message);
-  }
-};
-
-const handleAdminDeleteUser = async () => {
-  try {
-    const res = await fetch(
-      `http://127.0.0.1:8000/users/${adminUserId}`,
-      {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          "user-id": user.user_id,
-        },
-      }
-    );
-
-    if (!res.ok) throw new Error("Delete failed");
-
-    setAdminUserDeleteResponse({ deleted: true, id: adminUserId });
-    setAdminUserId("");
-    setAdminUserDeleteConfirm(false);
-  } catch (err) {
-    setError(err.message);
-  }
-};
 
 const loadBrowseRestaurants = async (page = 1) => {
   if (!user || user.role !== "customer") return;
@@ -2197,6 +2225,7 @@ const loadBrowseRestaurantMenu = async (restaurantId, page = 1) => {
   }
 };
 
+// === ADD THIS near your other handler functions ===
 const handleAddRating = async (e) => {
   e.preventDefault();
 
@@ -2262,6 +2291,7 @@ const handleAddRating = async (e) => {
       review: "",
     });
 
+    // Update selected restaurant locally so the new rating appears immediately
     setSelectedBrowseRestaurant((prev) => {
       if (!prev) return prev;
 
@@ -2539,12 +2569,54 @@ return (
         </button>
         </div>
 
-      {tab === "home" && (
-        <div>
-          <h2>Home</h2>
-          <p>This will be the main page.</p>
-        </div>
-      )}
+{tab === "home" && (
+  <div>
+    <h2>Home</h2>
+    <p>Welcome to the Food Delivery App!</p>
+    {user.role === "customer" && (
+      <div style={{ marginTop: "1rem" }}>
+        <button
+          onClick={handleGetRandomMeal}
+          disabled={randomMealLoading}
+          style={{
+            padding: "10px 20px",
+            fontSize: "16px",
+            backgroundColor: "#4CAF50",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: randomMealLoading ? "not-allowed" : "pointer",
+          }}
+        >
+          {randomMealLoading ? "Loading..." : "Get Random Meal 🍽"}
+        </button>
+        {randomMeal && (
+          <div
+            style={{
+              marginTop: "1.5rem",
+              padding: "1rem",
+              border: "2px solid #4CAF50",
+              borderRadius: "8px",
+              backgroundColor: "#f9f9f9",
+            }}
+          >
+            <h3>Today's Random Suggestion!</h3>
+            <p><strong>Meal:</strong> {randomMeal.name}</p>
+            <p><strong>Restaurant:</strong> {randomMeal.restaurant_name}</p>
+            <p><strong>Price:</strong> ${randomMeal.price}</p>
+            <p><strong>Description:</strong> {randomMeal.description}</p>
+            <p><strong>Tags:</strong> {(randomMeal.tags || []).join(", ")}</p>
+          </div>
+        )}
+      </div>
+    )}
+    {user.role !== "customer" && (
+      <p style={{ marginTop: "1rem", color: "#666" }}>
+        Random meal suggestions are only available for customers.
+      </p>
+    )}
+  </div>
+)}
 
       {tab === "account" && (
         <div>
@@ -3513,7 +3585,7 @@ return (
   <button
   onClick={() => {
     setFavoriteTab("delete");
-    loadFavorites(); 
+    loadFavorites(); // load list to choose from
   }}
   style={{ marginLeft: "0.5rem" }}
 >
@@ -3745,6 +3817,7 @@ return (
                 {selectedBrowseRestaurant.average_rating ?? "No ratings yet"}
               </p>
 
+                  {/* === ADD THIS inside the selectedBrowseRestaurant details block === */}
     <h4 style={{ marginTop: "1rem" }}>Leave a Rating</h4>
 
     <form onSubmit={handleAddRating}>
@@ -4054,10 +4127,14 @@ return (
         </div>
       )}
 
+{/* ======================================================
+          CUSTOMER: MY ORDERS TAB
+          ====================================================== */}
       {tab === "my-orders" && user.role === "customer" && (
         <div>
           <h2>My Orders</h2>
 
+          {/* -- Place order from active cart -- */}
           {cartResponse && (cartResponse.cart_items || []).length > 0 && (
             <div style={{ marginBottom: "1.5rem", border: "1px solid #ccc", padding: "1rem" }}>
               <h4>Active Cart</h4>
@@ -4085,6 +4162,7 @@ return (
             </div>
           )}
 
+          {/* -- Order list -- */}
           <button type="button" onClick={loadMyOrders} style={{ marginBottom: "1rem" }}>
             Refresh Orders
           </button>
@@ -4124,6 +4202,7 @@ return (
             </div>
           )}
 
+          {/* -- Payment form -- */}
           {selectedPayOrderId && (
             <div style={{ marginTop: "1.5rem", border: "1px solid #999", padding: "1rem" }}>
               <h4>Pay for Order {selectedPayOrderId}</h4>
@@ -4186,10 +4265,14 @@ return (
         </div>
       )}
 
+      {/* ======================================================
+          RESTAURANT OWNER: MANAGE ORDERS TAB
+          ====================================================== */}
       {tab === "manage-orders" && user.role === "restaurant_owner" && (
         <div>
           <h2>Manage Orders</h2>
 
+          {/* -- Load orders by restaurant ID -- */}
           <div style={{ marginBottom: "1rem" }}>
             <input
               placeholder="Restaurant ID"
@@ -4233,6 +4316,7 @@ return (
             </div>
           )}
 
+          {/* -- Update order status -- */}
           <div style={{ marginTop: "1.5rem", border: "1px solid #999", padding: "1rem" }}>
             <h4>Update Order Status</h4>
 
@@ -4286,10 +4370,14 @@ return (
         </div>
       )}
 
+      {/* ======================================================
+          DELIVERY DRIVER: DELIVERIES TAB
+          ====================================================== */}
       {tab === "deliveries" && user.role === "delivery_driver" && (
         <div>
           <h2>Deliveries</h2>
 
+          {/* Sub-tabs */}
           <div style={{ marginBottom: "1rem" }}>
             <button
               type="button"
@@ -4321,6 +4409,7 @@ return (
             </button>
           </div>
 
+          {/* -- Available orders -- */}
           {driverTab === "available" && (
             <div>
               <h4>Available Orders</h4>
@@ -4363,6 +4452,7 @@ return (
             </div>
           )}
 
+          {/* -- Assigned / my deliveries -- */}
           {driverTab === "assigned" && (
             <div>
               <h4>My Deliveries</h4>
@@ -4397,6 +4487,7 @@ return (
             </div>
           )}
 
+          {/* -- Update delivery status -- */}
           {driverTab === "update-status" && (
             <div>
               <h4>Update Delivery Status</h4>
@@ -4456,31 +4547,10 @@ return (
   <div>
     <h2>Admin Dashboard</h2>
 
-<div style={{ marginBottom: "1rem" }}>
-  <button
-    onClick={() => {
-      setAdminTab("analytics");
-      loadAdminData();
-    }}
-  >
+ <button onClick={loadAdminData} style={{ marginBottom: "1rem" }}>
     Load Analytics
   </button>
 
-  <button
-    onClick={() => setAdminTab("delete-restaurants")}
-    style={{ marginLeft: "0.5rem" }}
-  >
-    Delete Restaurants
-  </button>
-  <button
-    onClick={() => setAdminTab("delete-users")}
-    style={{ marginLeft: "0.5rem" }}
-  >
-    Delete Users
-  </button>
-</div>
-{adminTab === "analytics" && (
-    <>
   {orderStats.length === 0 ? (
     <p>No data yet. Click "Load Analytics".</p>
   ) : (
@@ -4492,7 +4562,7 @@ return (
         flexWrap: "wrap",
       }}
     >
-
+      {/* Pie Chart */}
       <div>
         <h4 style={{ textAlign: "center" }}>Order Status Distribution</h4>
 
@@ -4516,6 +4586,7 @@ return (
         </PieChart>
       </div>
 
+      {/* Line Chart */}
       <div>
         <h4 style={{ textAlign: "center" }}>Orders Over Time</h4>
 
@@ -4547,101 +4618,6 @@ return (
 </div>
     </div>
   )}
-  </>
-  )}
-
-  {adminTab === "delete-restaurants" && (
-  <div>
-    <h3>Delete Restaurants</h3>
-
-    <input
-      type="number"
-      placeholder="Restaurant ID"
-      value={adminRestaurantId}
-      onChange={(e) => setAdminRestaurantId(e.target.value)}
-    />
-
-    {!adminDeleteConfirm ? (
-      <button
-        onClick={() => setAdminDeleteConfirm(true)}
-        style={{ marginLeft: "0.5rem", backgroundColor: "red", color: "white" }}
-      >
-        Delete
-      </button>
-    ) : (
-      <div style={{ marginTop: "0.5rem" }}>
-        <p style={{ color: "red" }}>
-          Are you sure you want to delete this restaurant?
-        </p>
-
-        <button
-          onClick={handleAdminDeleteRestaurant}
-          style={{ backgroundColor: "red", color: "white", marginRight: "0.5rem" }}
-        >
-          Yes, Delete
-        </button>
-
-        <button onClick={() => setAdminDeleteConfirm(false)}>
-          Cancel
-        </button>
-      </div>
-    )}
-
-    {adminDeleteResponse?.deleted && (
-      <p style={{ color: "green", marginTop: "0.5rem" }}>
-        Restaurant {adminDeleteResponse.id} deleted successfully.
-      </p>
-    )}
-  </div>
-)}
-
-{adminTab === "delete-users" && (
-  <div>
-    <h3>Delete Users</h3>
-
-    <input
-      placeholder="User ID"
-      value={adminUserId}
-      onChange={(e) => setAdminUserId(e.target.value)}
-    />
-
-    {!adminUserDeleteConfirm ? (
-      <button
-        onClick={() => setAdminUserDeleteConfirm(true)}
-        style={{ marginLeft: "0.5rem", backgroundColor: "red", color: "white" }}
-      >
-        Delete
-      </button>
-    ) : (
-      <div style={{ marginTop: "0.5rem" }}>
-        <p style={{ color: "red" }}>
-          Are you sure you want to delete this user?
-        </p>
-
-        <button
-          onClick={handleAdminDeleteUser}
-          style={{
-            backgroundColor: "red",
-            color: "white",
-            marginRight: "0.5rem",
-          }}
-        >
-          Yes, Delete
-        </button>
-
-        <button onClick={() => setAdminUserDeleteConfirm(false)}>
-          Cancel
-        </button>
-      </div>
-    )}
-
-    {adminUserDeleteResponse?.deleted && (
-      <p style={{ color: "green", marginTop: "0.5rem" }}>
-        User {adminUserDeleteResponse.id} deleted successfully.
-      </p>
-    )}
-  </div>
-)}
 </div>
 )}
 
