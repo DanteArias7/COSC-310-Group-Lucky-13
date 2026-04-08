@@ -144,7 +144,6 @@ const [paymentForm, setPaymentForm] = useState({
 const [paymentLoading, setPaymentLoading] = useState(false);
 const [paymentResponse, setPaymentResponse] = useState(null);
 
-// --- Restaurant Owner: Manage Orders ---
 const [restaurantOrders, setRestaurantOrders] = useState([]);
 const [restaurantOrdersLoading, setRestaurantOrdersLoading] = useState(false);
 const [restaurantOrdersRestaurantId, setRestaurantOrdersRestaurantId] = useState("");
@@ -155,7 +154,6 @@ const [restaurantOrderStatusForm, setRestaurantOrderStatusForm] = useState({
 const [restaurantOrderStatusResponse, setRestaurantOrderStatusResponse] = useState(null);
 const [restaurantOrderStatusLoading, setRestaurantOrderStatusLoading] = useState(false);
 
-// --- Delivery Driver: Deliveries ---
 const [driverTab, setDriverTab] = useState("available");
 const [availableOrders, setAvailableOrders] = useState([]);
 const [availableOrdersLoading, setAvailableOrdersLoading] = useState(false);
@@ -255,7 +253,7 @@ const [ratingLoading, setRatingLoading] = useState(false);
 const [ratingResponse, setRatingResponse] = useState(null);
 
   useEffect(() => {
-      if (!user) return; // only start after login
+      if (!user) return; 
 
       const es = new EventSource(
         `http://127.0.0.1:8000/notifications/stream?user_id=${user.user_id}`
@@ -272,7 +270,7 @@ const [ratingResponse, setRatingResponse] = useState(null);
       };
 
       return () => {
-        es.close(); // cleanup on logout/unmount
+        es.close(); 
       };
     }, [user]);
 
@@ -1381,7 +1379,7 @@ const handlePlaceOrder = async () => {
     }
 
     setPlaceOrderResponse(data);
-    setCartResponse(null); // clear cart after placing
+    setCartResponse(null); 
   } catch (err) {
     setError(err.message || "Something went wrong");
   } finally {
@@ -1389,10 +1387,6 @@ const handlePlaceOrder = async () => {
   }
 };
 
-// ----------------------------------------------------------
-// CUSTOMER: Load my orders
-// Endpoint: GET /orders/user/{user_id}
-// ----------------------------------------------------------
 const loadMyOrders = async () => {
   if (!user) return;
   setError("");
@@ -1410,7 +1404,6 @@ const loadMyOrders = async () => {
     const data = await res.json();
 
     if (!res.ok) {
-      // 404 just means no orders yet — treat as empty list
       if (res.status === 404) { setMyOrders([]); return; }
       let msg = "Failed to load your orders";
       if (typeof data.detail === "string") msg = data.detail;
@@ -1427,10 +1420,6 @@ const loadMyOrders = async () => {
   }
 };
 
-// ----------------------------------------------------------
-// CUSTOMER: Simulate payment for a Pending order
-// Endpoint: POST /orders/{order_id}/pay
-// ----------------------------------------------------------
 const handlePayOrder = async (e) => {
   e.preventDefault();
   if (!user) return;
@@ -1473,7 +1462,7 @@ const handlePayOrder = async (e) => {
     setPaymentResponse(data);
     setPaymentForm({ card_number: "", cvv: "", expiration_date: "" });
     setSelectedPayOrderId("");
-    await loadMyOrders(); // refresh order list to show updated status
+    await loadMyOrders();
   } catch (err) {
     setError(err.message || "Something went wrong");
   } finally {
@@ -1481,10 +1470,6 @@ const handlePayOrder = async (e) => {
   }
 };
 
-// ----------------------------------------------------------
-// RESTAURANT OWNER: Load orders for a restaurant
-// Endpoint: GET /orders/restaurant/{restaurant_id}
-// ----------------------------------------------------------
 const loadRestaurantOrders = async (restaurantId) => {
   if (!user || user.role !== "restaurant_owner") return;
   setError("");
@@ -1520,11 +1505,6 @@ const loadRestaurantOrders = async (restaurantId) => {
   }
 };
 
-// ----------------------------------------------------------
-// RESTAURANT OWNER: Update order status (accept / prepare / ready)
-// Endpoint: PATCH /orders/{order_id}/restaurant-status
-//           body: { status: "Accepted_by_restaurant" | "Preparing" | "Ready_for_pickup" }
-// ----------------------------------------------------------
 const handleUpdateRestaurantStatus = async (e) => {
   e.preventDefault();
   if (!user || user.role !== "restaurant_owner") return;
@@ -1554,7 +1534,6 @@ const handleUpdateRestaurantStatus = async (e) => {
     }
 
     setRestaurantOrderStatusResponse(data);
-    // Refresh the restaurant order list if a restaurant is already loaded
     if (restaurantOrdersRestaurantId.trim()) {
       await loadRestaurantOrders(restaurantOrdersRestaurantId);
     }
@@ -1565,10 +1544,6 @@ const handleUpdateRestaurantStatus = async (e) => {
   }
 };
 
-// ----------------------------------------------------------
-// DELIVERY DRIVER: Load available orders (unassigned, correct status)
-// Endpoint: GET /orders/available
-// ----------------------------------------------------------
 const loadAvailableOrders = async () => {
   if (!user || user.role !== "delivery_driver") return;
   setError("");
@@ -1601,11 +1576,6 @@ const loadAvailableOrders = async () => {
   }
 };
 
-// ----------------------------------------------------------
-// DELIVERY DRIVER: Accept a delivery (self-assign to order)
-// Endpoint: PATCH /orders/{order_id}/accept-delivery
-//           driver_id is sent via the "user-id" header
-// ----------------------------------------------------------
 const handleAcceptDelivery = async (orderId) => {
   if (!user || user.role !== "delivery_driver") return;
   setError("");
@@ -1633,7 +1603,6 @@ const handleAcceptDelivery = async (orderId) => {
       throw new Error(msg);
     }
 
-    // Refresh both lists after accepting
     await loadAvailableOrders();
     await loadAssignedOrders();
   } catch (err) {
@@ -1643,10 +1612,6 @@ const handleAcceptDelivery = async (orderId) => {
   }
 };
 
-// ----------------------------------------------------------
-// DELIVERY DRIVER: Load orders assigned to this driver
-// Endpoint: GET /orders/assigned  (user-id resolved from header)
-// ----------------------------------------------------------
 const loadAssignedOrders = async () => {
   if (!user || user.role !== "delivery_driver") return;
   setError("");
@@ -1680,11 +1645,6 @@ const loadAssignedOrders = async () => {
   }
 };
 
-// ----------------------------------------------------------
-// DELIVERY DRIVER: Update delivery status (In_transit / Complete / Cancelled)
-// Endpoint: PATCH /orders/{order_id}/delivery-status
-//           body: { status: "In_transit" | "Complete" | "Cancelled" }
-// ----------------------------------------------------------
 const handleUpdateDeliveryStatus = async (e) => {
   e.preventDefault();
   if (!user || user.role !== "delivery_driver") return;
@@ -1717,7 +1677,7 @@ const handleUpdateDeliveryStatus = async (e) => {
     }
 
     setDeliveryStatusResponse(data);
-    await loadAssignedOrders(); // refresh assigned orders list
+    await loadAssignedOrders();
   } catch (err) {
     setError(err.message || "Something went wrong");
   } finally {
@@ -1744,7 +1704,6 @@ const loadAdminData = async () => {
 
     setOrders(data);
 
-    // 🔥 Count order statuses
     const counts = {};
 
     data.forEach((order) => {
@@ -2187,7 +2146,6 @@ const loadBrowseRestaurantMenu = async (restaurantId, page = 1) => {
   }
 };
 
-// === ADD THIS near your other handler functions ===
 const handleAddRating = async (e) => {
   e.preventDefault();
 
@@ -2253,7 +2211,6 @@ const handleAddRating = async (e) => {
       review: "",
     });
 
-    // Update selected restaurant locally so the new rating appears immediately
     setSelectedBrowseRestaurant((prev) => {
       if (!prev) return prev;
 
@@ -3505,7 +3462,7 @@ return (
   <button
   onClick={() => {
     setFavoriteTab("delete");
-    loadFavorites(); // load list to choose from
+    loadFavorites(); 
   }}
   style={{ marginLeft: "0.5rem" }}
 >
@@ -3737,7 +3694,6 @@ return (
                 {selectedBrowseRestaurant.average_rating ?? "No ratings yet"}
               </p>
 
-                  {/* === ADD THIS inside the selectedBrowseRestaurant details block === */}
     <h4 style={{ marginTop: "1rem" }}>Leave a Rating</h4>
 
     <form onSubmit={handleAddRating}>
@@ -4047,14 +4003,10 @@ return (
         </div>
       )}
 
-{/* ======================================================
-          CUSTOMER: MY ORDERS TAB
-          ====================================================== */}
       {tab === "my-orders" && user.role === "customer" && (
         <div>
           <h2>My Orders</h2>
 
-          {/* -- Place order from active cart -- */}
           {cartResponse && (cartResponse.cart_items || []).length > 0 && (
             <div style={{ marginBottom: "1.5rem", border: "1px solid #ccc", padding: "1rem" }}>
               <h4>Active Cart</h4>
@@ -4082,7 +4034,6 @@ return (
             </div>
           )}
 
-          {/* -- Order list -- */}
           <button type="button" onClick={loadMyOrders} style={{ marginBottom: "1rem" }}>
             Refresh Orders
           </button>
@@ -4122,7 +4073,6 @@ return (
             </div>
           )}
 
-          {/* -- Payment form -- */}
           {selectedPayOrderId && (
             <div style={{ marginTop: "1.5rem", border: "1px solid #999", padding: "1rem" }}>
               <h4>Pay for Order {selectedPayOrderId}</h4>
@@ -4185,14 +4135,10 @@ return (
         </div>
       )}
 
-      {/* ======================================================
-          RESTAURANT OWNER: MANAGE ORDERS TAB
-          ====================================================== */}
       {tab === "manage-orders" && user.role === "restaurant_owner" && (
         <div>
           <h2>Manage Orders</h2>
 
-          {/* -- Load orders by restaurant ID -- */}
           <div style={{ marginBottom: "1rem" }}>
             <input
               placeholder="Restaurant ID"
@@ -4236,7 +4182,6 @@ return (
             </div>
           )}
 
-          {/* -- Update order status -- */}
           <div style={{ marginTop: "1.5rem", border: "1px solid #999", padding: "1rem" }}>
             <h4>Update Order Status</h4>
 
@@ -4290,14 +4235,10 @@ return (
         </div>
       )}
 
-      {/* ======================================================
-          DELIVERY DRIVER: DELIVERIES TAB
-          ====================================================== */}
       {tab === "deliveries" && user.role === "delivery_driver" && (
         <div>
           <h2>Deliveries</h2>
 
-          {/* Sub-tabs */}
           <div style={{ marginBottom: "1rem" }}>
             <button
               type="button"
@@ -4329,7 +4270,6 @@ return (
             </button>
           </div>
 
-          {/* -- Available orders -- */}
           {driverTab === "available" && (
             <div>
               <h4>Available Orders</h4>
@@ -4372,7 +4312,6 @@ return (
             </div>
           )}
 
-          {/* -- Assigned / my deliveries -- */}
           {driverTab === "assigned" && (
             <div>
               <h4>My Deliveries</h4>
@@ -4407,7 +4346,6 @@ return (
             </div>
           )}
 
-          {/* -- Update delivery status -- */}
           {driverTab === "update-status" && (
             <div>
               <h4>Update Delivery Status</h4>
@@ -4482,7 +4420,7 @@ return (
         flexWrap: "wrap",
       }}
     >
-      {/* Pie Chart */}
+
       <div>
         <h4 style={{ textAlign: "center" }}>Order Status Distribution</h4>
 
@@ -4506,7 +4444,6 @@ return (
         </PieChart>
       </div>
 
-      {/* Line Chart */}
       <div>
         <h4 style={{ textAlign: "center" }}>Orders Over Time</h4>
 
