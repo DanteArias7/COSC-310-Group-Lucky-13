@@ -14,6 +14,9 @@ export default function App() {
   const [createResponse, setCreateResponse] = useState(null);
   const [restaurantTab, setRestaurantTab] = useState("create");
   const [confirmDeleteRestaurant, setConfirmDeleteRestaurant] = useState(false);
+  const [randomMeal, setRandomMeal] = useState(null);
+  const [randomMealLoading, setRandomMealLoading] = useState(false);
+
   const [createForm, setCreateForm] = useState({
     name: "",
     email: "",
@@ -24,60 +27,71 @@ export default function App() {
   });
 
   const [updateForm, setUpdateForm] = useState({
-      name: "",
-      email: "",
-      phone_number: "",
-      address: "",
-      password: "",
-      role: "",
-      });
+    name: "",
+    email: "",
+    phone_number: "",
+    address: "",
+    password: "",
+    role: "",
+  });
 
   const [restaurantResponse, setRestaurantResponse] = useState(null);
 
   const [restaurantForm, setRestaurantForm] = useState({
-  name: "",
-  phone_number: "",
-  address: "",
-  tags: "",
-  hours: {
-  Monday: { open: "", close: "", closed: false },
-  Tuesday: { open: "", close: "", closed: false },
-  Wednesday: { open: "", close: "", closed: false },
-  Thursday: { open: "", close: "", closed: false },
-  Friday: { open: "", close: "", closed: false },
-  Saturday: { open: "", close: "", closed: false },
-  Sunday: { open: "", close: "", closed: false },
-},
-  menu: [
-    {
-      name: "",
-      price: "",
-      description: "",
-      tags: "",
+    name: "",
+    phone_number: "",
+    address: "",
+    tags: "",
+    hours: {
+      Monday: { open: "", close: "", closed: false },
+      Tuesday: { open: "", close: "", closed: false },
+      Wednesday: { open: "", close: "", closed: false },
+      Thursday: { open: "", close: "", closed: false },
+      Friday: { open: "", close: "", closed: false },
+      Saturday: { open: "", close: "", closed: false },
+      Sunday: { open: "", close: "", closed: false },
     },
-  ],
-});
+    menu: [
+      {
+        name: "",
+        price: "",
+        description: "",
+        tags: "",
+      },
+    ],
+  });
 
-const [menuItemResponse, setMenuItemResponse] = useState(null);
+  const [menuItemResponse, setMenuItemResponse] = useState(null);
 
-const [addMenuItemForm, setAddMenuItemForm] = useState({
-  restaurant_id: "",
-  name: "",
-  price: "",
-  description: "",
-  tags: "",
-});
+  const [addMenuItemForm, setAddMenuItemForm] = useState({
+    restaurant_id: "",
+    name: "",
+    price: "",
+    description: "",
+    tags: "",
+  });
 
-const [restaurantIdInput, setRestaurantIdInput] = useState("");
-const [loadedRestaurant, setLoadedRestaurant] = useState(null);
+  const [restaurantIdInput, setRestaurantIdInput] = useState("");
+  const [loadedRestaurant, setLoadedRestaurant] = useState(null);
 
-const [updateRestaurantForm, setUpdateRestaurantForm] = useState({
-  id: "",
-  name: "",
-  phone_number: "",
-  address: "",
-  tags: "",
-  hours: {
+  const [updateRestaurantForm, setUpdateRestaurantForm] = useState({
+    id: "",
+    name: "",
+    phone_number: "",
+    address: "",
+    tags: "",
+    hours: {
+      Monday: { open: "", close: "", closed: false },
+      Tuesday: { open: "", close: "", closed: false },
+      Wednesday: { open: "", close: "", closed: false },
+      Thursday: { open: "", close: "", closed: false },
+      Friday: { open: "", close: "", closed: false },
+      Saturday: { open: "", close: "", closed: false },
+      Sunday: { open: "", close: "", closed: false },
+    },
+  });
+
+  const emptyHoursState = () => ({
     Monday: { open: "", close: "", closed: false },
     Tuesday: { open: "", close: "", closed: false },
     Wednesday: { open: "", close: "", closed: false },
@@ -164,10 +178,9 @@ const convertApiHoursToFormHours = (hoursObj) => {
         closed: false,
       };
     }
-  }
 
-  return base;
-};
+    return base;
+  };
 
 const [addToCartLoading, setAddToCartLoading] = useState(false);
 const [cartMessage, setCartMessage] = useState("");
@@ -182,14 +195,14 @@ const convertFormHoursToApiHours = (hoursObj) =>
   );
 
   const generateTimeOptions = () => {
-  const times = [];
-  for (let h = 0; h < 24; h++) {
-    const hour = h.toString().padStart(2, "0");
-    times.push(`${hour}:00`);
-    times.push(`${hour}:30`);
-  }
-  return times;
-};
+    const times = [];
+    for (let h = 0; h < 24; h++) {
+      const hour = h.toString().padStart(2, "0");
+      times.push(`${hour}:00`);
+      times.push(`${hour}:30`);
+    }
+    return times;
+  };
 
   const timeOptions = generateTimeOptions();
 
@@ -216,26 +229,26 @@ const [ratingLoading, setRatingLoading] = useState(false);
 const [ratingResponse, setRatingResponse] = useState(null);
 
   useEffect(() => {
-      if (!user) return; // only start after login
+    if (!user) return; // only start after login
 
-      const es = new EventSource(
-        `http://127.0.0.1:8000/notifications/stream?user_id=${user.user_id}`
-      );
+    const es = new EventSource(
+      `http://127.0.0.1:8000/notifications/stream?user_id=${user.user_id}`
+    );
 
-      eventSourceRef.current = es;
+    eventSourceRef.current = es;
 
-      es.addEventListener("notification", (event) => {
-        setNotifications((prev) => [...prev, event.data]);
-      });
+    es.addEventListener("notification", (event) => {
+      setNotifications((prev) => [...prev, event.data]);
+    });
 
-      es.onerror = () => {
-        console.error("SSE error");
-      };
+    es.onerror = () => {
+      console.error("SSE error");
+    };
 
-      return () => {
-        es.close(); // cleanup on logout/unmount
-      };
-    }, [user]);
+    return () => {
+      es.close(); // cleanup on logout/unmount
+    };
+  }, [user]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -243,8 +256,8 @@ const [ratingResponse, setRatingResponse] = useState(null);
     setResponse("");
 
     const payload = {
-    identifier,
-    password,
+      identifier,
+      password,
     };
 
     try {
@@ -261,15 +274,15 @@ const [ratingResponse, setRatingResponse] = useState(null);
       if (!res.ok) {
         let msg = "Login failed";
 
-          if (typeof data.detail === "string") {
-            msg = data.detail;
-          } else if (Array.isArray(data.detail)) {
-            msg = data.detail.map(x => x.msg).join(", ");
-          } else if (data.detail) {
-            msg = JSON.stringify(data.detail);
-          }
+        if (typeof data.detail === "string") {
+          msg = data.detail;
+        } else if (Array.isArray(data.detail)) {
+          msg = data.detail.map(x => x.msg).join(", ");
+        } else if (data.detail) {
+          msg = JSON.stringify(data.detail);
+        }
 
-          throw new Error(msg);
+        throw new Error(msg);
       }
 
       setResponse(data);
@@ -278,58 +291,58 @@ const [ratingResponse, setRatingResponse] = useState(null);
       setTab("home");
 
     } catch (err) {
-  setError(err.message || JSON.stringify(err));
-}
+      setError(err.message || JSON.stringify(err));
+    }
   };
 
   const handleLogout = () => {
-  setUser(null);
-  setIdentifier("");
-  setPassword("");
-  setError("");
-  setTab("home");
+    setUser(null);
+    setIdentifier("");
+    setPassword("");
+    setError("");
+    setTab("home");
   };
 
   const loadMyAccount = async () => {
-  setError("");
+    setError("");
 
-  try {
-    const res = await fetch(`http://127.0.0.1:8000/users/${user.user_id}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "user-id": user.user_id,
-      },
-    });
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/users/${user.user_id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.user_id,
+        },
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!res.ok) {
-      let msg = "Failed to load account";
+      if (!res.ok) {
+        let msg = "Failed to load account";
 
-      if (typeof data.detail === "string") {
-        msg = data.detail;
-      } else if (Array.isArray(data.detail)) {
-        msg = data.detail.map((x) => x.msg).join(", ");
-      } else if (data.detail) {
-        msg = JSON.stringify(data.detail);
+        if (typeof data.detail === "string") {
+          msg = data.detail;
+        } else if (Array.isArray(data.detail)) {
+          msg = data.detail.map((x) => x.msg).join(", ");
+        } else if (data.detail) {
+          msg = JSON.stringify(data.detail);
+        }
+
+        throw new Error(msg);
       }
 
-      throw new Error(msg);
+      setUpdateForm({
+        name: data.name,
+        email: data.email,
+        phone_number: data.phone_number,
+        address: data.address,
+        password: data.password,
+        role: data.role,
+      });
+    } catch (err) {
+      setError(err.message || "Something went wrong");
     }
-
-    setUpdateForm({
-      name: data.name,
-      email: data.email,
-      phone_number: data.phone_number,
-      address: data.address,
-      password: data.password,
-      role: data.role,
-    });
-  } catch (err) {
-    setError(err.message || "Something went wrong");
-  }
-};
+  };
 
   const handleCreateUser = async (e) => {
     e.preventDefault();
@@ -337,14 +350,14 @@ const [ratingResponse, setRatingResponse] = useState(null);
     setCreateResponse(null);
 
 
-      const { name, email, phone_number, address, password, role } = createForm;
+    const { name, email, phone_number, address, password, role } = createForm;
 
-      if (!name.trim()) return setError("Name is required");
-      if (!email.trim()) return setError("Email is required");
-      if (!phone_number.trim()) return setError("Phone number is required");
-      if (!address.trim()) return setError("Address is required");
-      if (!password.trim()) return setError("Password is required");
-      if (!role) return setError("Role is required");
+    if (!name.trim()) return setError("Name is required");
+    if (!email.trim()) return setError("Email is required");
+    if (!phone_number.trim()) return setError("Phone number is required");
+    if (!address.trim()) return setError("Address is required");
+    if (!password.trim()) return setError("Password is required");
+    if (!role) return setError("Role is required");
 
 
     try {
@@ -386,298 +399,127 @@ const [ratingResponse, setRatingResponse] = useState(null);
     }
   };
 
- const handleUpdateUser = async (e) => {
-  e.preventDefault();
-  setError("");
+  const handleUpdateUser = async (e) => {
+    e.preventDefault();
+    setError("");
 
-  const { name, email, phone_number, address, password, role } = updateForm;
+    const { name, email, phone_number, address, password, role } = updateForm;
 
-  if (!name.trim()) return setError("Name is required");
-  if (!email.trim()) return setError("Email is required");
-  if (!phone_number.trim()) return setError("Phone number is required");
-  if (!address.trim()) return setError("Address is required");
-  if (!password.trim()) return setError("Password is required");
-  if (!role.trim()) return setError("Role is required");
+    if (!name.trim()) return setError("Name is required");
+    if (!email.trim()) return setError("Email is required");
+    if (!phone_number.trim()) return setError("Phone number is required");
+    if (!address.trim()) return setError("Address is required");
+    if (!password.trim()) return setError("Password is required");
+    if (!role.trim()) return setError("Role is required");
 
-  try {
-    const payload = {
-      ...updateForm,
-      role: user.role, // 🔥 force original role
-    };
+    try {
+      const payload = {
+        ...updateForm,
+        role: user.role, // 🔥 force original role
+      };
 
-    const res = await fetch(`http://127.0.0.1:8000/users/${user.user_id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "user-id": user.user_id,
-      },
-      body: JSON.stringify(payload),
-    });
+      const res = await fetch(`http://127.0.0.1:8000/users/${user.user_id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.user_id,
+        },
+        body: JSON.stringify(payload),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!res.ok) {
-      let msg = "Update failed";
+      if (!res.ok) {
+        let msg = "Update failed";
 
-      if (typeof data.detail === "string") {
-        msg = data.detail;
-      } else if (Array.isArray(data.detail)) {
-        msg = data.detail.map((x) => x.msg).join(", ");
-      } else if (data.detail) {
-        msg = JSON.stringify(data.detail);
+        if (typeof data.detail === "string") {
+          msg = data.detail;
+        } else if (Array.isArray(data.detail)) {
+          msg = data.detail.map((x) => x.msg).join(", ");
+        } else if (data.detail) {
+          msg = JSON.stringify(data.detail);
+        }
+
+        throw new Error(msg);
       }
 
-      throw new Error(msg);
+      setUser({
+        ...user,
+        name: data.name,
+        role: data.role,
+      });
+
+      setUpdateForm({
+        ...updateForm,
+        role: data.role,
+      });
+    } catch (err) {
+      setError(err.message || "Something went wrong");
     }
-
-    setUser({
-      ...user,
-      name: data.name,
-      role: data.role,
-    });
-
-    setUpdateForm({
-      ...updateForm,
-      role: data.role,
-    });
-  } catch (err) {
-    setError(err.message || "Something went wrong");
-  }
-};
-
-  const handleDeleteUser = async () => {
-  setError("");
-
-  try {
-    const res = await fetch(`http://127.0.0.1:8000/users/${user.user_id}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        "user-id": user.user_id,
-      },
-    });
-
-    if (!res.ok) {
-      let msg = "Delete failed";
-
-      const data = await res.json().catch(() => null);
-
-      if (typeof data?.detail === "string") {
-        msg = data.detail;
-      } else if (Array.isArray(data?.detail)) {
-        msg = data.detail.map((x) => x.msg).join(", ");
-      } else if (data?.detail) {
-        msg = JSON.stringify(data.detail);
-      }
-
-      throw new Error(msg);
-    }
-
-    setUser(null);
-    setConfirmDelete(false);
-    setTab("home");
-  } catch (err) {
-    setError(err.message || "Something went wrong");
-  }
-};
-
-const handleRestaurantFieldChange = (field, value) => {
-  setRestaurantForm((prev) => ({
-    ...prev,
-    [field]: value,
-  }));
-};
-
-const handleMenuItemChange = (index, field, value) => {
-  setRestaurantForm((prev) => {
-    const updatedMenu = [...prev.menu];
-    updatedMenu[index] = {
-      ...updatedMenu[index],
-      [field]: value,
-    };
-    return {
-      ...prev,
-      menu: updatedMenu,
-    };
-  });
-};
-
-const addMenuItem = () => {
-  setRestaurantForm((prev) => ({
-    ...prev,
-    menu: [
-      ...prev.menu,
-      {
-        name: "",
-        price: "",
-        description: "",
-        tags: "",
-      },
-    ],
-  }));
-};
-
-const removeMenuItem = (index) => {
-  setRestaurantForm((prev) => ({
-    ...prev,
-    menu: prev.menu.filter((_, i) => i !== index),
-  }));
-};
-const handleLoadRestaurantById = async (e) => {
-  e.preventDefault();
-  setError("");
-  setLoadedRestaurant(null);
-
-  if (!restaurantIdInput.trim()) {
-    return setError("Restaurant ID is required");
-  }
-
-  try {
-    const res = await fetch(`http://127.0.0.1:8000/restaurants/${restaurantIdInput}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "user-id": user.user_id,
-      },
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      let msg = "Failed to load restaurant";
-
-      if (typeof data.detail === "string") {
-        msg = data.detail;
-      } else if (Array.isArray(data.detail)) {
-        msg = data.detail.map((x) => x.msg).join(", ");
-      } else if (data.detail) {
-        msg = JSON.stringify(data.detail);
-      }
-
-      throw new Error(msg);
-    }
-
-    setLoadedRestaurant(data);
-
-    setUpdateRestaurantForm({
-      id: data.id,
-      name: data.name || "",
-      phone_number: data.phone_number || "",
-      address: data.address || "",
-      tags: (data.tags || []).join(", "),
-      hours: convertApiHoursToFormHours(data.hours || {}),
-    });
-
-    setRestaurantTab("update");
-  } catch (err) {
-    setError(err.message || "Something went wrong");
-  }
-};
-
-const handleCreateRestaurant = async (e) => {
-  e.preventDefault();
-  setError("");
-  setRestaurantResponse(null);
-
-  if (!restaurantForm.name.trim()) return setError("Restaurant name is required");
-  if (!/^\d{10}$/.test(restaurantForm.phone_number)) {
-  return setError("Phone number must be exactly 10 digits");
-}
-    if (!/^\d+$/.test(restaurantForm.phone_number)) {
-      return setError("Phone number must contain only digits");
-} if (!restaurantForm.address.trim()) return setError("Address is required");
-  if (restaurantForm.menu.length < 1) return setError("At least one menu item is required");
-
-  for (const item of restaurantForm.menu) {
-  if (!item.name.trim()) return setError("Each menu item must have a name");
-
-  const price = Number(item.price);
-
-  if (item.price === "" || isNaN(price)) {
-    return setError("Each menu item must have a valid price");
-  }
-
-  if (price < 0) {
-    return setError("Price cannot be negative");
-  }
-
-  if (!item.description.trim()) {
-    return setError("Each menu item must have a description");
-  }
-}
-
-  const payload = {
-    name: restaurantForm.name,
-    hours: Object.fromEntries(
-  Object.entries(restaurantForm.hours).map(([day, val]) => [
-    day,
-    val.closed
-      ? "Closed"
-      : val.open && val.close
-      ? `${val.open}-${val.close}`
-      : "Closed",
-  ])
-),
-    phone_number: restaurantForm.phone_number,
-    address: restaurantForm.address,
-    tags: restaurantForm.tags
-      .split(",")
-      .map((tag) => tag.trim())
-      .filter(Boolean),
-    menu: restaurantForm.menu.map((item) => ({
-      name: item.name.trim(),
-      price: Number(item.price),
-      description: item.description.trim(),
-      tags: item.tags
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean),
-    })),
   };
 
-  try {
-    const res = await fetch("http://127.0.0.1:8000/restaurants", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "user-id": user.user_id,
-      },
-      body: JSON.stringify(payload),
-    });
+  const handleDeleteUser = async () => {
+    setError("");
 
-    const data = await res.json();
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/users/${user.user_id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.user_id,
+        },
+      });
 
-    if (!res.ok) {
-      let msg = "Restaurant creation failed";
+      if (!res.ok) {
+        let msg = "Delete failed";
 
-      if (typeof data.detail === "string") {
-        msg = data.detail;
-      } else if (Array.isArray(data.detail)) {
-        msg = data.detail.map((x) => x.msg).join(", ");
-      } else if (data.detail) {
-        msg = JSON.stringify(data.detail);
+        const data = await res.json().catch(() => null);
+
+        if (typeof data?.detail === "string") {
+          msg = data.detail;
+        } else if (Array.isArray(data?.detail)) {
+          msg = data.detail.map((x) => x.msg).join(", ");
+        } else if (data?.detail) {
+          msg = JSON.stringify(data.detail);
+        }
+
+        throw new Error(msg);
       }
 
-      throw new Error(msg);
+      setUser(null);
+      setConfirmDelete(false);
+      setTab("home");
+    } catch (err) {
+      setError(err.message || "Something went wrong");
     }
+  };
 
-    setRestaurantResponse(data);
+  const handleRestaurantFieldChange = (field, value) => {
+    setRestaurantForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
 
-    setRestaurantForm({
-      name: "",
-      phone_number: "",
-      address: "",
-      tags: "",
-      hours: {
-        Monday: { open: "", close: "", closed: false },
-        Tuesday: { open: "", close: "", closed: false },
-        Wednesday: { open: "", close: "", closed: false },
-        Thursday: { open: "", close: "", closed: false },
-        Friday: { open: "", close: "", closed: false },
-        Saturday: { open: "", close: "", closed: false },
-        Sunday: { open: "", close: "", closed: false },
-      },
+  const handleMenuItemChange = (index, field, value) => {
+    setRestaurantForm((prev) => {
+      const updatedMenu = [...prev.menu];
+      updatedMenu[index] = {
+        ...updatedMenu[index],
+        [field]: value,
+      };
+      return {
+        ...prev,
+        menu: updatedMenu,
+      };
+    });
+  };
+
+  const addMenuItem = () => {
+    setRestaurantForm((prev) => ({
+      ...prev,
       menu: [
+        ...prev.menu,
         {
           name: "",
           price: "",
@@ -685,632 +527,823 @@ const handleCreateRestaurant = async (e) => {
           tags: "",
         },
       ],
-    });
-  } catch (err) {
-    setError(err.message || "Something went wrong");
-  }
-};
-
-const handleHoursChange = (day, field, value) => {
-  setRestaurantForm((prev) => ({
-    ...prev,
-    hours: {
-      ...prev.hours,
-      [day]: {
-        ...prev.hours[day],
-        [field]: value,
-      },
-    },
-  }));
-};
-
-const handleUpdateRestaurant = async (e) => {
-  e.preventDefault();
-  setError("");
-
-  if (!updateRestaurantForm.id) {
-    return setError("No restaurant loaded");
-  }
-
-  if (!updateRestaurantForm.name.trim()) {
-    return setError("Restaurant name is required");
-  }
-
-  if (!/^\d+$/.test(updateRestaurantForm.phone_number)) {
-    return setError("Phone number must contain only digits");
-  }
-
-  if (!updateRestaurantForm.address.trim()) {
-    return setError("Address is required");
-  }
-
-  for (const [day, val] of Object.entries(updateRestaurantForm.hours)) {
-    if (!val.closed && (!val.open || !val.close)) {
-      return setError(`${day} must have both open and close times, or be marked closed`);
-    }
-  }
-
-  const payload = {
-    name: updateRestaurantForm.name,
-    hours: convertFormHoursToApiHours(updateRestaurantForm.hours),
-    phone_number: updateRestaurantForm.phone_number,
-    address: updateRestaurantForm.address,
-    tags: updateRestaurantForm.tags
-      .split(",")
-      .map((tag) => tag.trim())
-      .filter(Boolean),
+    }));
   };
 
-  try {
-    const res = await fetch(
-      `http://127.0.0.1:8000/restaurants/${updateRestaurantForm.id}`,
-      {
-        method: "PUT",
+  const removeMenuItem = (index) => {
+    setRestaurantForm((prev) => ({
+      ...prev,
+      menu: prev.menu.filter((_, i) => i !== index),
+    }));
+  };
+  const handleLoadRestaurantById = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoadedRestaurant(null);
+
+    if (!restaurantIdInput.trim()) {
+      return setError("Restaurant ID is required");
+    }
+
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/restaurants/${restaurantIdInput}`, {
+        method: "GET",
         headers: {
           "Content-Type": "application/json",
           "user-id": user.user_id,
         },
-        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        let msg = "Failed to load restaurant";
+
+        if (typeof data.detail === "string") {
+          msg = data.detail;
+        } else if (Array.isArray(data.detail)) {
+          msg = data.detail.map((x) => x.msg).join(", ");
+        } else if (data.detail) {
+          msg = JSON.stringify(data.detail);
+        }
+
+        throw new Error(msg);
       }
-    );
 
-    const data = await res.json();
+      setLoadedRestaurant(data);
 
-    if (!res.ok) {
-      let msg = "Restaurant update failed";
+      setUpdateRestaurantForm({
+        id: data.id,
+        name: data.name || "",
+        phone_number: data.phone_number || "",
+        address: data.address || "",
+        tags: (data.tags || []).join(", "),
+        hours: convertApiHoursToFormHours(data.hours || {}),
+      });
 
-      if (typeof data.detail === "string") {
-        msg = data.detail;
-      } else if (Array.isArray(data.detail)) {
-        msg = data.detail.map((x) => x.msg).join(", ");
-      } else if (data.detail) {
-        msg = JSON.stringify(data.detail);
-      }
-
-      throw new Error(msg);
+      setRestaurantTab("update");
+    } catch (err) {
+      setError(err.message || "Something went wrong");
     }
-
-    setLoadedRestaurant(data);
-
-    setUpdateRestaurantForm({
-      id: data.id,
-      name: data.name || "",
-      phone_number: data.phone_number || "",
-      address: data.address || "",
-      tags: (data.tags || []).join(", "),
-      hours: convertApiHoursToFormHours(data.hours || {}),
-    });
-  } catch (err) {
-    setError(err.message || "Something went wrong");
-  }
-};
-
-const handleUpdateRestaurantFieldChange = (field, value) => {
-  setUpdateRestaurantForm((prev) => ({
-    ...prev,
-    [field]: value,
-  }));
-};
-
-const handleUpdateRestaurantHoursChange = (day, field, value) => {
-  setUpdateRestaurantForm((prev) => ({
-    ...prev,
-    hours: {
-      ...prev.hours,
-      [day]: {
-        ...prev.hours[day],
-        [field]: value,
-      },
-    },
-  }));
-};
-
-const handleDeleteRestaurant = async () => {
-  setError("");
-
-  const idToDelete = loadedRestaurant?.id || restaurantIdInput;
-
-  if (!idToDelete) {
-    return setError("Load a restaurant or enter a restaurant ID first");
-  }
-
-  try {
-    const res = await fetch(`http://127.0.0.1:8000/restaurants/${idToDelete}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        "user-id": user.user_id,
-      },
-    });
-
-    if (!res.ok) {
-      let msg = "Restaurant delete failed";
-
-      const data = await res.json().catch(() => null);
-
-      if (typeof data?.detail === "string") {
-        msg = data.detail;
-      } else if (Array.isArray(data?.detail)) {
-        msg = data.detail.map((x) => x.msg).join(", ");
-      } else if (data?.detail) {
-        msg = JSON.stringify(data.detail);
-      }
-
-      throw new Error(msg);
-    }
-
-    setLoadedRestaurant(null);
-    setRestaurantIdInput("");
-    setConfirmDeleteRestaurant(false);
-
-    setUpdateRestaurantForm({
-      id: "",
-      name: "",
-      phone_number: "",
-      address: "",
-      tags: "",
-      hours: {
-        Monday: { open: "", close: "", closed: false },
-        Tuesday: { open: "", close: "", closed: false },
-        Wednesday: { open: "", close: "", closed: false },
-        Thursday: { open: "", close: "", closed: false },
-        Friday: { open: "", close: "", closed: false },
-        Saturday: { open: "", close: "", closed: false },
-        Sunday: { open: "", close: "", closed: false },
-      },
-    });
-
-    setRestaurantResponse({ deleted: true, id: idToDelete });
-    setRestaurantTab("delete");
-  } catch (err) {
-    setError(err.message || "Something went wrong");
-  }
-};
-
-const handleAddMenuItemFieldChange = (field, value) => {
-  setAddMenuItemForm((prev) => ({
-    ...prev,
-    [field]: value,
-  }));
-};
-
-const handleAddMenuItemToRestaurant = async (e) => {
-  e.preventDefault();
-  setError("");
-  setMenuItemResponse(null);
-
-  const restaurantId = addMenuItemForm.restaurant_id || loadedRestaurant?.id;
-
-  if (!restaurantId) {
-    return setError("Restaurant ID is required");
-  }
-
-  if (!addMenuItemForm.name.trim()) {
-    return setError("Menu item name is required");
-  }
-
-  const price = Number(addMenuItemForm.price);
-
-  if (addMenuItemForm.price === "" || isNaN(price)) {
-    return setError("Menu item price must be valid");
-  }
-
-  if (price < 0) {
-    return setError("Price cannot be negative");
-  }
-
-  if (!addMenuItemForm.description.trim()) {
-    return setError("Menu item description is required");
-  }
-
-  const payload = {
-    name: addMenuItemForm.name.trim(),
-    price,
-    description: addMenuItemForm.description.trim(),
-    tags: addMenuItemForm.tags
-      .split(",")
-      .map((tag) => tag.trim())
-      .filter(Boolean),
   };
 
-  try {
-    const res = await fetch(
-      `http://127.0.0.1:8000/restaurants/${restaurantId}/menu`,
-      {
+  const handleCreateRestaurant = async (e) => {
+    e.preventDefault();
+    setError("");
+    setRestaurantResponse(null);
+
+    if (!restaurantForm.name.trim()) return setError("Restaurant name is required");
+    if (!/^\d{10}$/.test(restaurantForm.phone_number)) {
+      return setError("Phone number must be exactly 10 digits");
+    }
+    if (!/^\d+$/.test(restaurantForm.phone_number)) {
+      return setError("Phone number must contain only digits");
+    } if (!restaurantForm.address.trim()) return setError("Address is required");
+    if (restaurantForm.menu.length < 1) return setError("At least one menu item is required");
+
+    for (const item of restaurantForm.menu) {
+      if (!item.name.trim()) return setError("Each menu item must have a name");
+
+      const price = Number(item.price);
+
+      if (item.price === "" || isNaN(price)) {
+        return setError("Each menu item must have a valid price");
+      }
+
+      if (price < 0) {
+        return setError("Price cannot be negative");
+      }
+
+      if (!item.description.trim()) {
+        return setError("Each menu item must have a description");
+      }
+    }
+
+    const payload = {
+      name: restaurantForm.name,
+      hours: Object.fromEntries(
+        Object.entries(restaurantForm.hours).map(([day, val]) => [
+          day,
+          val.closed
+            ? "Closed"
+            : val.open && val.close
+              ? `${val.open}-${val.close}`
+              : "Closed",
+        ])
+      ),
+      phone_number: restaurantForm.phone_number,
+      address: restaurantForm.address,
+      tags: restaurantForm.tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean),
+      menu: restaurantForm.menu.map((item) => ({
+        name: item.name.trim(),
+        price: Number(item.price),
+        description: item.description.trim(),
+        tags: item.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+      })),
+    };
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/restaurants", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "user-id": user.user_id,
         },
         body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        let msg = "Restaurant creation failed";
+
+        if (typeof data.detail === "string") {
+          msg = data.detail;
+        } else if (Array.isArray(data.detail)) {
+          msg = data.detail.map((x) => x.msg).join(", ");
+        } else if (data.detail) {
+          msg = JSON.stringify(data.detail);
+        }
+
+        throw new Error(msg);
       }
-    );
+
+      setRestaurantResponse(data);
+
+      setRestaurantForm({
+        name: "",
+        phone_number: "",
+        address: "",
+        tags: "",
+        hours: {
+          Monday: { open: "", close: "", closed: false },
+          Tuesday: { open: "", close: "", closed: false },
+          Wednesday: { open: "", close: "", closed: false },
+          Thursday: { open: "", close: "", closed: false },
+          Friday: { open: "", close: "", closed: false },
+          Saturday: { open: "", close: "", closed: false },
+          Sunday: { open: "", close: "", closed: false },
+        },
+        menu: [
+          {
+            name: "",
+            price: "",
+            description: "",
+            tags: "",
+          },
+        ],
+      });
+    } catch (err) {
+      setError(err.message || "Something went wrong");
+    }
+  };
+
+  const handleHoursChange = (day, field, value) => {
+    setRestaurantForm((prev) => ({
+      ...prev,
+      hours: {
+        ...prev.hours,
+        [day]: {
+          ...prev.hours[day],
+          [field]: value,
+        },
+      },
+    }));
+  };
+
+  const handleUpdateRestaurant = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!updateRestaurantForm.id) {
+      return setError("No restaurant loaded");
+    }
+
+    if (!updateRestaurantForm.name.trim()) {
+      return setError("Restaurant name is required");
+    }
+
+    if (!/^\d+$/.test(updateRestaurantForm.phone_number)) {
+      return setError("Phone number must contain only digits");
+    }
+
+    if (!updateRestaurantForm.address.trim()) {
+      return setError("Address is required");
+    }
+
+    for (const [day, val] of Object.entries(updateRestaurantForm.hours)) {
+      if (!val.closed && (!val.open || !val.close)) {
+        return setError(`${day} must have both open and close times, or be marked closed`);
+      }
+    }
+
+    const payload = {
+      name: updateRestaurantForm.name,
+      hours: convertFormHoursToApiHours(updateRestaurantForm.hours),
+      phone_number: updateRestaurantForm.phone_number,
+      address: updateRestaurantForm.address,
+      tags: updateRestaurantForm.tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean),
+    };
+
+    try {
+      const res = await fetch(
+        `http://127.0.0.1:8000/restaurants/${updateRestaurantForm.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "user-id": user.user_id,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        let msg = "Restaurant update failed";
+
+        if (typeof data.detail === "string") {
+          msg = data.detail;
+        } else if (Array.isArray(data.detail)) {
+          msg = data.detail.map((x) => x.msg).join(", ");
+        } else if (data.detail) {
+          msg = JSON.stringify(data.detail);
+        }
+
+        throw new Error(msg);
+      }
+
+      setLoadedRestaurant(data);
+
+      setUpdateRestaurantForm({
+        id: data.id,
+        name: data.name || "",
+        phone_number: data.phone_number || "",
+        address: data.address || "",
+        tags: (data.tags || []).join(", "),
+        hours: convertApiHoursToFormHours(data.hours || {}),
+      });
+    } catch (err) {
+      setError(err.message || "Something went wrong");
+    }
+  };
+
+  const handleGetRandomMeal = async () => {
+    if (!user || user.role !== "customer") {
+      setError("Only customers can get random meal suggestions");
+      return;
+    }
+
+    setError("");
+    setRandomMeal(null);
+    setRandomMealLoading(true);
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/restaurants/random-meal", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.user_id,
+        },
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        let msg = "Failed to get random meal";
+
+        if (typeof data.detail === "string") {
+          msg = data.detail;
+        } else if (Array.isArray(data.detail)) {
+          msg = data.detail.map((x) => x.msg).join(", ");
+        } else if (data.detail) {
+          msg = JSON.stringify(data.detail);
+        }
+
+        throw new Error(msg);
+      }
+
+      setRandomMeal(data);
+    } catch (err) {
+      setError(err.message || "Something went wrong");
+    } finally {
+      setRandomMealLoading(false);
+    }
+  };
+
+  const handleUpdateRestaurantFieldChange = (field, value) => {
+    setUpdateRestaurantForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleUpdateRestaurantHoursChange = (day, field, value) => {
+    setUpdateRestaurantForm((prev) => ({
+      ...prev,
+      hours: {
+        ...prev.hours,
+        [day]: {
+          ...prev.hours[day],
+          [field]: value,
+        },
+      },
+    }));
+  };
+
+  const handleDeleteRestaurant = async () => {
+    setError("");
+
+    const idToDelete = loadedRestaurant?.id || restaurantIdInput;
+
+    if (!idToDelete) {
+      return setError("Load a restaurant or enter a restaurant ID first");
+    }
+
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/restaurants/${idToDelete}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.user_id,
+        },
+      });
+
+      if (!res.ok) {
+        let msg = "Restaurant delete failed";
+
+        const data = await res.json().catch(() => null);
+
+        if (typeof data?.detail === "string") {
+          msg = data.detail;
+        } else if (Array.isArray(data?.detail)) {
+          msg = data.detail.map((x) => x.msg).join(", ");
+        } else if (data?.detail) {
+          msg = JSON.stringify(data.detail);
+        }
+
+        throw new Error(msg);
+      }
+
+      setLoadedRestaurant(null);
+      setRestaurantIdInput("");
+      setConfirmDeleteRestaurant(false);
+
+      setUpdateRestaurantForm({
+        id: "",
+        name: "",
+        phone_number: "",
+        address: "",
+        tags: "",
+        hours: {
+          Monday: { open: "", close: "", closed: false },
+          Tuesday: { open: "", close: "", closed: false },
+          Wednesday: { open: "", close: "", closed: false },
+          Thursday: { open: "", close: "", closed: false },
+          Friday: { open: "", close: "", closed: false },
+          Saturday: { open: "", close: "", closed: false },
+          Sunday: { open: "", close: "", closed: false },
+        },
+      });
+
+      setRestaurantResponse({ deleted: true, id: idToDelete });
+      setRestaurantTab("delete");
+    } catch (err) {
+      setError(err.message || "Something went wrong");
+    }
+  };
+
+  const handleAddMenuItemFieldChange = (field, value) => {
+    setAddMenuItemForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleAddMenuItemToRestaurant = async (e) => {
+    e.preventDefault();
+    setError("");
+    setMenuItemResponse(null);
+
+    const restaurantId = addMenuItemForm.restaurant_id || loadedRestaurant?.id;
+
+    if (!restaurantId) {
+      return setError("Restaurant ID is required");
+    }
+
+    if (!addMenuItemForm.name.trim()) {
+      return setError("Menu item name is required");
+    }
+
+    const price = Number(addMenuItemForm.price);
+
+    if (addMenuItemForm.price === "" || isNaN(price)) {
+      return setError("Menu item price must be valid");
+    }
+
+    if (price < 0) {
+      return setError("Price cannot be negative");
+    }
+
+    if (!addMenuItemForm.description.trim()) {
+      return setError("Menu item description is required");
+    }
+
+    const payload = {
+      name: addMenuItemForm.name.trim(),
+      price,
+      description: addMenuItemForm.description.trim(),
+      tags: addMenuItemForm.tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean),
+    };
+
+    try {
+      const res = await fetch(
+        `http://127.0.0.1:8000/restaurants/${restaurantId}/menu`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "user-id": user.user_id,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        let msg = "Failed to add menu item";
+
+        if (typeof data.detail === "string") {
+          msg = data.detail;
+        } else if (Array.isArray(data.detail)) {
+          msg = data.detail.map((x) => x.msg).join(", ");
+        } else if (data.detail) {
+          msg = JSON.stringify(data.detail);
+        }
+
+        throw new Error(msg);
+      }
+
+      setMenuItemResponse(data);
+
+      setAddMenuItemForm({
+        restaurant_id: restaurantId.toString(),
+        name: "",
+        price: "",
+        description: "",
+        tags: "",
+      });
+
+      if (loadedRestaurant) {
+        setLoadedRestaurant({
+          ...loadedRestaurant,
+          menu: [...(loadedRestaurant.menu || []), data],
+        });
+      }
+    } catch (err) {
+      setError(err.message || "Something went wrong");
+    }
+  };
+
+  const handleUpdateMenuItemFieldChange = (field, value) => {
+    setUpdateMenuItemForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleUpdateMenuItem = async (e) => {
+    e.preventDefault();
+    setError("");
+    setUpdateMenuItemResponse(null);
+
+    if (!updateMenuItemForm.restaurant_id.trim()) {
+      return setError("Restaurant ID is required");
+    }
+
+    if (!updateMenuItemForm.menu_item_id.trim()) {
+      return setError("Menu item ID is required");
+    }
+
+    if (!updateMenuItemForm.name.trim()) {
+      return setError("Menu item name is required");
+    }
+
+    const price = Number(updateMenuItemForm.price);
+
+    if (updateMenuItemForm.price === "" || isNaN(price)) {
+      return setError("Menu item price must be valid");
+    }
+
+    if (price < 0) {
+      return setError("Price cannot be negative");
+    }
+
+    if (!updateMenuItemForm.description.trim()) {
+      return setError("Menu item description is required");
+    }
+
+    const payload = {
+      name: updateMenuItemForm.name.trim(),
+      price,
+      description: updateMenuItemForm.description.trim(),
+      tags: updateMenuItemForm.tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean),
+    };
+
+    const query = updateMenuItemForm.item_status.trim()
+      ? `?item_status=${encodeURIComponent(updateMenuItemForm.item_status.trim())}`
+      : "";
+
+    try {
+      const res = await fetch(
+        `http://127.0.0.1:8000/restaurants/${updateMenuItemForm.restaurant_id}/menu/${updateMenuItemForm.menu_item_id}${query}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "user-id": user.user_id,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        let msg = "Failed to update menu item";
+
+        if (typeof data.detail === "string") {
+          msg = data.detail;
+        } else if (Array.isArray(data.detail)) {
+          msg = data.detail.map((x) => x.msg).join(", ");
+        } else if (data.detail) {
+          msg = JSON.stringify(data.detail);
+        }
+
+        throw new Error(msg);
+      }
+
+      setUpdateMenuItemResponse(data);
+
+      if (loadedRestaurant && String(loadedRestaurant.id) === String(updateMenuItemForm.restaurant_id)) {
+        setLoadedRestaurant({
+          ...loadedRestaurant,
+          menu: (loadedRestaurant.menu || []).map((item) =>
+            String(item.id) === String(updateMenuItemForm.menu_item_id) ? data : item
+          ),
+        });
+      }
+    } catch (err) {
+      setError(err.message || "Something went wrong");
+    }
+  };
+
+  const loadMenuItemIntoUpdateForm = (menuItem) => {
+    setUpdateMenuItemForm({
+      restaurant_id: loadedRestaurant ? String(loadedRestaurant.id) : "",
+      menu_item_id: menuItem.id,
+      name: menuItem.name || "",
+      price: String(menuItem.price ?? ""),
+      description: menuItem.description || "",
+      tags: (menuItem.tags || []).join(", "),
+      item_status: menuItem.status || "",
+    });
+    setRestaurantTab("update-menu-item");
+  };
+
+  const handleDeleteMenuItemFieldChange = (field, value) => {
+    setDeleteMenuItemForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleDeleteMenuItem = async () => {
+    setError("");
+    setDeleteMenuItemResponse(null);
+
+    const restaurantId = deleteMenuItemForm.restaurant_id || loadedRestaurant?.id;
+
+    if (!restaurantId) {
+      return setError("Restaurant ID is required");
+    }
+
+    if (!deleteMenuItemForm.menu_item_id.trim()) {
+      return setError("Menu item ID is required");
+    }
+
+    try {
+      const res = await fetch(
+        `http://127.0.0.1:8000/restaurants/${restaurantId}/menu/${deleteMenuItemForm.menu_item_id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            "user-id": user.user_id,
+          },
+        }
+      );
+
+      if (!res.ok) {
+        let msg = "Failed to delete menu item";
+
+        const data = await res.json().catch(() => null);
+
+        if (typeof data?.detail === "string") {
+          msg = data.detail;
+        } else if (Array.isArray(data?.detail)) {
+          msg = data.detail.map((x) => x.msg).join(", ");
+        } else if (data?.detail) {
+          msg = JSON.stringify(data.detail);
+        }
+
+        throw new Error(msg);
+      }
+
+      setDeleteMenuItemResponse({
+        deleted: true,
+        restaurant_id: String(restaurantId),
+        menu_item_id: deleteMenuItemForm.menu_item_id,
+      });
+
+      if (loadedRestaurant && String(loadedRestaurant.id) === String(restaurantId)) {
+        setLoadedRestaurant({
+          ...loadedRestaurant,
+          menu: (loadedRestaurant.menu || []).filter(
+            (item) => String(item.id) !== String(deleteMenuItemForm.menu_item_id)
+          ),
+        });
+      }
+
+      setDeleteMenuItemForm({
+        restaurant_id: String(restaurantId),
+        menu_item_id: "",
+      });
+
+      setConfirmDeleteMenuItem(false);
+    } catch (err) {
+      setError(err.message || "Something went wrong");
+    }
+  };
+
+  const loadMenuItemIntoDeleteForm = (menuItem) => {
+    setDeleteMenuItemForm({
+      restaurant_id: loadedRestaurant ? String(loadedRestaurant.id) : "",
+      menu_item_id: menuItem.id,
+    });
+    setDeleteMenuItemResponse(null);
+    setConfirmDeleteMenuItem(false);
+    setRestaurantTab("delete-menu-item");
+  };
+
+  const getMenuItemName = async (restaurantId, menuItemId) => {
+    const res = await fetch(`http://127.0.0.1:8000/restaurants/${restaurantId}`, {
+      headers: {
+        "Content-Type": "application/json",
+        "user-id": user.user_id,
+      },
+    });
 
     const data = await res.json();
 
-    if (!res.ok) {
-      let msg = "Failed to add menu item";
-
-      if (typeof data.detail === "string") {
-        msg = data.detail;
-      } else if (Array.isArray(data.detail)) {
-        msg = data.detail.map((x) => x.msg).join(", ");
-      } else if (data.detail) {
-        msg = JSON.stringify(data.detail);
-      }
-
-      throw new Error(msg);
-    }
-
-    setMenuItemResponse(data);
-
-    setAddMenuItemForm({
-      restaurant_id: restaurantId.toString(),
-      name: "",
-      price: "",
-      description: "",
-      tags: "",
-    });
-
-    if (loadedRestaurant) {
-      setLoadedRestaurant({
-        ...loadedRestaurant,
-        menu: [...(loadedRestaurant.menu || []), data],
-      });
-    }
-  } catch (err) {
-    setError(err.message || "Something went wrong");
-  }
-};
-
-  const handleUpdateMenuItemFieldChange = (field, value) => {
-  setUpdateMenuItemForm((prev) => ({
-    ...prev,
-    [field]: value,
-  }));
-};
-
-const handleUpdateMenuItem = async (e) => {
-  e.preventDefault();
-  setError("");
-  setUpdateMenuItemResponse(null);
-
-  if (!updateMenuItemForm.restaurant_id.trim()) {
-    return setError("Restaurant ID is required");
-  }
-
-  if (!updateMenuItemForm.menu_item_id.trim()) {
-    return setError("Menu item ID is required");
-  }
-
-  if (!updateMenuItemForm.name.trim()) {
-    return setError("Menu item name is required");
-  }
-
-  const price = Number(updateMenuItemForm.price);
-
-  if (updateMenuItemForm.price === "" || isNaN(price)) {
-    return setError("Menu item price must be valid");
-  }
-
-  if (price < 0) {
-    return setError("Price cannot be negative");
-  }
-
-  if (!updateMenuItemForm.description.trim()) {
-    return setError("Menu item description is required");
-  }
-
-  const payload = {
-    name: updateMenuItemForm.name.trim(),
-    price,
-    description: updateMenuItemForm.description.trim(),
-    tags: updateMenuItemForm.tags
-      .split(",")
-      .map((tag) => tag.trim())
-      .filter(Boolean),
+    const item = data.menu.find((i) => i.id === menuItemId);
+    return item ? item.name : "Unknown item";
   };
 
-  const query = updateMenuItemForm.item_status.trim()
-    ? `?item_status=${encodeURIComponent(updateMenuItemForm.item_status.trim())}`
-    : "";
+  const loadFavorites = async () => {
+    setFavorites([]);
+    try {
+      const res = await fetch("http://127.0.0.1:8000/favorites", {
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.user_id,
+        },
+      });
 
-  try {
-    const res = await fetch(
-      `http://127.0.0.1:8000/restaurants/${updateMenuItemForm.restaurant_id}/menu/${updateMenuItemForm.menu_item_id}${query}`,
-      {
-        method: "PUT",
+      const data = await res.json();
+
+      if (!Array.isArray(data)) {
+        setFavorites([]);
+        return;
+      }
+
+
+
+      const enriched = await Promise.all(
+        data.map(async (fav) => {
+          const res = await fetch(
+            `http://127.0.0.1:8000/restaurants/${fav.restaurant_id}`,
+            {
+              headers: {
+                "Content-Type": "application/json",
+                "user-id": user.user_id,
+              },
+            }
+          );
+
+          const restaurant = await res.json();
+
+          const item = restaurant.menu.find(
+            (i) => i.id === fav.menu_item_id
+          );
+
+          return {
+            ...fav,
+            menu_item_name: item?.name || "Unknown",
+            restaurant_name: restaurant.name || "Unknown",
+          };
+        })
+      );
+
+      setFavorites(enriched);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleAddFavorite = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    try {
+      const payload = {
+        id: crypto.randomUUID(),
+        user_id: user.user_id,
+        restaurant_id: Number(favoriteForm.restaurant_id),
+        menu_item_id: favoriteForm.menu_item_id,
+      };
+
+      const res = await fetch("http://127.0.0.1:8000/favorites", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           "user-id": user.user_id,
         },
         body: JSON.stringify(payload),
-      }
-    );
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      let msg = "Failed to update menu item";
-
-      if (typeof data.detail === "string") {
-        msg = data.detail;
-      } else if (Array.isArray(data.detail)) {
-        msg = data.detail.map((x) => x.msg).join(", ");
-      } else if (data.detail) {
-        msg = JSON.stringify(data.detail);
-      }
-
-      throw new Error(msg);
-    }
-
-    setUpdateMenuItemResponse(data);
-
-    if (loadedRestaurant && String(loadedRestaurant.id) === String(updateMenuItemForm.restaurant_id)) {
-      setLoadedRestaurant({
-        ...loadedRestaurant,
-        menu: (loadedRestaurant.menu || []).map((item) =>
-          String(item.id) === String(updateMenuItemForm.menu_item_id) ? data : item
-        ),
       });
-    }
-  } catch (err) {
-    setError(err.message || "Something went wrong");
-  }
-};
 
-const loadMenuItemIntoUpdateForm = (menuItem) => {
-  setUpdateMenuItemForm({
-    restaurant_id: loadedRestaurant ? String(loadedRestaurant.id) : "",
-    menu_item_id: menuItem.id,
-    name: menuItem.name || "",
-    price: String(menuItem.price ?? ""),
-    description: menuItem.description || "",
-    tags: (menuItem.tags || []).join(", "),
-    item_status: menuItem.status || "",
-  });
-  setRestaurantTab("update-menu-item");
-};
+      const data = await res.json();
 
-const handleDeleteMenuItemFieldChange = (field, value) => {
-  setDeleteMenuItemForm((prev) => ({
-    ...prev,
-    [field]: value,
-  }));
-};
+      if (!res.ok) {
+        let msg = "Failed to add favorite";
 
-const handleDeleteMenuItem = async () => {
-  setError("");
-  setDeleteMenuItemResponse(null);
+        if (typeof data.detail === "string") {
+          msg = data.detail;
+        } else if (Array.isArray(data.detail)) {
+          msg = data.detail.map((x) => x.msg).join(", ");
+        } else if (data.detail) {
+          msg = JSON.stringify(data.detail);
+        }
 
-  const restaurantId = deleteMenuItemForm.restaurant_id || loadedRestaurant?.id;
-
-  if (!restaurantId) {
-    return setError("Restaurant ID is required");
-  }
-
-  if (!deleteMenuItemForm.menu_item_id.trim()) {
-    return setError("Menu item ID is required");
-  }
-
-  try {
-    const res = await fetch(
-      `http://127.0.0.1:8000/restaurants/${restaurantId}/menu/${deleteMenuItemForm.menu_item_id}`,
-      {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          "user-id": user.user_id,
-        },
-      }
-    );
-
-    if (!res.ok) {
-      let msg = "Failed to delete menu item";
-
-      const data = await res.json().catch(() => null);
-
-      if (typeof data?.detail === "string") {
-        msg = data.detail;
-      } else if (Array.isArray(data?.detail)) {
-        msg = data.detail.map((x) => x.msg).join(", ");
-      } else if (data?.detail) {
-        msg = JSON.stringify(data.detail);
+        throw new Error(msg);
       }
 
-      throw new Error(msg);
-    }
-
-    setDeleteMenuItemResponse({
-      deleted: true,
-      restaurant_id: String(restaurantId),
-      menu_item_id: deleteMenuItemForm.menu_item_id,
-    });
-
-    if (loadedRestaurant && String(loadedRestaurant.id) === String(restaurantId)) {
-      setLoadedRestaurant({
-        ...loadedRestaurant,
-        menu: (loadedRestaurant.menu || []).filter(
-          (item) => String(item.id) !== String(deleteMenuItemForm.menu_item_id)
-        ),
+      // ✅ success
+      setFavoriteForm({
+        restaurant_id: "",
+        menu_item_id: "",
       });
+
+      // optional refresh
+      setFavoriteTab("view");
+      loadFavorites();
+
+    } catch (err) {
+      setError(err.message || "Something went wrong");
     }
+  };
 
-    setDeleteMenuItemForm({
-      restaurant_id: String(restaurantId),
-      menu_item_id: "",
-    });
+  const handleDeleteFavorite = async (favoriteId) => {
+    setError("");
 
-    setConfirmDeleteMenuItem(false);
-  } catch (err) {
-    setError(err.message || "Something went wrong");
-  }
-};
-
-const loadMenuItemIntoDeleteForm = (menuItem) => {
-  setDeleteMenuItemForm({
-    restaurant_id: loadedRestaurant ? String(loadedRestaurant.id) : "",
-    menu_item_id: menuItem.id,
-  });
-  setDeleteMenuItemResponse(null);
-  setConfirmDeleteMenuItem(false);
-  setRestaurantTab("delete-menu-item");
-};
-
-const getMenuItemName = async (restaurantId, menuItemId) => {
-  const res = await fetch(`http://127.0.0.1:8000/restaurants/${restaurantId}`, {
-    headers: {
-      "Content-Type": "application/json",
-      "user-id": user.user_id,
-    },
-  });
-
-  const data = await res.json();
-
-  const item = data.menu.find((i) => i.id === menuItemId);
-  return item ? item.name : "Unknown item";
-};
-
-const loadFavorites = async () => {
-  setFavorites([]);
-  try {
-    const res = await fetch("http://127.0.0.1:8000/favorites", {
-      headers: {
-        "Content-Type": "application/json",
-        "user-id": user.user_id,
-      },
-    });
-
-    const data = await res.json();
-
-if (!Array.isArray(data)) {
-  setFavorites([]);
-  return;
-}
-
-
-
-    const enriched = await Promise.all(
-      data.map(async (fav) => {
-        const res = await fetch(
-          `http://127.0.0.1:8000/restaurants/${fav.restaurant_id}`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              "user-id": user.user_id,
-            },
-          }
-        );
-
-        const restaurant = await res.json();
-
-        const item = restaurant.menu.find(
-          (i) => i.id === fav.menu_item_id
-        );
-
-        return {
-          ...fav,
-          menu_item_name: item?.name || "Unknown",
-          restaurant_name: restaurant.name || "Unknown",
-        };
-      })
-    );
-
-    setFavorites(enriched);
-  } catch (err) {
-    setError(err.message);
-  }
-};
-
-const handleAddFavorite = async (e) => {
-  e.preventDefault();
-  setError("");
-
-  try {
-    const payload = {
-      id: crypto.randomUUID(),
-      user_id: user.user_id,
-      restaurant_id: Number(favoriteForm.restaurant_id),
-      menu_item_id: favoriteForm.menu_item_id,
-    };
-
-    const res = await fetch("http://127.0.0.1:8000/favorites", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "user-id": user.user_id,
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      let msg = "Failed to add favorite";
-
-      if (typeof data.detail === "string") {
-        msg = data.detail;
-      } else if (Array.isArray(data.detail)) {
-        msg = data.detail.map((x) => x.msg).join(", ");
-      } else if (data.detail) {
-        msg = JSON.stringify(data.detail);
-      }
-
-      throw new Error(msg);
-    }
-
-    // ✅ success
-    setFavoriteForm({
-      restaurant_id: "",
-      menu_item_id: "",
-    });
-
-    // optional refresh
-    setFavoriteTab("view");
-    loadFavorites();
-
-  } catch (err) {
-    setError(err.message || "Something went wrong");
-  }
-};
-
-const handleDeleteFavorite = async (favoriteId) => {
-  setError("");
-
-  try {
-    const res = await fetch(
-      `http://127.0.0.1:8000/favorites/${favoriteId}`,
-      {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          "user-id": user.user_id,
-        },
-      }
-    );
-
-    if (!res.ok) {
-      const data = await res.json().catch(() => null);
-
-      let msg = "Delete failed";
-
-      if (typeof data?.detail === "string") {
-        msg = data.detail;
-      } else if (Array.isArray(data?.detail)) {
-        msg = data.detail.map((x) => x.msg).join(", ");
-      } else if (data?.detail) {
-        msg = JSON.stringify(data.detail);
-      }
-
-      throw new Error(msg);
-    }
-
-    loadFavorites();
-
-  } catch (err) {
-    setError(err.message || "Something went wrong");
-  }
-};
+    try {
+      const res = await fetch(
+        `http://127.0.0.1:8000/favorites/${favoriteId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            "user-id": user.user_id,
+          },
+        }
+      );
 
 const loadAdminData = async () => {
   setError("");
@@ -1856,129 +1889,154 @@ const handleAddRating = async (e) => {
     <div style={{ padding: "2rem", fontFamily: "Arial" }}>
       <h1>Login</h1>
 
-      <form onSubmit={handleLogin}>
-        <div>
-          <input
-            placeholder="Email or phone"
-            value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
-          />
-        </div>
+        let msg = "Delete failed";
 
-        <div style={{ marginTop: "0.5rem" }}>
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
+        if (typeof data?.detail === "string") {
+          msg = data.detail;
+        } else if (Array.isArray(data?.detail)) {
+          msg = data.detail.map((x) => x.msg).join(", ");
+        } else if (data?.detail) {
+          msg = JSON.stringify(data.detail);
+        }
 
-        <button type="submit" style={{ marginTop: "1rem" }}>
-          Login
-        </button>
-      </form>
+        throw new Error(msg);
+      }
 
-      {response && (
-        <div style={{ marginTop: "1rem", color: "green" }}>
-          <p>Welcome {response.name}</p>
-          <p>Role: {response.role}</p>
-          <p>User ID: {response.user_id}</p>
-        </div>
-      )}
+      loadFavorites();
 
-      <h2>Create User</h2>
-      <form onSubmit={handleCreateUser}>
-        <div>
-          <input
-            placeholder="Name"
-            value={createForm.name}
-            onChange={(e) =>
-              setCreateForm({ ...createForm, name: e.target.value })
-            }
-          />
-        </div>
+    } catch (err) {
+      setError(err.message || "Something went wrong");
+    }
+  };
 
-        <div style={{ marginTop: "0.5rem" }}>
-          <input
-            placeholder="Email"
-            value={createForm.email}
-            onChange={(e) =>
-              setCreateForm({ ...createForm, email: e.target.value })
-            }
-          />
-        </div>
+  if (!user) {
+    return (
+      <div style={{ padding: "2rem", fontFamily: "Arial" }}>
+        <h1>Login</h1>
 
-        <div style={{ marginTop: "0.5rem" }}>
-          <input
-            placeholder="Phone number"
-            value={createForm.phone_number}
-            onChange={(e) =>
-              setCreateForm({ ...createForm, phone_number: e.target.value })
-            }
-          />
-        </div>
+        <form onSubmit={handleLogin}>
+          <div>
+            <input
+              placeholder="Email or phone"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+            />
+          </div>
 
-        <div style={{ marginTop: "0.5rem" }}>
-          <input
-            placeholder="Address"
-            value={createForm.address}
-            onChange={(e) =>
-              setCreateForm({ ...createForm, address: e.target.value })
-            }
-          />
-        </div>
+          <div style={{ marginTop: "0.5rem" }}>
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
 
-        <div style={{ marginTop: "0.5rem" }}>
-          <input
-            type="password"
-            placeholder="Password"
-            value={createForm.password}
-            onChange={(e) =>
-              setCreateForm({ ...createForm, password: e.target.value })
-            }
-          />
-        </div>
+          <button type="submit" style={{ marginTop: "1rem" }}>
+            Login
+          </button>
+        </form>
 
-        <div style={{ marginTop: "0.5rem" }}>
-          <select
-            value={createForm.role}
-            onChange={(e) =>
-              setCreateForm({ ...createForm, role: e.target.value })
-            }
-          >
-            <option value="customer">customer</option>
-            <option value="restaurant_owner">restaurant_owner</option>
-            <option value="delivery_driver">delivery_driver</option>
-          </select>
-        </div>
+        {response && (
+          <div style={{ marginTop: "1rem", color: "green" }}>
+            <p>Welcome {response.name}</p>
+            <p>Role: {response.role}</p>
+            <p>User ID: {response.user_id}</p>
+          </div>
+        )}
 
-        <button type="submit" style={{ marginTop: "1rem" }}>
-          Create User
-        </button>
-      </form>
+        <h2>Create User</h2>
+        <form onSubmit={handleCreateUser}>
+          <div>
+            <input
+              placeholder="Name"
+              value={createForm.name}
+              onChange={(e) =>
+                setCreateForm({ ...createForm, name: e.target.value })
+              }
+            />
+          </div>
 
-      {createResponse && (
-        <div style={{ marginTop: "1rem", color: "green" }}>
-          <p>User created successfully.</p>
-          <p>Name: {createResponse.name}</p>
-          <p>Email: {createResponse.email}</p>
-          <p>Phone: {createResponse.phone_number}</p>
-          <p>Address: {createResponse.address}</p>
-          <p>Role: {createResponse.role}</p>
-        </div>
-      )}
+          <div style={{ marginTop: "0.5rem" }}>
+            <input
+              placeholder="Email"
+              value={createForm.email}
+              onChange={(e) =>
+                setCreateForm({ ...createForm, email: e.target.value })
+              }
+            />
+          </div>
 
-      {error && (
-      <p style={{ color: "red" }}>
-        {typeof error === "string" ? error : JSON.stringify(error)}
-      </p>
-    )}
-    </div>
-  );
-}
+          <div style={{ marginTop: "0.5rem" }}>
+            <input
+              placeholder="Phone number"
+              value={createForm.phone_number}
+              onChange={(e) =>
+                setCreateForm({ ...createForm, phone_number: e.target.value })
+              }
+            />
+          </div>
 
-return (
+          <div style={{ marginTop: "0.5rem" }}>
+            <input
+              placeholder="Address"
+              value={createForm.address}
+              onChange={(e) =>
+                setCreateForm({ ...createForm, address: e.target.value })
+              }
+            />
+          </div>
+
+          <div style={{ marginTop: "0.5rem" }}>
+            <input
+              type="password"
+              placeholder="Password"
+              value={createForm.password}
+              onChange={(e) =>
+                setCreateForm({ ...createForm, password: e.target.value })
+              }
+            />
+          </div>
+
+          <div style={{ marginTop: "0.5rem" }}>
+            <select
+              value={createForm.role}
+              onChange={(e) =>
+                setCreateForm({ ...createForm, role: e.target.value })
+              }
+            >
+              <option value="customer">customer</option>
+              <option value="restaurant_owner">restaurant_owner</option>
+              <option value="delivery_driver">delivery_driver</option>
+            </select>
+          </div>
+
+          <button type="submit" style={{ marginTop: "1rem" }}>
+            Create User
+          </button>
+        </form>
+
+        {createResponse && (
+          <div style={{ marginTop: "1rem", color: "green" }}>
+            <p>User created successfully.</p>
+            <p>Name: {createResponse.name}</p>
+            <p>Email: {createResponse.email}</p>
+            <p>Phone: {createResponse.phone_number}</p>
+            <p>Address: {createResponse.address}</p>
+            <p>Role: {createResponse.role}</p>
+          </div>
+        )}
+
+        {error && (
+          <p style={{ color: "red" }}>
+            {typeof error === "string" ? error : JSON.stringify(error)}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  return (
     <div style={{ padding: "2rem", fontFamily: "Arial" }}>
       <h1>Main Page</h1>
 
@@ -2048,7 +2106,20 @@ return (
 )}
 
 
+        {user.role === "customer" && (
           <button
+            onClick={() => {
+              setTab("favorites");
+              setFavoriteTab(null);
+              setFavorites([]);
+            }}
+            style={{ marginLeft: "0.5rem" }}
+          >
+            Favorites
+          </button>
+        )}
+
+        <button
           onClick={() => setTab("notifications")}
           style={{ marginLeft: "0.5rem" }}
         >
@@ -2059,12 +2130,55 @@ return (
         <button onClick={handleLogout} style={{ marginLeft: "0.5rem" }}>
           Logout
         </button>
-        </div>
+      </div>
 
       {tab === "home" && (
         <div>
           <h2>Home</h2>
           <p>This will be the main page.</p>
+
+          {user.role === "customer" && (
+            <div style={{ marginTop: "1rem" }}>
+              <button
+                onClick={handleGetRandomMeal}
+                disabled={randomMealLoading}
+                style={{
+                  padding: "10px 20px",
+                  fontSize: "16px",
+                  backgroundColor: "#4CAF50",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: randomMealLoading ? "not-allowed" : "pointer"
+                }}
+              >
+                {randomMealLoading ? "Loading..." : "Get Random Meal 🍽️"}
+              </button>
+
+              {randomMeal && (
+                <div style={{
+                  marginTop: "1.5rem",
+                  padding: "1rem",
+                  border: "2px solid #4CAF50",
+                  borderRadius: "8px",
+                  backgroundColor: "#f9f9f9"
+                }}>
+                  <h3>Today's Random Suggestion!</h3>
+                  <p><strong>Meal:</strong> {randomMeal.name}</p>
+                  <p><strong>Restaurant:</strong> {randomMeal.restaurant_name}</p>
+                  <p><strong>Price:</strong> ${randomMeal.price}</p>
+                  <p><strong>Description:</strong> {randomMeal.description}</p>
+                  <p><strong>Tags:</strong> {(randomMeal.tags || []).join(", ")}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {user.role !== "customer" && (
+            <p style={{ marginTop: "1rem", color: "#666" }}>
+              Random meal suggestions are only available for customers.
+            </p>
+          )}
         </div>
       )}
 
@@ -2134,996 +2248,1001 @@ return (
             </button>
           </form>
           <div style={{ marginTop: "1rem" }}>
-          {!confirmDelete ? (
-            <button
-              type="button"
-              onClick={() => setConfirmDelete(true)}
-              style={{ backgroundColor: "red", color: "white" }}
-            >
-              Delete Account
-            </button>
-          ) : (
-            <div>
-              <p style={{ color: "red" }}>Are you sure?</p>
-
+            {!confirmDelete ? (
               <button
                 type="button"
-                onClick={handleDeleteUser}
-                style={{ backgroundColor: "red", color: "white", marginRight: "0.5rem" }}
+                onClick={() => setConfirmDelete(true)}
+                style={{ backgroundColor: "red", color: "white" }}
               >
-                Yes, Delete
+                Delete Account
               </button>
+            ) : (
+              <div>
+                <p style={{ color: "red" }}>Are you sure?</p>
 
-              <button
-                type="button"
-                onClick={() => setConfirmDelete(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          )}
-        </div>
-        </div>
-         )}
+                <button
+                  type="button"
+                  onClick={handleDeleteUser}
+                  style={{ backgroundColor: "red", color: "white", marginRight: "0.5rem" }}
+                >
+                  Yes, Delete
+                </button>
 
-     {tab === "manage-restaurants" && user.role === "restaurant_owner" && (
-  <div>
-    <h2>Manage Restaurants</h2>
-
-    <div style={{ marginBottom: "1rem" }}>
-      <button
-        onClick={() => setRestaurantTab("create")}
-      >
-        Create Restaurant
-      </button>
-       <button
-        onClick={() => setRestaurantTab("load")}
-        style={{ marginLeft: "0.5rem" }}
-      >
-        Load Restaurant
-      </button>
-
-      <button
-        onClick={() => setRestaurantTab("update")}
-        style={{ marginLeft: "0.5rem" }}
-      >
-        Update Restaurant
-      </button>
-      <button
-        onClick={() => {
-          setRestaurantTab("add-menu-item");
-          setAddMenuItemForm((prev) => ({
-            ...prev,
-            restaurant_id: loadedRestaurant?.id ? String(loadedRestaurant.id) : prev.restaurant_id,
-          }));
-        }}
-        style={{ marginLeft: "0.5rem" }}
-      >
-        Add Menu Item
-      </button>
-        <button
-        onClick={() => {
-          setRestaurantTab("update-menu-item");
-          setUpdateMenuItemForm((prev) => ({
-            ...prev,
-            restaurant_id: loadedRestaurant?.id ? String(loadedRestaurant.id) : prev.restaurant_id,
-          }));
-        }}
-        style={{ marginLeft: "0.5rem" }}
-      >
-        Update Menu Item
-      </button>
-      <button
-        onClick={() => {
-          setRestaurantTab("delete-menu-item");
-          setConfirmDeleteMenuItem(false);
-          setDeleteMenuItemResponse(null);
-          setDeleteMenuItemForm((prev) => ({
-            ...prev,
-            restaurant_id: loadedRestaurant?.id ? String(loadedRestaurant.id) : prev.restaurant_id,
-          }));
-        }}
-        style={{ marginLeft: "0.5rem" }}
-      >
-        Delete Menu Item
-      </button>
-      <button
-        onClick={() => {
-          setRestaurantTab("delete");
-          setConfirmDeleteRestaurant(false);
-        }}
-        style={{ marginLeft: "0.5rem" }}
-      >
-        Delete Restaurant
-      </button>
-    </div>
-
-    {restaurantTab === "create" && (
-      <div>
-        <h3>Create Restaurant</h3>
-
-        <form onSubmit={handleCreateRestaurant}>
-          <div>
-            <input
-              placeholder="Restaurant name"
-              value={restaurantForm.name}
-              onChange={(e) => handleRestaurantFieldChange("name", e.target.value)}
-            />
-          </div>
-
-          <div style={{ marginTop: "0.5rem" }}>
-           <input
-            type="tel"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            maxLength={10}
-            placeholder="Phone number"
-            value={restaurantForm.phone_number}
-            onChange={(e) => {
-              const value = e.target.value.replace(/\D/g, "");
-              handleRestaurantFieldChange("phone_number", value);
-            }}
-          />
-          </div>
-
-          <div style={{ marginTop: "0.5rem" }}>
-            <input
-              placeholder="Address"
-              value={restaurantForm.address}
-              onChange={(e) => handleRestaurantFieldChange("address", e.target.value)}
-            />
-          </div>
-
-          <h3 style={{ marginTop: "1rem" }}>Hours</h3>
-
-            <div style={{ marginLeft: "120px" }}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "1rem",
-                  fontWeight: "bold",
-                  marginTop: "0.5rem",
-                }}
-              >
-                <div style={{ width: "100px" }}></div>
-                <div style={{ width: "140px" }}>Open</div>
-                <div style={{ width: "140px" }}>Close</div>
-                <div>Closed</div>
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(false)}
+                >
+                  Cancel
+                </button>
               </div>
+            )}
+          </div>
+        </div>
+      )}
 
-              {Object.keys(restaurantForm.hours).map((day) => {
-                const dayData = restaurantForm.hours[day];
+      {tab === "manage-restaurants" && user.role === "restaurant_owner" && (
+        <div>
+          <h2>Manage Restaurants</h2>
 
-                return (
+          <div style={{ marginBottom: "1rem" }}>
+            <button
+              onClick={() => setRestaurantTab("create")}
+            >
+              Create Restaurant
+            </button>
+            <button
+              onClick={() => setRestaurantTab("load")}
+              style={{ marginLeft: "0.5rem" }}
+            >
+              Load Restaurant
+            </button>
+
+            <button
+              onClick={() => setRestaurantTab("update")}
+              style={{ marginLeft: "0.5rem" }}
+            >
+              Update Restaurant
+            </button>
+            <button
+              onClick={() => {
+                setRestaurantTab("add-menu-item");
+                setAddMenuItemForm((prev) => ({
+                  ...prev,
+                  restaurant_id: loadedRestaurant?.id ? String(loadedRestaurant.id) : prev.restaurant_id,
+                }));
+              }}
+              style={{ marginLeft: "0.5rem" }}
+            >
+              Add Menu Item
+            </button>
+            <button
+              onClick={() => {
+                setRestaurantTab("update-menu-item");
+                setUpdateMenuItemForm((prev) => ({
+                  ...prev,
+                  restaurant_id: loadedRestaurant?.id ? String(loadedRestaurant.id) : prev.restaurant_id,
+                }));
+              }}
+              style={{ marginLeft: "0.5rem" }}
+            >
+              Update Menu Item
+            </button>
+            <button
+              onClick={() => {
+                setRestaurantTab("delete-menu-item");
+                setConfirmDeleteMenuItem(false);
+                setDeleteMenuItemResponse(null);
+                setDeleteMenuItemForm((prev) => ({
+                  ...prev,
+                  restaurant_id: loadedRestaurant?.id ? String(loadedRestaurant.id) : prev.restaurant_id,
+                }));
+              }}
+              style={{ marginLeft: "0.5rem" }}
+            >
+              Delete Menu Item
+            </button>
+            <button
+              onClick={() => {
+                setRestaurantTab("delete");
+                setConfirmDeleteRestaurant(false);
+              }}
+              style={{ marginLeft: "0.5rem" }}
+            >
+              Delete Restaurant
+            </button>
+          </div>
+
+          {restaurantTab === "create" && (
+            <div>
+              <h3>Create Restaurant</h3>
+
+              <form onSubmit={handleCreateRestaurant}>
+                <div>
+                  <input
+                    placeholder="Restaurant name"
+                    value={restaurantForm.name}
+                    onChange={(e) => handleRestaurantFieldChange("name", e.target.value)}
+                  />
+                </div>
+
+                <div style={{ marginTop: "0.5rem" }}>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={10}
+                    placeholder="Phone number"
+                    value={restaurantForm.phone_number}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, "");
+                      handleRestaurantFieldChange("phone_number", value);
+                    }}
+                  />
+                </div>
+
+                <div style={{ marginTop: "0.5rem" }}>
+                  <input
+                    placeholder="Address"
+                    value={restaurantForm.address}
+                    onChange={(e) => handleRestaurantFieldChange("address", e.target.value)}
+                  />
+                </div>
+
+                <h3 style={{ marginTop: "1rem" }}>Hours</h3>
+
+                <div style={{ marginLeft: "120px" }}>
                   <div
-                    key={day}
                     style={{
                       display: "flex",
                       alignItems: "center",
                       gap: "1rem",
+                      fontWeight: "bold",
                       marginTop: "0.5rem",
                     }}
                   >
-                    <div style={{ width: "100px" }}>
-                      <strong>{day}</strong>
+                    <div style={{ width: "100px" }}></div>
+                    <div style={{ width: "140px" }}>Open</div>
+                    <div style={{ width: "140px" }}>Close</div>
+                    <div>Closed</div>
+                  </div>
+
+                  {Object.keys(restaurantForm.hours).map((day) => {
+                    const dayData = restaurantForm.hours[day];
+
+                    return (
+                      <div
+                        key={day}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "1rem",
+                          marginTop: "0.5rem",
+                        }}
+                      >
+                        <div style={{ width: "100px" }}>
+                          <strong>{day}</strong>
+                        </div>
+
+                        <select
+                          disabled={dayData.closed}
+                          style={{ width: "140px" }}
+                          value={dayData.open}
+                          onChange={(e) => handleHoursChange(day, "open", e.target.value)}
+                        >
+                          <option value=""></option>
+                          {timeOptions.map((t) => (
+                            <option key={t} value={t}>{t}</option>
+                          ))}
+                        </select>
+
+                        <select
+                          disabled={dayData.closed}
+                          style={{ width: "140px" }}
+                          value={dayData.close}
+                          onChange={(e) => handleHoursChange(day, "close", e.target.value)}
+                        >
+                          <option value=""></option>
+                          {timeOptions.map((t) => (
+                            <option key={t} value={t}>{t}</option>
+                          ))}
+                        </select>
+
+                        <input
+                          type="checkbox"
+                          checked={dayData.closed}
+                          onChange={(e) =>
+                            handleHoursChange(day, "closed", e.target.checked)
+                          }
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div style={{ marginTop: "1rem" }}>
+                  <input
+                    placeholder="Restaurant tags (comma separated)"
+                    value={restaurantForm.tags}
+                    onChange={(e) => handleRestaurantFieldChange("tags", e.target.value)}
+                  />
+                </div>
+
+                <h3 style={{ marginTop: "1rem" }}>Menu</h3>
+
+                {restaurantForm.menu.map((item, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      border: "1px solid #ccc",
+                      padding: "1rem",
+                      marginTop: "1rem",
+                    }}
+                  >
+                    <p>Menu Item {index + 1}</p>
+
+                    <div>
+                      <input
+                        placeholder="Item name"
+                        value={item.name}
+                        onChange={(e) =>
+                          handleMenuItemChange(index, "name", e.target.value)
+                        }
+                      />
                     </div>
 
-                    <select
-                      disabled={dayData.closed}
-                      style={{ width: "140px" }}
-                      value={dayData.open}
-                      onChange={(e) => handleHoursChange(day, "open", e.target.value)}
-                    >
-                      <option value=""></option>
-                      {timeOptions.map((t) => (
-                        <option key={t} value={t}>{t}</option>
-                      ))}
-                    </select>
+                    <div style={{ marginTop: "0.5rem" }}>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="Price"
+                        value={item.price}
+                        onKeyDown={(e) => {
+                          if (e.key === "-" || e.key === "e") e.preventDefault();
+                        }}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (Number(value) < 0) return;
+                          handleMenuItemChange(index, "price", value);
+                        }}
+                      />
+                    </div>
 
-                    <select
-                      disabled={dayData.closed}
-                      style={{ width: "140px" }}
-                      value={dayData.close}
-                      onChange={(e) => handleHoursChange(day, "close", e.target.value)}
-                    >
-                      <option value=""></option>
-                      {timeOptions.map((t) => (
-                        <option key={t} value={t}>{t}</option>
-                      ))}
-                    </select>
+                    <div style={{ marginTop: "0.5rem" }}>
+                      <input
+                        placeholder="Description"
+                        value={item.description}
+                        onChange={(e) =>
+                          handleMenuItemChange(index, "description", e.target.value)
+                        }
+                      />
+                    </div>
 
+                    <div style={{ marginTop: "0.5rem" }}>
+                      <input
+                        placeholder="Item tags (comma separated)"
+                        value={item.tags}
+                        onChange={(e) =>
+                          handleMenuItemChange(index, "tags", e.target.value)
+                        }
+                      />
+                    </div>
+
+                    {restaurantForm.menu.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeMenuItem(index)}
+                        style={{ marginTop: "0.5rem" }}
+                      >
+                        Remove Item
+                      </button>
+                    )}
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={addMenuItem}
+                  style={{ marginTop: "1rem", marginRight: "0.5rem" }}
+                >
+                  Add Menu Item
+                </button>
+
+                <button type="submit" style={{ marginTop: "1rem" }}>
+                  Create Restaurant
+                </button>
+              </form>
+
+              {restaurantResponse && (
+                <div style={{ marginTop: "1rem", color: "green" }}>
+                  <p>Restaurant created successfully.</p>
+                  <p>ID: {restaurantResponse.id}</p>
+                  <p>Name: {restaurantResponse.name}</p>
+                  <p>Owner User ID: {restaurantResponse.user_id}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {restaurantTab === "load" && (
+            <div>
+              <h3>Load Restaurant</h3>
+
+              <form onSubmit={handleLoadRestaurantById}>
+                <input
+                  type="number"
+                  min="1"
+                  placeholder="Restaurant ID"
+                  value={restaurantIdInput}
+                  onChange={(e) => setRestaurantIdInput(e.target.value)}
+                />
+
+                <button type="submit" style={{ marginLeft: "0.5rem" }}>
+                  Load
+                </button>
+              </form>
+
+              {loadedRestaurant && (
+                <div style={{ marginTop: "1rem" }}>
+                  <p><strong>ID:</strong> {loadedRestaurant.id}</p>
+                  <p><strong>Name:</strong> {loadedRestaurant.name}</p>
+                  <p><strong>Owner User ID:</strong> {loadedRestaurant.user_id}</p>
+                  <p><strong>Phone:</strong> {loadedRestaurant.phone_number}</p>
+                  <p><strong>Address:</strong> {loadedRestaurant.address}</p>
+                  <p><strong>Tags:</strong> {(loadedRestaurant.tags || []).join(", ")}</p>
+                  <p><strong>Average Rating:</strong> {String(loadedRestaurant.average_rating)}</p>
+                </div>
+              )}
+              {loadedRestaurant?.menu?.length > 0 && (
+                <div style={{ marginTop: "1rem" }}>
+                  <h4>Menu</h4>
+                  {loadedRestaurant.menu.map((item) => (
+                    <div
+                      key={item.id}
+                      style={{
+                        border: "1px solid #ccc",
+                        padding: "0.75rem",
+                        marginTop: "0.5rem",
+                      }}
+                    >
+                      <p><strong>ID:</strong> {item.id}</p>
+                      <p><strong>Name:</strong> {item.name}</p>
+                      <p><strong>Price:</strong> {item.price}</p>
+                      <p><strong>Status:</strong> {item.status}</p>
+
+                      <button
+                        type="button"
+                        onClick={() => loadMenuItemIntoUpdateForm(item)}
+                      >
+                        Edit This Menu Item
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => loadMenuItemIntoDeleteForm(item)}
+                        style={{ marginLeft: "0.5rem" }}
+                      >
+                        Delete This Menu Item
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+            </div>
+
+
+          )}
+
+          {restaurantTab === "update" && (
+            <div>
+              <h3>Update Restaurant</h3>
+
+              {!updateRestaurantForm.id ? (
+                <p>Load a restaurant first.</p>
+              ) : (
+                <form onSubmit={handleUpdateRestaurant}>
+                  <div>
                     <input
-                      type="checkbox"
-                      checked={dayData.closed}
+                      placeholder="Restaurant name"
+                      value={updateRestaurantForm.name}
                       onChange={(e) =>
-                        handleHoursChange(day, "closed", e.target.checked)
+                        handleUpdateRestaurantFieldChange("name", e.target.value)
                       }
                     />
                   </div>
-                );
-              })}
-            </div>
 
-            <div style={{ marginTop: "1rem" }}>
-            <input
-              placeholder="Restaurant tags (comma separated)"
-              value={restaurantForm.tags}
-              onChange={(e) => handleRestaurantFieldChange("tags", e.target.value)}
-            />
-          </div>
+                  <div style={{ marginTop: "0.5rem" }}>
+                    <input
+                      type="tel"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      placeholder="Phone number"
+                      value={updateRestaurantForm.phone_number}
+                      onChange={(e) =>
+                        handleUpdateRestaurantFieldChange(
+                          "phone_number",
+                          e.target.value.replace(/\D/g, "")
+                        )
+                      }
+                    />
+                  </div>
 
-          <h3 style={{ marginTop: "1rem" }}>Menu</h3>
+                  <div style={{ marginTop: "0.5rem" }}>
+                    <input
+                      placeholder="Address"
+                      value={updateRestaurantForm.address}
+                      onChange={(e) =>
+                        handleUpdateRestaurantFieldChange("address", e.target.value)
+                      }
+                    />
+                  </div>
 
-          {restaurantForm.menu.map((item, index) => (
-            <div
-              key={index}
-              style={{
-                border: "1px solid #ccc",
-                padding: "1rem",
-                marginTop: "1rem",
-              }}
-            >
-              <p>Menu Item {index + 1}</p>
+                  <div style={{ marginTop: "0.5rem" }}>
+                    <input
+                      placeholder="Restaurant tags (comma separated)"
+                      value={updateRestaurantForm.tags}
+                      onChange={(e) =>
+                        handleUpdateRestaurantFieldChange("tags", e.target.value)
+                      }
+                    />
+                  </div>
 
-              <div>
-                <input
-                  placeholder="Item name"
-                  value={item.name}
-                  onChange={(e) =>
-                    handleMenuItemChange(index, "name", e.target.value)
-                  }
-                />
-              </div>
+                  <h3 style={{ marginTop: "1rem" }}>Hours</h3>
 
-              <div style={{ marginTop: "0.5rem" }}>
-                <input
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="Price"
-                value={item.price}
-                onKeyDown={(e) => {
-                  if (e.key === "-" || e.key === "e") e.preventDefault();
-                }}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (Number(value) < 0) return;
-                  handleMenuItemChange(index, "price", value);
-                }}
-              />
-              </div>
+                  <div style={{ marginLeft: "120px" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "1rem",
+                        fontWeight: "bold",
+                        marginTop: "0.5rem",
+                      }}
+                    >
+                      <div style={{ width: "100px" }}></div>
+                      <div style={{ width: "140px" }}>Open</div>
+                      <div style={{ width: "140px" }}>Close</div>
+                      <div>Closed</div>
+                    </div>
 
-              <div style={{ marginTop: "0.5rem" }}>
-                <input
-                  placeholder="Description"
-                  value={item.description}
-                  onChange={(e) =>
-                    handleMenuItemChange(index, "description", e.target.value)
-                  }
-                />
-              </div>
+                    {Object.keys(updateRestaurantForm.hours).map((day) => {
+                      const dayData = updateRestaurantForm.hours[day];
 
-              <div style={{ marginTop: "0.5rem" }}>
-                <input
-                  placeholder="Item tags (comma separated)"
-                  value={item.tags}
-                  onChange={(e) =>
-                    handleMenuItemChange(index, "tags", e.target.value)
-                  }
-                />
-              </div>
+                      return (
+                        <div
+                          key={day}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "1rem",
+                            marginTop: "0.5rem",
+                          }}
+                        >
+                          <div style={{ width: "100px" }}>
+                            <strong>{day}</strong>
+                          </div>
 
-              {restaurantForm.menu.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeMenuItem(index)}
-                  style={{ marginTop: "0.5rem" }}
-                >
-                  Remove Item
-                </button>
+                          <select
+                            disabled={dayData.closed}
+                            style={{ width: "140px" }}
+                            value={dayData.open}
+                            onChange={(e) =>
+                              handleUpdateRestaurantHoursChange(day, "open", e.target.value)
+                            }
+                          >
+                            <option value=""></option>
+                            {timeOptions.map((t) => (
+                              <option key={t} value={t}>{t}</option>
+                            ))}
+                          </select>
+
+                          <select
+                            disabled={dayData.closed}
+                            style={{ width: "140px" }}
+                            value={dayData.close}
+                            onChange={(e) =>
+                              handleUpdateRestaurantHoursChange(day, "close", e.target.value)
+                            }
+                          >
+                            <option value=""></option>
+                            {timeOptions.map((t) => (
+                              <option key={t} value={t}>{t}</option>
+                            ))}
+                          </select>
+
+                          <input
+                            type="checkbox"
+                            checked={dayData.closed}
+                            onChange={(e) =>
+                              handleUpdateRestaurantHoursChange(day, "closed", e.target.checked)
+                            }
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <button type="submit" style={{ marginTop: "1rem" }}>
+                    Update Restaurant
+                  </button>
+                </form>
               )}
             </div>
-          ))}
+          )}
 
-          <button
-            type="button"
-            onClick={addMenuItem}
-            style={{ marginTop: "1rem", marginRight: "0.5rem" }}
-          >
-            Add Menu Item
-          </button>
+          {restaurantTab === "add-menu-item" && (
+            <div>
+              <h3>Add Menu Item</h3>
 
-          <button type="submit" style={{ marginTop: "1rem" }}>
-            Create Restaurant
-          </button>
-        </form>
-
-        {restaurantResponse && (
-          <div style={{ marginTop: "1rem", color: "green" }}>
-            <p>Restaurant created successfully.</p>
-            <p>ID: {restaurantResponse.id}</p>
-            <p>Name: {restaurantResponse.name}</p>
-            <p>Owner User ID: {restaurantResponse.user_id}</p>
-          </div>
-        )}
-      </div>
-    )}
-
-    {restaurantTab === "load" && (
-  <div>
-    <h3>Load Restaurant</h3>
-
-    <form onSubmit={handleLoadRestaurantById}>
-      <input
-        type="number"
-        min="1"
-        placeholder="Restaurant ID"
-        value={restaurantIdInput}
-        onChange={(e) => setRestaurantIdInput(e.target.value)}
-      />
-
-      <button type="submit" style={{ marginLeft: "0.5rem" }}>
-        Load
-      </button>
-    </form>
-
-    {loadedRestaurant && (
-      <div style={{ marginTop: "1rem" }}>
-        <p><strong>ID:</strong> {loadedRestaurant.id}</p>
-        <p><strong>Name:</strong> {loadedRestaurant.name}</p>
-        <p><strong>Owner User ID:</strong> {loadedRestaurant.user_id}</p>
-        <p><strong>Phone:</strong> {loadedRestaurant.phone_number}</p>
-        <p><strong>Address:</strong> {loadedRestaurant.address}</p>
-        <p><strong>Tags:</strong> {(loadedRestaurant.tags || []).join(", ")}</p>
-        <p><strong>Average Rating:</strong> {String(loadedRestaurant.average_rating)}</p>
-      </div>
-    )}
-    {loadedRestaurant?.menu?.length > 0 && (
-  <div style={{ marginTop: "1rem" }}>
-    <h4>Menu</h4>
-    {loadedRestaurant.menu.map((item) => (
-      <div
-        key={item.id}
-        style={{
-          border: "1px solid #ccc",
-          padding: "0.75rem",
-          marginTop: "0.5rem",
-        }}
-      >
-        <p><strong>ID:</strong> {item.id}</p>
-        <p><strong>Name:</strong> {item.name}</p>
-        <p><strong>Price:</strong> {item.price}</p>
-        <p><strong>Status:</strong> {item.status}</p>
-
-        <button
-          type="button"
-          onClick={() => loadMenuItemIntoUpdateForm(item)}
-        >
-          Edit This Menu Item
-        </button>
-
-        <button
-      type="button"
-      onClick={() => loadMenuItemIntoDeleteForm(item)}
-      style={{ marginLeft: "0.5rem" }}
-    >
-      Delete This Menu Item
-    </button>
-      </div>
-    ))}
-  </div>
-)}
-
-  </div>
-
-
-)}
-
-{restaurantTab === "update" && (
-  <div>
-    <h3>Update Restaurant</h3>
-
-    {!updateRestaurantForm.id ? (
-      <p>Load a restaurant first.</p>
-    ) : (
-      <form onSubmit={handleUpdateRestaurant}>
-        <div>
-          <input
-            placeholder="Restaurant name"
-            value={updateRestaurantForm.name}
-            onChange={(e) =>
-              handleUpdateRestaurantFieldChange("name", e.target.value)
-            }
-          />
-        </div>
-
-        <div style={{ marginTop: "0.5rem" }}>
-          <input
-            type="tel"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            placeholder="Phone number"
-            value={updateRestaurantForm.phone_number}
-            onChange={(e) =>
-              handleUpdateRestaurantFieldChange(
-                "phone_number",
-                e.target.value.replace(/\D/g, "")
-              )
-            }
-          />
-        </div>
-
-        <div style={{ marginTop: "0.5rem" }}>
-          <input
-            placeholder="Address"
-            value={updateRestaurantForm.address}
-            onChange={(e) =>
-              handleUpdateRestaurantFieldChange("address", e.target.value)
-            }
-          />
-        </div>
-
-        <div style={{ marginTop: "0.5rem" }}>
-          <input
-            placeholder="Restaurant tags (comma separated)"
-            value={updateRestaurantForm.tags}
-            onChange={(e) =>
-              handleUpdateRestaurantFieldChange("tags", e.target.value)
-            }
-          />
-        </div>
-
-        <h3 style={{ marginTop: "1rem" }}>Hours</h3>
-
-        <div style={{ marginLeft: "120px" }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "1rem",
-              fontWeight: "bold",
-              marginTop: "0.5rem",
-            }}
-          >
-            <div style={{ width: "100px" }}></div>
-            <div style={{ width: "140px" }}>Open</div>
-            <div style={{ width: "140px" }}>Close</div>
-            <div>Closed</div>
-          </div>
-
-          {Object.keys(updateRestaurantForm.hours).map((day) => {
-            const dayData = updateRestaurantForm.hours[day];
-
-            return (
-              <div
-                key={day}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "1rem",
-                  marginTop: "0.5rem",
-                }}
-              >
-                <div style={{ width: "100px" }}>
-                  <strong>{day}</strong>
+              <form onSubmit={handleAddMenuItemToRestaurant}>
+                <div>
+                  <input
+                    type="number"
+                    min="1"
+                    placeholder="Restaurant ID"
+                    value={addMenuItemForm.restaurant_id}
+                    onChange={(e) =>
+                      handleAddMenuItemFieldChange("restaurant_id", e.target.value)
+                    }
+                  />
                 </div>
 
-                <select
-                  disabled={dayData.closed}
-                  style={{ width: "140px" }}
-                  value={dayData.open}
-                  onChange={(e) =>
-                    handleUpdateRestaurantHoursChange(day, "open", e.target.value)
-                  }
-                >
-                  <option value=""></option>
-                  {timeOptions.map((t) => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                </select>
+                <div style={{ marginTop: "0.5rem" }}>
+                  <input
+                    placeholder="Menu item name"
+                    value={addMenuItemForm.name}
+                    onChange={(e) =>
+                      handleAddMenuItemFieldChange("name", e.target.value)
+                    }
+                  />
+                </div>
 
-                <select
-                  disabled={dayData.closed}
-                  style={{ width: "140px" }}
-                  value={dayData.close}
-                  onChange={(e) =>
-                    handleUpdateRestaurantHoursChange(day, "close", e.target.value)
-                  }
-                >
-                  <option value=""></option>
-                  {timeOptions.map((t) => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                </select>
+                <div style={{ marginTop: "0.5rem" }}>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="Price"
+                    value={addMenuItemForm.price}
+                    onKeyDown={(e) => {
+                      if (e.key === "-" || e.key === "e") e.preventDefault();
+                    }}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (Number(value) < 0) return;
+                      handleAddMenuItemFieldChange("price", value);
+                    }}
+                  />
+                </div>
 
-                <input
-                  type="checkbox"
-                  checked={dayData.closed}
-                  onChange={(e) =>
-                    handleUpdateRestaurantHoursChange(day, "closed", e.target.checked)
-                  }
-                />
-              </div>
-            );
-          })}
-        </div>
+                <div style={{ marginTop: "0.5rem" }}>
+                  <input
+                    placeholder="Description"
+                    value={addMenuItemForm.description}
+                    onChange={(e) =>
+                      handleAddMenuItemFieldChange("description", e.target.value)
+                    }
+                  />
+                </div>
 
-        <button type="submit" style={{ marginTop: "1rem" }}>
-          Update Restaurant
-        </button>
-      </form>
-    )}
-  </div>
-)}
+                <div style={{ marginTop: "0.5rem" }}>
+                  <input
+                    placeholder="Tags (comma separated)"
+                    value={addMenuItemForm.tags}
+                    onChange={(e) =>
+                      handleAddMenuItemFieldChange("tags", e.target.value)
+                    }
+                  />
+                </div>
 
-{restaurantTab === "add-menu-item" && (
-  <div>
-    <h3>Add Menu Item</h3>
+                <button type="submit" style={{ marginTop: "1rem" }}>
+                  Add Menu Item
+                </button>
+              </form>
 
-    <form onSubmit={handleAddMenuItemToRestaurant}>
-      <div>
-        <input
-          type="number"
-          min="1"
-          placeholder="Restaurant ID"
-          value={addMenuItemForm.restaurant_id}
-          onChange={(e) =>
-            handleAddMenuItemFieldChange("restaurant_id", e.target.value)
-          }
-        />
-      </div>
+              {menuItemResponse && (
+                <div style={{ marginTop: "1rem", color: "green" }}>
+                  <p>Menu item added successfully.</p>
+                  <p>ID: {menuItemResponse.id}</p>
+                  <p>Name: {menuItemResponse.name}</p>
+                  <p>Price: {menuItemResponse.price}</p>
+                  <p>Description: {menuItemResponse.description}</p>
+                  <p>Status: {menuItemResponse.status}</p>
+                  <p>Tags: {(menuItemResponse.tags || []).join(", ")}</p>
+                </div>
+              )}
+            </div>
+          )}
 
-      <div style={{ marginTop: "0.5rem" }}>
-        <input
-          placeholder="Menu item name"
-          value={addMenuItemForm.name}
-          onChange={(e) =>
-            handleAddMenuItemFieldChange("name", e.target.value)
-          }
-        />
-      </div>
-
-      <div style={{ marginTop: "0.5rem" }}>
-        <input
-          type="number"
-          min="0"
-          step="0.01"
-          placeholder="Price"
-          value={addMenuItemForm.price}
-          onKeyDown={(e) => {
-            if (e.key === "-" || e.key === "e") e.preventDefault();
-          }}
-          onChange={(e) => {
-            const value = e.target.value;
-            if (Number(value) < 0) return;
-            handleAddMenuItemFieldChange("price", value);
-          }}
-        />
-      </div>
-
-      <div style={{ marginTop: "0.5rem" }}>
-        <input
-          placeholder="Description"
-          value={addMenuItemForm.description}
-          onChange={(e) =>
-            handleAddMenuItemFieldChange("description", e.target.value)
-          }
-        />
-      </div>
-
-      <div style={{ marginTop: "0.5rem" }}>
-        <input
-          placeholder="Tags (comma separated)"
-          value={addMenuItemForm.tags}
-          onChange={(e) =>
-            handleAddMenuItemFieldChange("tags", e.target.value)
-          }
-        />
-      </div>
-
-      <button type="submit" style={{ marginTop: "1rem" }}>
-        Add Menu Item
-      </button>
-    </form>
-
-    {menuItemResponse && (
-      <div style={{ marginTop: "1rem", color: "green" }}>
-        <p>Menu item added successfully.</p>
-        <p>ID: {menuItemResponse.id}</p>
-        <p>Name: {menuItemResponse.name}</p>
-        <p>Price: {menuItemResponse.price}</p>
-        <p>Description: {menuItemResponse.description}</p>
-        <p>Status: {menuItemResponse.status}</p>
-        <p>Tags: {(menuItemResponse.tags || []).join(", ")}</p>
-      </div>
-    )}
-  </div>
-)}
-
-{restaurantTab === "update-menu-item" && (
-  <div>
-    <h3>Update Menu Item</h3>
-
-    <form onSubmit={handleUpdateMenuItem}>
-      <div>
-        <input
-          type="number"
-          min="1"
-          placeholder="Restaurant ID"
-          value={updateMenuItemForm.restaurant_id}
-          onChange={(e) =>
-            handleUpdateMenuItemFieldChange("restaurant_id", e.target.value)
-          }
-        />
-      </div>
-
-      <div style={{ marginTop: "0.5rem" }}>
-        <input
-          placeholder="Menu Item ID"
-          value={updateMenuItemForm.menu_item_id}
-          onChange={(e) =>
-            handleUpdateMenuItemFieldChange("menu_item_id", e.target.value)
-          }
-        />
-      </div>
-
-      <div style={{ marginTop: "0.5rem" }}>
-        <input
-          placeholder="Menu item name"
-          value={updateMenuItemForm.name}
-          onChange={(e) =>
-            handleUpdateMenuItemFieldChange("name", e.target.value)
-          }
-        />
-      </div>
-
-      <div style={{ marginTop: "0.5rem" }}>
-        <input
-          type="number"
-          min="0"
-          step="0.01"
-          placeholder="Price"
-          value={updateMenuItemForm.price}
-          onKeyDown={(e) => {
-            if (e.key === "-" || e.key === "e") e.preventDefault();
-          }}
-          onChange={(e) => {
-            const value = e.target.value;
-            if (Number(value) < 0) return;
-            handleUpdateMenuItemFieldChange("price", value);
-          }}
-        />
-      </div>
-
-      <div style={{ marginTop: "0.5rem" }}>
-        <input
-          placeholder="Description"
-          value={updateMenuItemForm.description}
-          onChange={(e) =>
-            handleUpdateMenuItemFieldChange("description", e.target.value)
-          }
-        />
-      </div>
-
-      <div style={{ marginTop: "0.5rem" }}>
-        <input
-          placeholder="Tags (comma separated)"
-          value={updateMenuItemForm.tags}
-          onChange={(e) =>
-            handleUpdateMenuItemFieldChange("tags", e.target.value)
-          }
-        />
-      </div>
-
-      <div style={{ marginTop: "0.5rem" }}>
-        <input
-          placeholder='Optional status, e.g. "Available" or "Unavailable"'
-          value={updateMenuItemForm.item_status}
-          onChange={(e) =>
-            handleUpdateMenuItemFieldChange("item_status", e.target.value)
-          }
-        />
-      </div>
-
-      <button type="submit" style={{ marginTop: "1rem" }}>
-        Update Menu Item
-      </button>
-    </form>
-
-    {updateMenuItemResponse && (
-      <div style={{ marginTop: "1rem", color: "green" }}>
-        <p>Menu item updated successfully.</p>
-        <p>ID: {updateMenuItemResponse.id}</p>
-        <p>Name: {updateMenuItemResponse.name}</p>
-        <p>Price: {updateMenuItemResponse.price}</p>
-        <p>Description: {updateMenuItemResponse.description}</p>
-        <p>Status: {updateMenuItemResponse.status}</p>
-        <p>Tags: {(updateMenuItemResponse.tags || []).join(", ")}</p>
-      </div>
-    )}
-  </div>
-)}
-
-{restaurantTab === "delete-menu-item" && (
-  <div>
-    <h3>Delete Menu Item</h3>
-
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        setConfirmDeleteMenuItem(true);
-      }}
-    >
-      <div>
-        <input
-          type="number"
-          min="1"
-          placeholder="Restaurant ID"
-          value={deleteMenuItemForm.restaurant_id}
-          onChange={(e) =>
-            handleDeleteMenuItemFieldChange("restaurant_id", e.target.value)
-          }
-        />
-      </div>
-
-      <div style={{ marginTop: "0.5rem" }}>
-        <input
-          placeholder="Menu Item ID"
-          value={deleteMenuItemForm.menu_item_id}
-          onChange={(e) =>
-            handleDeleteMenuItemFieldChange("menu_item_id", e.target.value)
-          }
-        />
-      </div>
-
-      <button type="submit" style={{ marginTop: "1rem" }}>
-        Select Menu Item
-      </button>
-    </form>
-
-    {(deleteMenuItemForm.restaurant_id || loadedRestaurant?.id) &&
-      deleteMenuItemForm.menu_item_id && (
-        <div style={{ marginTop: "1rem" }}>
-          {!confirmDeleteMenuItem ? (
-            <button
-              type="button"
-              onClick={() => setConfirmDeleteMenuItem(true)}
-              style={{ backgroundColor: "red", color: "white" }}
-            >
-              Delete Menu Item
-            </button>
-          ) : (
+          {restaurantTab === "update-menu-item" && (
             <div>
-              <p style={{ color: "red" }}>
-                Are you sure you want to delete this menu item?
-              </p>
+              <h3>Update Menu Item</h3>
 
-              <button
-                type="button"
-                onClick={handleDeleteMenuItem}
-                style={{
-                  backgroundColor: "red",
-                  color: "white",
-                  marginRight: "0.5rem",
+              <form onSubmit={handleUpdateMenuItem}>
+                <div>
+                  <input
+                    type="number"
+                    min="1"
+                    placeholder="Restaurant ID"
+                    value={updateMenuItemForm.restaurant_id}
+                    onChange={(e) =>
+                      handleUpdateMenuItemFieldChange("restaurant_id", e.target.value)
+                    }
+                  />
+                </div>
+
+                <div style={{ marginTop: "0.5rem" }}>
+                  <input
+                    placeholder="Menu Item ID"
+                    value={updateMenuItemForm.menu_item_id}
+                    onChange={(e) =>
+                      handleUpdateMenuItemFieldChange("menu_item_id", e.target.value)
+                    }
+                  />
+                </div>
+
+                <div style={{ marginTop: "0.5rem" }}>
+                  <input
+                    placeholder="Menu item name"
+                    value={updateMenuItemForm.name}
+                    onChange={(e) =>
+                      handleUpdateMenuItemFieldChange("name", e.target.value)
+                    }
+                  />
+                </div>
+
+                <div style={{ marginTop: "0.5rem" }}>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="Price"
+                    value={updateMenuItemForm.price}
+                    onKeyDown={(e) => {
+                      if (e.key === "-" || e.key === "e") e.preventDefault();
+                    }}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (Number(value) < 0) return;
+                      handleUpdateMenuItemFieldChange("price", value);
+                    }}
+                  />
+                </div>
+
+                <div style={{ marginTop: "0.5rem" }}>
+                  <input
+                    placeholder="Description"
+                    value={updateMenuItemForm.description}
+                    onChange={(e) =>
+                      handleUpdateMenuItemFieldChange("description", e.target.value)
+                    }
+                  />
+                </div>
+
+                <div style={{ marginTop: "0.5rem" }}>
+                  <input
+                    placeholder="Tags (comma separated)"
+                    value={updateMenuItemForm.tags}
+                    onChange={(e) =>
+                      handleUpdateMenuItemFieldChange("tags", e.target.value)
+                    }
+                  />
+                </div>
+
+                <div style={{ marginTop: "0.5rem" }}>
+                  <input
+                    placeholder='Optional status, e.g. "Available" or "Unavailable"'
+                    value={updateMenuItemForm.item_status}
+                    onChange={(e) =>
+                      handleUpdateMenuItemFieldChange("item_status", e.target.value)
+                    }
+                  />
+                </div>
+
+                <button type="submit" style={{ marginTop: "1rem" }}>
+                  Update Menu Item
+                </button>
+              </form>
+
+              {updateMenuItemResponse && (
+                <div style={{ marginTop: "1rem", color: "green" }}>
+                  <p>Menu item updated successfully.</p>
+                  <p>ID: {updateMenuItemResponse.id}</p>
+                  <p>Name: {updateMenuItemResponse.name}</p>
+                  <p>Price: {updateMenuItemResponse.price}</p>
+                  <p>Description: {updateMenuItemResponse.description}</p>
+                  <p>Status: {updateMenuItemResponse.status}</p>
+                  <p>Tags: {(updateMenuItemResponse.tags || []).join(", ")}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {restaurantTab === "delete-menu-item" && (
+            <div>
+              <h3>Delete Menu Item</h3>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  setConfirmDeleteMenuItem(true);
                 }}
               >
-                Yes, Delete
-              </button>
+                <div>
+                  <input
+                    type="number"
+                    min="1"
+                    placeholder="Restaurant ID"
+                    value={deleteMenuItemForm.restaurant_id}
+                    onChange={(e) =>
+                      handleDeleteMenuItemFieldChange("restaurant_id", e.target.value)
+                    }
+                  />
+                </div>
 
-              <button
-                type="button"
-                onClick={() => setConfirmDeleteMenuItem(false)}
+                <div style={{ marginTop: "0.5rem" }}>
+                  <input
+                    placeholder="Menu Item ID"
+                    value={deleteMenuItemForm.menu_item_id}
+                    onChange={(e) =>
+                      handleDeleteMenuItemFieldChange("menu_item_id", e.target.value)
+                    }
+                  />
+                </div>
+
+                <button type="submit" style={{ marginTop: "1rem" }}>
+                  Select Menu Item
+                </button>
+              </form>
+
+              {(deleteMenuItemForm.restaurant_id || loadedRestaurant?.id) &&
+                deleteMenuItemForm.menu_item_id && (
+                  <div style={{ marginTop: "1rem" }}>
+                    {!confirmDeleteMenuItem ? (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteMenuItem(true)}
+                        style={{ backgroundColor: "red", color: "white" }}
+                      >
+                        Delete Menu Item
+                      </button>
+                    ) : (
+                      <div>
+                        <p style={{ color: "red" }}>
+                          Are you sure you want to delete this menu item?
+                        </p>
+
+                        <button
+                          type="button"
+                          onClick={handleDeleteMenuItem}
+                          style={{
+                            backgroundColor: "red",
+                            color: "white",
+                            marginRight: "0.5rem",
+                          }}
+                        >
+                          Yes, Delete
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeleteMenuItem(false)}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+              {deleteMenuItemResponse?.deleted && (
+                <div style={{ marginTop: "1rem", color: "green" }}>
+                  <p>Menu item deleted successfully.</p>
+                  <p>Restaurant ID: {deleteMenuItemResponse.restaurant_id}</p>
+                  <p>Menu Item ID: {deleteMenuItemResponse.menu_item_id}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {restaurantTab === "delete" && (
+            <div>
+              <h3>Delete Restaurant</h3>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  setConfirmDeleteRestaurant(true);
+                }}
               >
-                Cancel
-              </button>
+                <input
+                  type="number"
+                  min="1"
+                  placeholder="Restaurant ID"
+                  value={restaurantIdInput}
+                  onChange={(e) => setRestaurantIdInput(e.target.value)}
+                />
+
+                <button type="submit" style={{ marginLeft: "0.5rem" }}>
+                  Select Restaurant
+                </button>
+              </form>
+
+              {loadedRestaurant && (
+                <div style={{ marginTop: "1rem" }}>
+                  <p><strong>ID:</strong> {loadedRestaurant.id}</p>
+                  <p><strong>Name:</strong> {loadedRestaurant.name}</p>
+                  <p><strong>Owner User ID:</strong> {loadedRestaurant.user_id}</p>
+                  <p><strong>Phone:</strong> {loadedRestaurant.phone_number}</p>
+                  <p><strong>Address:</strong> {loadedRestaurant.address}</p>
+                </div>
+              )}
+
+              {(restaurantIdInput || loadedRestaurant?.id) && (
+                <div style={{ marginTop: "1rem" }}>
+                  {!confirmDeleteRestaurant ? (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDeleteRestaurant(true)}
+                      style={{ backgroundColor: "red", color: "white" }}
+                    >
+                      Delete Restaurant
+                    </button>
+                  ) : (
+                    <div>
+                      <p style={{ color: "red" }}>
+                        Are you sure you want to delete this restaurant?
+                      </p>
+
+                      <button
+                        type="button"
+                        onClick={handleDeleteRestaurant}
+                        style={{
+                          backgroundColor: "red",
+                          color: "white",
+                          marginRight: "0.5rem",
+                        }}
+                      >
+                        Yes, Delete
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteRestaurant(false)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {restaurantResponse?.deleted && (
+                <div style={{ marginTop: "1rem", color: "green" }}>
+                  <p>Restaurant deleted successfully.</p>
+                  <p>ID: {restaurantResponse.id}</p>
+                </div>
+              )}
             </div>
           )}
         </div>
       )}
+      {tab === "favorites" && (
+        <div>
+          <h2>Favorites</h2>
 
-    {deleteMenuItemResponse?.deleted && (
-      <div style={{ marginTop: "1rem", color: "green" }}>
-        <p>Menu item deleted successfully.</p>
-        <p>Restaurant ID: {deleteMenuItemResponse.restaurant_id}</p>
-        <p>Menu Item ID: {deleteMenuItemResponse.menu_item_id}</p>
-      </div>
-    )}
-  </div>
-)}
-
-{restaurantTab === "delete" && (
-  <div>
-    <h3>Delete Restaurant</h3>
-
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        setConfirmDeleteRestaurant(true);
-      }}
-    >
-      <input
-        type="number"
-        min="1"
-        placeholder="Restaurant ID"
-        value={restaurantIdInput}
-        onChange={(e) => setRestaurantIdInput(e.target.value)}
-      />
-
-      <button type="submit" style={{ marginLeft: "0.5rem" }}>
-        Select Restaurant
-      </button>
-    </form>
-
-    {loadedRestaurant && (
-      <div style={{ marginTop: "1rem" }}>
-        <p><strong>ID:</strong> {loadedRestaurant.id}</p>
-        <p><strong>Name:</strong> {loadedRestaurant.name}</p>
-        <p><strong>Owner User ID:</strong> {loadedRestaurant.user_id}</p>
-        <p><strong>Phone:</strong> {loadedRestaurant.phone_number}</p>
-        <p><strong>Address:</strong> {loadedRestaurant.address}</p>
-      </div>
-    )}
-
-    {(restaurantIdInput || loadedRestaurant?.id) && (
-      <div style={{ marginTop: "1rem" }}>
-        {!confirmDeleteRestaurant ? (
-          <button
-            type="button"
-            onClick={() => setConfirmDeleteRestaurant(true)}
-            style={{ backgroundColor: "red", color: "white" }}
-          >
-            Delete Restaurant
-          </button>
-        ) : (
-          <div>
-            <p style={{ color: "red" }}>
-              Are you sure you want to delete this restaurant?
-            </p>
-
-            <button
-              type="button"
-              onClick={handleDeleteRestaurant}
-              style={{
-                backgroundColor: "red",
-                color: "white",
-                marginRight: "0.5rem",
-              }}
-            >
-              Yes, Delete
+          {/* Sub-tab button */}
+          <div style={{ marginBottom: "1rem" }}>
+            <button onClick={() => {
+              setFavoriteTab("view");
+              loadFavorites(); // ← move it here
+            }}>
+              View Favorites
             </button>
-
             <button
-              type="button"
-              onClick={() => setConfirmDeleteRestaurant(false)}
+              onClick={() => setFavoriteTab("add")}
+              style={{ marginLeft: "0.5rem" }}
             >
-              Cancel
+              Add Favorite
+            </button>
+            <button
+              onClick={() => {
+                setFavoriteTab("delete");
+                loadFavorites(); // load list to choose from
+              }}
+              style={{ marginLeft: "0.5rem" }}
+            >
+              Delete Favorite
             </button>
           </div>
-        )}
-      </div>
-    )}
 
-    {restaurantResponse?.deleted && (
-      <div style={{ marginTop: "1rem", color: "green" }}>
-        <p>Restaurant deleted successfully.</p>
-        <p>ID: {restaurantResponse.id}</p>
-      </div>
-    )}
-  </div>
-)}
-  </div>
-)}
-{tab === "favorites" && (
-  <div>
-    <h2>Favorites</h2>
-
-    {/* Sub-tab button */}
-    <div style={{ marginBottom: "1rem" }}>
-     <button onClick={() => {
-  setFavoriteTab("view");
-  loadFavorites(); // ← move it here
-}}>
-  View Favorites
-</button>
- <button
-    onClick={() => setFavoriteTab("add")}
-    style={{ marginLeft: "0.5rem" }}
-  >
-    Add Favorite
-  </button>
-  <button
-  onClick={() => {
-    setFavoriteTab("delete");
-    loadFavorites(); // load list to choose from
-  }}
-  style={{ marginLeft: "0.5rem" }}
->
-  Delete Favorite
-</button>
-    </div>
-
-    {favoriteTab === "view" && (
-      <div>
-        {favorites.length === 0 ? (
-          <p>No favorites yet.</p>
-        ) : (
-          favorites.map((fav) => (
-            <div key={fav.id}>
-              <p>ID: {fav.id}</p>
-              <p>Restaurant: {fav.restaurant_name}</p>
-              <p>Menu Item: {fav.menu_item_name}</p>
+          {favoriteTab === "view" && (
+            <div>
+              {favorites.length === 0 ? (
+                <p>No favorites yet.</p>
+              ) : (
+                favorites.map((fav) => (
+                  <div key={fav.id}>
+                    <p>ID: {fav.id}</p>
+                    <p>Restaurant: {fav.restaurant_name}</p>
+                    <p>Menu Item: {fav.menu_item_name}</p>
+                  </div>
+                ))
+              )}
             </div>
-          ))
-        )}
-      </div>
-    )}
+          )}
 
-    {favoriteTab === "add" && (
-  <div>
-    <form onSubmit={handleAddFavorite}>
-      <div>
-        <input
-          placeholder="Restaurant ID"
-          value={favoriteForm.restaurant_id}
-          onChange={(e) =>
-            setFavoriteForm({
-              ...favoriteForm,
-              restaurant_id: e.target.value,
-            })
-          }
-        />
-      </div>
+          {favoriteTab === "add" && (
+            <div>
+              <form onSubmit={handleAddFavorite}>
+                <div>
+                  <input
+                    placeholder="Restaurant ID"
+                    value={favoriteForm.restaurant_id}
+                    onChange={(e) =>
+                      setFavoriteForm({
+                        ...favoriteForm,
+                        restaurant_id: e.target.value,
+                      })
+                    }
+                  />
+                </div>
 
-      <div style={{ marginTop: "0.5rem" }}>
-        <input
-          placeholder="Menu Item ID"
-          value={favoriteForm.menu_item_id}
-          onChange={(e) =>
-            setFavoriteForm({
-              ...favoriteForm,
-              menu_item_id: e.target.value,
-            })
-          }
-        />
-      </div>
+                <div style={{ marginTop: "0.5rem" }}>
+                  <input
+                    placeholder="Menu Item ID"
+                    value={favoriteForm.menu_item_id}
+                    onChange={(e) =>
+                      setFavoriteForm({
+                        ...favoriteForm,
+                        menu_item_id: e.target.value,
+                      })
+                    }
+                  />
+                </div>
 
-      <button type="submit" style={{ marginTop: "1rem" }}>
-        Add Favorite
-      </button>
-    </form>
-  </div>
-)}
-{favoriteTab === "delete" && (
-  <div>
-    <h3>Delete Favorite</h3>
+                <button type="submit" style={{ marginTop: "1rem" }}>
+                  Add Favorite
+                </button>
+              </form>
+            </div>
+          )}
+          {favoriteTab === "delete" && (
+            <div>
+              <h3>Delete Favorite</h3>
 
-    {favorites.length === 0 ? (
-      <p>No favorites to delete.</p>
-    ) : (
-      favorites.map((fav) => (
-        <div
-          key={fav.id}
-          style={{
-            border: "1px solid #ccc",
-            padding: "0.5rem",
-            marginTop: "0.5rem",
-          }}
-        >
-          <p>ID: {fav.id}</p>
-          <p>Restaurant: {fav.restaurant_name}</p>
-          <p>Menu Item: {fav.menu_item_name}</p>
+              {favorites.length === 0 ? (
+                <p>No favorites to delete.</p>
+              ) : (
+                favorites.map((fav) => (
+                  <div
+                    key={fav.id}
+                    style={{
+                      border: "1px solid #ccc",
+                      padding: "0.5rem",
+                      marginTop: "0.5rem",
+                    }}
+                  >
+                    <p>ID: {fav.id}</p>
+                    <p>Restaurant: {fav.restaurant_name}</p>
+                    <p>Menu Item: {fav.menu_item_name}</p>
 
-          <button
-            onClick={() => handleDeleteFavorite(fav.id)}
-            style={{
-              backgroundColor: "red",
-              color: "white",
-              marginTop: "0.5rem",
-            }}
-          >
-            Delete
-          </button>
+                    <button
+                      onClick={() => handleDeleteFavorite(fav.id)}
+                      style={{
+                        backgroundColor: "red",
+                        color: "white",
+                        marginTop: "0.5rem",
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
       ))
     )}
