@@ -1,6 +1,7 @@
 """Service layer for restaurant business logic."""
 
 from datetime import date, datetime, time
+import random
 import re
 from typing import Any, Dict, List, Protocol
 import uuid
@@ -283,6 +284,36 @@ class RestaurantServices:
                 filtered_menu_items.append(menu_item)
 
         return filtered_menu_items
+
+    def get_random_meal(self) -> Dict[str, Any]:
+        """
+        Get a random meal from all restaurants
+
+        Returns:
+        Dict containing random meal with restaurant information
+
+        Raises:
+        HTTPException 404 if no meals found in any restaurant
+        """
+        restaurants = self.repo.load_all_restaurants()
+
+        all_meals = []
+        for restaurant in restaurants:
+            for meal in restaurant.get('menu', []):
+                all_meals.append({
+                    'id': meal.get('id'),
+                    'name': meal.get('name'),
+                    'description': meal.get('description', ''),
+                    'price': float(meal.get('price', 0)),
+                    'tags': meal.get('tags', []),
+                    'restaurant_id': restaurant.get('id'),
+                    'restaurant_name': restaurant.get('name')
+                })
+
+        if not all_meals:
+            raise HTTPException(status_code=404, detail="No meals found in any restaurant")
+
+        return random.choice(all_meals)
 
     def filter_restaurants_by_tags(self, restaurants: List[RestaurantResult],
                                    tags: List[str] ) -> List[RestaurantResult]:

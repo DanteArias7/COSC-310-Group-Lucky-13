@@ -105,6 +105,30 @@ def browse_restaurants(restaurant_repo: RestaurantRepo = Depends(create_restaura
 
     return paginate(restaurants)
 
+@restaurant_router.get("/random-meal", status_code=200)
+def get_random_meal(
+    restaurant_repo: RestaurantRepo = Depends(create_restaurant_repo),
+    user_repo: UserRepo = Depends(create_user_repo),
+    user_id: str = Header(..., alias="user-id")
+):
+    """
+    Get a random meal from any restaurant's menu
+
+    Args:
+        restaurant_repo: Repository for restaurant data
+        user_repo: Repository for user data
+        user_id: Current user ID from header
+
+    Returns:
+        A random menu item with restaurant info
+    """
+
+    authorization_service = AuthorizationServices(user_repo)
+    authorization_service.authorize(user_id, "browse_restaurants")
+
+    restaurant_service = RestaurantServices(restaurant_repo)
+    return restaurant_service.get_random_meal()
+
 @restaurant_router.get("/{restaurant_id}", response_model=Restaurant, status_code=200)
 def get_restaurant_by_id(restaurant_id: int,
                         restaurant_repo: RestaurantRepo=Depends(create_restaurant_repo),
