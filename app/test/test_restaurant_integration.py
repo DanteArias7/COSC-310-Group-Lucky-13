@@ -213,17 +213,21 @@ def restaurant_test_client(temp_user_path, temp_restaurant_path, temp_order_path
     app.dependency_overrides.clear()
 
 @pytest.fixture
-def cart_test_client(temp_user_path, temp_cart_path):
+def cart_test_client(temp_user_path, temp_cart_path, temp_restaurant_path):
     """Override dependency injection for restaurant repo object"""
 
-    def override_restaurant_repo():
+    def override_cart_repo():
         return CartRepo(temp_cart_path)
 
     def override_user_repo():
         return UserRepo(temp_user_path)
 
-    app.dependency_overrides[create_cart_repo] = override_restaurant_repo
+    def override_restaurant_repo():
+        return RestaurantRepo(temp_restaurant_path)
+
+    app.dependency_overrides[create_cart_repo] = override_cart_repo
     app.dependency_overrides[create_user_repo] = override_user_repo
+    app.dependency_overrides[create_restaurant_repo] = override_restaurant_repo
 
     yield TestClient(app)
 
@@ -1086,8 +1090,11 @@ def test_deleting_cart_item_from_cart_success(test_carts, test_users,
     - Item is removed from the cart
     - Cart data is updated correctly
     """
-    distance_mock = mocker.patch("app.routers.restaurant.random.uniform")
-    distance_mock.return_value = 1.0
+    mock_distance = mocker.MagicMock()
+    mock_distance.status_code = 200
+    mock_distance.json.return_value = {"routes": [{"distanceMeters": 1000}]}
+    mocker.patch("app.services.delivery_distance_services.httpx.post",
+                 return_value=mock_distance)
 
     request = "/restaurants/" + str(test_carts[0]["restaurant_id"])
     request = request + "/cart/" + test_carts[0]["id"]
@@ -1158,8 +1165,11 @@ def test_add_cart_item_to_cart_success(test_carts, test_users,
     Input: valid restaurant_id, valid cart_id, and menu item payload.
     Expected behavior: API returns 201 and the item is added to the cart.
     """
-    distance_mock = mocker.patch("app.routers.restaurant.random.uniform")
-    distance_mock.return_value = 1.0
+    mock_distance = mocker.MagicMock()
+    mock_distance.status_code = 200
+    mock_distance.json.return_value = {"routes": [{"distanceMeters": 1000}]}
+    mocker.patch("app.services.delivery_distance_services.httpx.post",
+                 return_value=mock_distance)
 
     request = "/restaurants/" + str(test_carts[0]["restaurant_id"])
     request = request + "/cart/" + test_carts[0]["id"]
