@@ -213,17 +213,21 @@ def restaurant_test_client(temp_user_path, temp_restaurant_path, temp_order_path
     app.dependency_overrides.clear()
 
 @pytest.fixture
-def cart_test_client(temp_user_path, temp_cart_path):
+def cart_test_client(temp_user_path, temp_cart_path, temp_restaurant_path):
     """Override dependency injection for restaurant repo object"""
 
-    def override_restaurant_repo():
+    def override_cart_repo():
         return CartRepo(temp_cart_path)
 
     def override_user_repo():
         return UserRepo(temp_user_path)
 
-    app.dependency_overrides[create_cart_repo] = override_restaurant_repo
+    def override_restaurant_repo():
+        return RestaurantRepo(temp_restaurant_path)
+
+    app.dependency_overrides[create_cart_repo] = override_cart_repo
     app.dependency_overrides[create_user_repo] = override_user_repo
+    app.dependency_overrides[create_restaurant_repo] = override_restaurant_repo
 
     yield TestClient(app)
 
@@ -1086,8 +1090,11 @@ def test_deleting_cart_item_from_cart_success(test_carts, test_users,
     - Item is removed from the cart
     - Cart data is updated correctly
     """
-    distance_mock = mocker.patch("app.routers.restaurant.random.uniform")
-    distance_mock.return_value = 1.0
+    mock_distance = mocker.MagicMock()
+    mock_distance.status_code = 200
+    mock_distance.json.return_value = {"routes": [{"distanceMeters": 100000}]}
+    mocker.patch("app.services.delivery_distance_services.httpx.post",
+                 return_value=mock_distance)
 
     request = "/restaurants/" + str(test_carts[0]["restaurant_id"])
     request = request + "/cart/" + test_carts[0]["id"]
@@ -1099,9 +1106,9 @@ def test_deleting_cart_item_from_cart_success(test_carts, test_users,
 
     test_carts[0]["cart_items"] = []
     test_carts[0]["subtotal"] = 0.00
-    test_carts[0]["delivery_fee"] = 0.35
+    test_carts[0]["delivery_fee"] = 15.00
     test_carts[0]["tax"] = 0.00
-    test_carts[0]["total"] = 0.35
+    test_carts[0]["total"] = 15.00
 
     assert r.status_code == 204
     assert test_carts == carts
@@ -1158,8 +1165,11 @@ def test_add_cart_item_to_cart_success(test_carts, test_users,
     Input: valid restaurant_id, valid cart_id, and menu item payload.
     Expected behavior: API returns 201 and the item is added to the cart.
     """
-    distance_mock = mocker.patch("app.routers.restaurant.random.uniform")
-    distance_mock.return_value = 1.0
+    mock_distance = mocker.MagicMock()
+    mock_distance.status_code = 200
+    mock_distance.json.return_value = {"routes": [{"distanceMeters": 1000}]}
+    mocker.patch("app.services.delivery_distance_services.httpx.post",
+                 return_value=mock_distance)
 
     request = "/restaurants/" + str(test_carts[0]["restaurant_id"])
     request = request + "/cart/" + test_carts[0]["id"]
@@ -1258,3 +1268,122 @@ def test_add_review_to_nonexistent_with_no_orders(test_users,
     assert r.status_code == 409
     assert data["detail"] == "You must have at least 1 completed order " \
     "from this restaurant to rate it."
+
+def test_get_random_meal_endpoint_returns_200(restaurant_test_client, test_users):
+    """Test that GET /restaurants/random-meal returns 200 OK with valid user"""
+    response = restaurant_test_client.get(
+        "/restaurants/random-meal",
+        headers={"user-id": test_users[0]["id"]}
+    )
+    assert response.status_code == 200
+
+
+def test_get_random_meal_response_has_all_required_fields(restaurant_test_client, test_users):
+    """Test that response contains all required fields"""
+    response = restaurant_test_client.get(
+        "/restaurants/random-meal",
+        headers={"user-id": test_users[0]["id"]}
+    )
+
+    data = response.json()
+    required_fields = ["id", "name", "description", "price",
+                       "tags", "restaurant_id", "restaurant_name"]
+
+    for field in required_fields:
+        assert field in data, f"Missing field: {field}"
+
+
+def test_get_random_meal_price_is_positive_float(restaurant_test_client, test_users):
+    """Test that price is a positive float"""
+    response = restaurant_test_client.get(
+        "/restaurants/random-meal",
+        headers={"user-id": test_users[0]["id"]}
+    )
+
+    data = response.json()
+    assert isinstance(data["price"], (int, float))
+    assert data["price"] > 0
+
+
+def test_get_random_meal_requires_user_id_header(restaurant_test_client):
+    """Test that endpoint requires user-id header"""
+    response = restaurant_test_client.get("/restaurants/random-meal")
+    assert response.status_code == 422
+
+
+def test_get_random_meal_returns_valid_meal_from_database(
+        restaurant_test_client, test_users, temp_restaurant_path):
+    """Test that returned meal actually exists in the restaurant data"""
+    response = restaurant_test_client.get(
+        "/restaurants/random-meal",
+        headers={"user-id": test_users[0]["id"]}
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+
+    with open(temp_restaurant_path, "r", encoding="utf-8") as f:
+        restaurants = json.load(f)
+
+    meal_found = False
+    for restaurant in restaurants:
+        for meal in restaurant.get("menu", []):
+            if meal["id"] == data["id"]:
+                meal_found = True
+                assert meal["name"] == data["name"]
+                assert meal["price"] == data["price"]
+                break
+
+    assert meal_found, "Returned meal not found in restaurant data"
+
+
+def test_get_random_meal_returns_404_when_no_meals_exist(
+        restaurant_test_client, test_users, temp_restaurant_path):
+    """Test that endpoint returns 404 when no meals exist in any restaurant"""
+
+    empty_restaurants = [{"id": 999, "name": "Empty Restaurant", "menu": []}]
+
+    with open(temp_restaurant_path, "w", encoding="utf-8") as f:
+        json.dump(empty_restaurants, f, ensure_ascii=False)
+
+    response = restaurant_test_client.get(
+        "/restaurants/random-meal",
+        headers={"user-id": test_users[0]["id"]}
+    )
+
+    assert response.status_code == 404
+
+
+def test_get_random_meal_authorization_required(restaurant_test_client):
+    """Test that endpoint requires proper authorization"""
+
+    response_no_header = restaurant_test_client.get("/restaurants/random-meal")
+    assert response_no_header.status_code == 422
+
+    response_invalid_user = restaurant_test_client.get(
+        "/restaurants/random-meal",
+        headers={"user-id": "invalid-user-id"}
+    )
+    assert response_invalid_user.status_code in [403, 404]
+
+
+def test_get_random_meal_tags_field_is_list(restaurant_test_client, test_users):
+    """Test that tags field is always a list"""
+    response = restaurant_test_client.get(
+        "/restaurants/random-meal",
+        headers={"user-id": test_users[0]["id"]}
+    )
+
+    data = response.json()
+    assert isinstance(data["tags"], list)
+
+
+def test_get_random_meal_with_different_user_ids(restaurant_test_client, test_users):
+    """Test that endpoint works with different valid user IDs"""
+    for user in test_users:
+        if user["role"] in ["customer", "restaurant_owner"]:
+            response = restaurant_test_client.get(
+                "/restaurants/random-meal",
+                headers={"user-id": user["id"]}
+            )
+            assert response.status_code == 200, f"Failed for user {user['id']}"

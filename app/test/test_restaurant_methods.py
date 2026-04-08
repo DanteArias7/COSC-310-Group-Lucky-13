@@ -690,3 +690,119 @@ def test_caluclate_average_rating(restaurant_service):
     expected_average = round((5 + 4.5 + 3 + 1)/4, 2)
 
     assert average == expected_average
+
+def test_get_random_meal_success(test_restaurants, mocked_repo, restaurant_service):
+    """Test that get_random_meal returns a valid random meal with all required fields"""
+    mocked_repo.load_all_restaurants.return_value = test_restaurants
+
+    result = restaurant_service.get_random_meal()
+
+    assert "id" in result
+    assert "name" in result
+    assert "description" in result
+    assert "price" in result
+    assert "tags" in result
+    assert "restaurant_id" in result
+    assert "restaurant_name" in result
+
+    assert isinstance(result["id"], str)
+    assert isinstance(result["name"], str)
+    assert isinstance(result["price"], float)
+    assert isinstance(result["tags"], list)
+    assert isinstance(result["restaurant_id"], int)
+
+
+def test_get_random_meal_returns_meal_from_test_data(
+        test_restaurants, mocked_repo, restaurant_service):
+    """Test that get_random_meal returns a meal that exists in the test data"""
+    mocked_repo.load_all_restaurants.return_value = test_restaurants
+
+    result = restaurant_service.get_random_meal()
+
+    meal_found = False
+    for restaurant in test_restaurants:
+        for meal in restaurant.get("menu", []):
+            if meal["id"] == result["id"]:
+                meal_found = True
+                assert meal["name"] == result["name"]
+                assert meal["price"] == result["price"]
+                break
+
+    assert meal_found, "Returned meal not found in test data"
+
+
+def test_get_random_meal_includes_restaurant_info(
+        test_restaurants, mocked_repo, restaurant_service):
+    """Test that get_random_meal attaches correct restaurant information"""
+    mocked_repo.load_all_restaurants.return_value = test_restaurants
+
+    result = restaurant_service.get_random_meal()
+
+    restaurant_ids = [r["id"] for r in test_restaurants]
+    assert result["restaurant_id"] in restaurant_ids
+
+    assert result["restaurant_name"] != ""
+
+    for restaurant in test_restaurants:
+        if restaurant["id"] == result["restaurant_id"]:
+            assert result["restaurant_name"] == restaurant["name"]
+            break
+
+
+def test_get_random_meal_price_is_float(test_restaurants, mocked_repo, restaurant_service):
+    """Test that price is returned as float type"""
+    mocked_repo.load_all_restaurants.return_value = test_restaurants
+
+    result = restaurant_service.get_random_meal()
+
+    assert isinstance(result["price"], float)
+    assert result["price"] > 0
+
+
+def test_get_random_meal_handles_empty_description(
+        test_restaurants, mocked_repo, restaurant_service):
+    """Test that meals with empty description are handled properly"""
+    test_restaurants[0]["menu"][0]["description"] = ""
+    mocked_repo.load_all_restaurants.return_value = test_restaurants
+
+    result = restaurant_service.get_random_meal()
+
+    assert "description" in result
+    assert result["description"] == ""
+
+
+def test_get_random_meal_raises_404_when_no_meals(mocked_repo, restaurant_service):
+    """Test that 404 is raised when no meals exist in any restaurant"""
+    restaurants_with_empty_menu = [
+        {"id": 101, "name": "Empty Restaurant", "menu": []}
+    ]
+    mocked_repo.load_all_restaurants.return_value = restaurants_with_empty_menu
+
+    with pytest.raises(HTTPException) as exc_info:
+        restaurant_service.get_random_meal()
+
+    assert exc_info.value.status_code == 404
+    assert "No meals found" in str(exc_info.value.detail)
+
+
+def test_get_random_meal_raises_404_when_no_restaurants(mocked_repo, restaurant_service):
+    """Test that 404 is raised when no restaurants exist"""
+    mocked_repo.load_all_restaurants.return_value = []
+
+    with pytest.raises(HTTPException) as exc_info:
+        restaurant_service.get_random_meal()
+
+    assert exc_info.value.status_code == 404
+
+
+def test_get_random_meal_returns_different_meals_over_multiple_calls(
+        test_restaurants, mocked_repo, restaurant_service):
+    """Test that multiple calls can return different meals (randomness)"""
+    mocked_repo.load_all_restaurants.return_value = test_restaurants
+
+    results = set()
+    for _ in range(20):
+        result = restaurant_service.get_random_meal()
+        results.add(result["id"])
+
+    assert len(results) >= 1
