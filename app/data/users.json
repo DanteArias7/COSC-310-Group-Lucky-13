@@ -58,7 +58,7 @@
     "name": "Admin",
     "email": "admin@gmail.com",
     "phone_number": "123-456-7890",
-    "address": "Admin House",
+    "address": "255 Valley Rd N, Kelowna, BC V1V 2G1",
     "password": "password",
     "role": "admin"
   }
