@@ -14,6 +14,8 @@ export default function App() {
   const [createResponse, setCreateResponse] = useState(null);
   const [restaurantTab, setRestaurantTab] = useState("create");
   const [confirmDeleteRestaurant, setConfirmDeleteRestaurant] = useState(false);
+  const [randomMeal, setRandomMeal] = useState(null);
+  const [randomMealLoading, setRandomMealLoading] = useState(false);
   const [createForm, setCreateForm] = useState({
     name: "",
     email: "",
@@ -260,7 +262,7 @@ const [ratingLoading, setRatingLoading] = useState(false);
 const [ratingResponse, setRatingResponse] = useState(null);
 
   useEffect(() => {
-      if (!user) return; 
+      if (!user) return;
 
       const es = new EventSource(
         `http://127.0.0.1:8000/notifications/stream?user_id=${user.user_id}`
@@ -277,7 +279,7 @@ const [ratingResponse, setRatingResponse] = useState(null);
       };
 
       return () => {
-        es.close(); 
+        es.close();
       };
     }, [user]);
 
@@ -567,6 +569,43 @@ const removeMenuItem = (index) => {
     menu: prev.menu.filter((_, i) => i !== index),
   }));
 };
+
+const handleGetRandomMeal = async () => {
+  if (!user || user.role !== "customer") {
+    setError("Only customers can get random meal suggestions");
+    return;
+  }
+  setError("");
+  setRandomMeal(null);
+  setRandomMealLoading(true);
+  try {
+    const res = await fetch("http://127.0.0.1:8000/restaurants/random-meal", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "user-id": user.user_id,
+      },
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      let msg = "Failed to get random meal";
+      if (typeof data.detail === "string") {
+        msg = data.detail;
+      } else if (Array.isArray(data.detail)) {
+        msg = data.detail.map((x) => x.msg).join(", ");
+      } else if (data.detail) {
+        msg = JSON.stringify(data.detail);
+      }
+      throw new Error(msg);
+    }
+    setRandomMeal(data);
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  } finally {
+    setRandomMealLoading(false);
+  }
+};
+
 const handleLoadRestaurantById = async (e) => {
   e.preventDefault();
   setError("");
@@ -1386,7 +1425,7 @@ const handlePlaceOrder = async () => {
     }
 
     setPlaceOrderResponse(data);
-    setCartResponse(null); 
+    setCartResponse(null);
   } catch (err) {
     setError(err.message || "Something went wrong");
   } finally {
@@ -2542,7 +2581,49 @@ return (
       {tab === "home" && (
         <div>
           <h2>Home</h2>
-          <p>This will be the main page.</p>
+          <p>Welcome to the Food Delivery App!</p>
+          {user.role === "customer" && (
+            <div style={{ marginTop: "1rem" }}>
+              <button
+                onClick={handleGetRandomMeal}
+                disabled={randomMealLoading}
+                style={{
+                  padding: "10px 20px",
+                  fontSize: "16px",
+                  backgroundColor: "#4CAF50",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: randomMealLoading ? "not-allowed" : "pointer",
+                }}
+              >
+                {randomMealLoading ? "Loading..." : "Get Random Meal 🍽"}
+              </button>
+              {randomMeal && (
+                <div
+                  style={{
+                    marginTop: "1.5rem",
+                    padding: "1rem",
+                    border: "2px solid #4CAF50",
+                    borderRadius: "8px",
+                    backgroundColor: "#f9f9f9",
+                  }}
+                >
+                  <h3>Today's Random Suggestion!</h3>
+                  <p><strong>Meal:</strong> {randomMeal.name}</p>
+                  <p><strong>Restaurant:</strong> {randomMeal.restaurant_name}</p>
+                  <p><strong>Price:</strong> ${randomMeal.price}</p>
+                  <p><strong>Description:</strong> {randomMeal.description}</p>
+                  <p><strong>Tags:</strong> {(randomMeal.tags || []).join(", ")}</p>
+                </div>
+              )}
+            </div>
+          )}
+          {user.role !== "customer" && (
+            <p style={{ marginTop: "1rem", color: "#666" }}>
+              Random meal suggestions are only available for customers.
+            </p>
+          )}
         </div>
       )}
 
@@ -3513,7 +3594,7 @@ return (
   <button
   onClick={() => {
     setFavoriteTab("delete");
-    loadFavorites(); 
+    loadFavorites();
   }}
   style={{ marginLeft: "0.5rem" }}
 >
