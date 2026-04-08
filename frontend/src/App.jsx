@@ -130,6 +130,10 @@ const [orders, setOrders] = useState([]);
 const [orderStats, setOrderStats] = useState([]);
 const [orderTrend, setOrderTrend] = useState([]);
 const [restaurantStats, setRestaurantStats] = useState([]);
+const [adminTab, setAdminTab] = useState("analytics");
+const [adminRestaurantId, setAdminRestaurantId] = useState("");
+const [adminDeleteConfirm, setAdminDeleteConfirm] = useState(false);
+const [adminDeleteResponse, setAdminDeleteResponse] = useState(null);
 
 const [browseData, setBrowseData] = useState({
   items: [],
@@ -1385,6 +1389,28 @@ setRestaurantStats(restaurantData);
 
 };
 
+const handleAdminDeleteRestaurant = async () => {
+  try {
+    const res = await fetch(
+      `http://127.0.0.1:8000/restaurants/${adminRestaurantId}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.user_id,
+        },
+      }
+    );
+
+    if (!res.ok) throw new Error("Delete failed");
+
+    alert("Deleted successfully");
+    setAdminRestaurantId("");
+    setAdminDeleteConfirm(false);
+  } catch (err) {
+    setError(err.message);
+  }
+};
 
 
 const loadBrowseRestaurants = async (page = 1) => {
@@ -3600,10 +3626,25 @@ return (
   <div>
     <h2>Admin Dashboard</h2>
 
- <button onClick={loadAdminData} style={{ marginBottom: "1rem" }}>
+<div style={{ marginBottom: "1rem" }}>
+  <button
+    onClick={() => {
+      setAdminTab("analytics");
+      loadAdminData(); // 🔥 important
+    }}
+  >
     Load Analytics
   </button>
 
+  <button
+    onClick={() => setAdminTab("delete-restaurants")}
+    style={{ marginLeft: "0.5rem" }}
+  >
+    Delete Restaurants
+  </button>
+</div>
+{adminTab === "analytics" && (
+    <>
   {orderStats.length === 0 ? (
     <p>No data yet. Click "Load Analytics".</p>
   ) : (
@@ -3671,6 +3712,53 @@ return (
 </div>
     </div>
   )}
+  </>
+  )}
+
+  {adminTab === "delete-restaurants" && (
+  <div>
+    <h3>Delete Restaurants</h3>
+
+    <input
+      type="number"
+      placeholder="Restaurant ID"
+      value={adminRestaurantId}
+      onChange={(e) => setAdminRestaurantId(e.target.value)}
+    />
+
+    {!adminDeleteConfirm ? (
+      <button
+        onClick={() => setAdminDeleteConfirm(true)}
+        style={{ marginLeft: "0.5rem", backgroundColor: "red", color: "white" }}
+      >
+        Delete
+      </button>
+    ) : (
+      <div style={{ marginTop: "0.5rem" }}>
+        <p style={{ color: "red" }}>
+          Are you sure you want to delete this restaurant?
+        </p>
+
+        <button
+          onClick={handleAdminDeleteRestaurant}
+          style={{ backgroundColor: "red", color: "white", marginRight: "0.5rem" }}
+        >
+          Yes, Delete
+        </button>
+
+        <button onClick={() => setAdminDeleteConfirm(false)}>
+          Cancel
+        </button>
+      </div>
+    )}
+
+    {adminDeleteResponse?.deleted && (
+      <p style={{ color: "green", marginTop: "0.5rem" }}>
+        Restaurant {adminDeleteResponse.id} deleted successfully.
+      </p>
+    )}
+  </div>
+)}
 </div>
 )}
 

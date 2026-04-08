@@ -164,6 +164,10 @@ def delete_restaurant(restaurant_id: int,
     """Delete a restaurant listing from the system"""
     restaurant_service = RestaurantServices(restaurant_repo)
     authorization_service = AuthorizationServices(user_repo)
+    user_service = UserServices(user_repo)
+    user = user_service.get_user_by_id(user_id)
+    if user.role == "admin":
+        return restaurant_service.delete_restaurant(restaurant_id)
     authorization_service.authorize(user_id, "manage_own_restaurant")
     authorization_service.authorize_access(user_id,
                             restaurant_service.fetch_restaurant(restaurant_id).user_id)
