@@ -79,6 +79,7 @@ class CartServices():
             sum(item["item"]["price"] * item["quantity"]
                 for item in cart["cart_items"]), 2)
         delivery_fee = round(distance * FEE_PER_KM, 2)
+        delivery_fee = min(delivery_fee, 15.0)
         tax = round(subtotal * TAX_RATE, 2)
         total = round(subtotal + delivery_fee + tax, 2)
 
