@@ -4366,33 +4366,6 @@ return (
           <p><strong>Total:</strong> ${order.order_value}</p>
           <p><strong>Status:</strong> {order.status}</p>
 
-          <button
-            type="button"
-            style={{ marginTop: "0.5rem" }}
-            onClick={() => {
-              setRestaurantOrderStatusForm({
-                order_id: order.id,
-                status: "Accepted_by_restaurant",
-              });
-              setRestaurantOrderStatusResponse(null);
-            }}
-          >
-            Prepare Accept
-          </button>
-
-          <button
-            type="button"
-            style={{ marginTop: "0.5rem", marginLeft: "0.5rem" }}
-            onClick={() => {
-              setRestaurantOrderStatusForm({
-                order_id: order.id,
-                status: "Rejected_by_restaurant",
-              });
-              setRestaurantOrderStatusResponse(null);
-            }}
-          >
-            Prepare Reject
-          </button>
         </div>
       ))}
     </div>
@@ -4449,7 +4422,7 @@ return (
                     })
                   }
                 >
-                  <option value="Accepted_by_restaurant">Accept Order</option>
+                  <option value="Accepted_by_restaurant">Accepted_by_restaurant</option>
                   <option value="Preparing">Preparing</option>
                   <option value="Ready_for_pickup">Ready for Pickup</option>
                 </select>
