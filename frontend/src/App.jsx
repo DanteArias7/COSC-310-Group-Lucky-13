@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import {PieChart, Pie, Cell, Tooltip, Legend} from 'recharts';
+import {PieChart, Pie, Cell, Tooltip, Legend, LineChart, Line, XAxis, YAxis} from 'recharts';
 
 export default function App() {
   const [identifier, setIdentifier] = useState("");
@@ -128,6 +128,7 @@ const [favoriteForm, setFavoriteForm] = useState({
 
 const [orders, setOrders] = useState([]);
 const [orderStats, setOrderStats] = useState([]);
+const [orderTrend, setOrderTrend] = useState([]);
 
 const [browseData, setBrowseData] = useState({
   items: [],
@@ -1343,6 +1344,22 @@ const loadAdminData = async () => {
     }));
 
     setOrderStats(formatted);
+
+    const dateCounts = {};
+
+data.forEach((order) => {
+  const date = order.order_date;
+  dateCounts[date] = (dateCounts[date] || 0) + 1;
+});
+
+const trendData = Object.entries(dateCounts)
+  .map(([date, count]) => ({
+    date,
+    count,
+  }))
+  .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+setOrderTrend(trendData);
 
   } catch (err) {
     setError(err.message || "Something went wrong");
@@ -3564,33 +3581,60 @@ return (
   <div>
     <h2>Admin Dashboard</h2>
 
-    <button onClick={loadAdminData} style={{ marginBottom: "1rem" }}>
-      Load Analytics
-    </button>
+ <button onClick={loadAdminData} style={{ marginBottom: "1rem" }}>
+    Load Analytics
+  </button>
 
-    {orderStats.length === 0 ? (
-      <p>No data yet. Click "Load Analytics".</p>
-    ) : (
-      <PieChart width={400} height={400}>
-        <Pie
-          data={orderStats}
-          dataKey="value"
-          nameKey="name"
-          outerRadius={120}
-           label
-        >
-          {orderStats.map((entry, index) => (
-            <Cell
-              key={index}
-              fill={["#0088FE", "#00C49F", "#FFBB28", "#FF8042"][index % 4]}
-            />
-          ))}
-        </Pie>
-        <Tooltip />
-        <Legend />
-      </PieChart>
-    )}
-  </div>
+  {orderStats.length === 0 ? (
+    <p>No data yet. Click "Load Analytics".</p>
+  ) : (
+    <div
+      style={{
+        display: "flex",
+        gap: "2rem",
+        alignItems: "flex-start",
+        flexWrap: "wrap",
+      }}
+    >
+      {/* Pie Chart */}
+      <div>
+        <h4 style={{ textAlign: "center" }}>Order Status Distribution</h4>
+
+        <PieChart width={400} height={400}>
+          <Pie
+            data={orderStats}
+            dataKey="value"
+            nameKey="name"
+            outerRadius={120}
+            label
+          >
+            {orderStats.map((entry, index) => (
+              <Cell
+                key={index}
+                fill={["#0088FE", "#00C49F", "#FFBB28", "#FF8042"][index % 4]}
+              />
+            ))}
+          </Pie>
+          <Tooltip />
+          <Legend />
+        </PieChart>
+      </div>
+
+      {/* Line Chart */}
+      <div>
+        <h4 style={{ textAlign: "center" }}>Orders Over Time</h4>
+
+        <LineChart width={500} height={300} data={orderTrend}>
+          <XAxis dataKey="date" />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Line type="monotone" dataKey="count" />
+        </LineChart>
+      </div>
+    </div>
+  )}
+</div>
 )}
 
             {tab === "notifications" && (

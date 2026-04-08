@@ -22,6 +22,20 @@
         "description": "Plant-based patty with lettuce and tomato",
         "price": 12.99,
         "tags": ["vegan"]
+      },
+      {
+        "id": "018f8c10-7b2a-7f21-9a3c-0a1b2c3d4e02",
+        "name": "Avocado Toast",
+        "description": "Smashed avocado on whole grain bread",
+        "price": 8.50,
+        "tags": ["vegan", "brunch"]
+      },
+      {
+        "id": "018f8c10-7b2a-7f21-9a3c-0a1b2c3d4e03",
+        "name": "Quinoa Salad",
+        "description": "Quinoa with mixed greens and vinaigrette",
+        "price": 10.00,
+        "tags": ["vegan", "gluten-free"]
       }
     ],
     "average_rating": null,
@@ -50,6 +64,104 @@
         "description": "Cheeseburger",
         "price": 10.50,
         "tags": ["burger"]
+      },
+      {
+        "id": "018f8c10-8a4b-7f22-a12d-0b2c3d4e5f03",
+        "name": "Fries",
+        "description": "Crispy french fries",
+        "price": 3.00,
+        "tags": ["sides"]
+      },
+      {
+        "id": "018f8c10-8a4b-7f22-a12d-0b2c3d4e5f04",
+        "name": "Milkshake",
+        "description": "Vanilla milkshake",
+        "price": 4.50,
+        "tags": ["dessert"]
+      }
+    ],
+    "average_rating": null,
+    "ratings": []
+  },
+  {
+    "id": 103,
+    "user_id": "3f1c2b9e-8c4d-4b7e-a9f2-1c6d5e8f9abc",
+    "name": "Pasta Corner",
+    "hours": {
+      "Monday": "11:00-21:00",
+      "Tuesday": "11:00-21:00",
+      "Wednesday": "11:00-21:00",
+      "Thursday": "11:00-21:00",
+      "Friday": "11:00-22:00",
+      "Saturday": "12:00-22:00",
+      "Sunday": "12:00-20:00"
+    },
+    "phone_number": "5551234567",
+    "address": "789 Pasta Lane",
+    "tags": ["italian"],
+     "menu": [
+      {
+        "id": "018f8c10-9a4b-7f22-a12d-0b2c3d4e5f05",
+        "name": "Spaghetti Carbonara",
+        "description": "Spaghetti with creamy sauce and pancetta",
+        "price": 14.99,
+        "tags": ["pasta"]
+      },
+      {
+        "id": "018f8c10-9a4b-7f22-a12d-0b2c3d4e5f06",
+        "name": "Fettuccine Alfredo",
+        "description": "Fettuccine in a rich Alfredo sauce",
+        "price": 13.50,
+        "tags": ["pasta"]
+      },
+      {
+        "id": "018f8c10-9a4b-7f22-a12d-0b2c3d4e5f07",
+        "name": "Lasagna",
+        "description": "Layers of pasta, meat, and cheese",
+        "price": 15.00,
+        "tags": ["pasta"]
+      }
+    ],
+    "average_rating": null,
+    "ratings": []
+  },
+  {
+    "id": 104,
+    "user_id": "8a7d5c21-6f4e-4b91-9c2d-3e8f7a1b2c9d",
+    "name": "Sushi World",
+    "hours": {
+      "Monday": "12:00-22:00",
+      "Tuesday": "12:00-22:00",
+      "Wednesday": "12:00-22:00",
+      "Thursday": "12:00-22:00",
+      "Friday": "12:00-23:00",
+      "Saturday": "12:00-23:00",
+      "Sunday": "12:00-21:00"
+    },
+    "phone_number": "4445556666",
+    "address": "321 Sushi Street",
+    "tags": ["japanese"],
+     "menu": [
+      {
+        "id": "018f8c10-a14b-7f22-a12d-0b2c3d4e5f08",
+        "name": "California Roll",
+        "description": "Crab, avocado, and cucumber roll",
+        "price": 8.99,
+        "tags": ["sushi"]
+      },
+      {
+        "id": "018f8c10-a14b-7f22-a12d-0b2c3d4e5f09",
+        "name": "Spicy Tuna Roll",
+        "description": "Tuna with spicy mayo sauce",
+        "price": 9.50,
+        "tags": ["sushi"]
+      },
+      {
+        "id": "018f8c10-a14b-7f22-a12d-0b2c3d4e5f0a",
+        "name": "Salmon Nigiri",
+        "description": "Fresh salmon on rice",
+        "price": 5.00,
+        "tags": ["sushi"]
       }
     ],
     "average_rating": null,
