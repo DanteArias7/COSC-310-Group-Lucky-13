@@ -56,6 +56,9 @@ def delete_user(user_id, repo: UserRepo = Depends(create_user_repo),
     """API endpoint to delete a user"""
     user_service = UserServices(repo)
     authorization_service = AuthorizationServices(repo)
+    user = user_service.get_user_by_id(current_user_id)
+    if user.role == "admin":
+        return user_service.delete_user(user_id)
     authorization_service.authorize(current_user_id, "manage_own_account")
     authorization_service.authorize_access(current_user_id, user_id)
     return user_service.delete_user(user_id)
