@@ -271,7 +271,8 @@ const [ratingResponse, setRatingResponse] = useState(null);
       eventSourceRef.current = es;
 
       es.addEventListener("notification", (event) => {
-        setNotifications((prev) => [...prev, event.data]);
+        const parsed = JSON.parse(event.data);
+        setNotifications((prev) => [...prev, parsed]);
       });
 
       es.onerror = () => {
@@ -287,6 +288,7 @@ const [ratingResponse, setRatingResponse] = useState(null);
     e.preventDefault();
     setError("");
     setResponse("");
+    setNotifications([]);
 
     const payload = {
     identifier,
@@ -334,6 +336,7 @@ const [ratingResponse, setRatingResponse] = useState(null);
   setPassword("");
   setError("");
   setTab("home");
+  setNotifications([]);
   };
 
   const loadMyAccount = async () => {
@@ -4733,11 +4736,12 @@ return (
           {notifications.length === 0 ? (
             <p>No notifications yet.</p>
           ) : (
-            <ul>
-              {notifications.map((notification, index) => (
-                <li key={index}>{notification}</li>
-              ))}
-            </ul>
+            notifications.map((n, i) => (
+    <div key={i} style={{ marginBottom: "1rem" }}>
+      <p><strong>{n.message}</strong></p>
+      <small>{new Date(n.timestamp).toLocaleString()}</small>
+    </div>
+  ))
           )}
         </div>
       )}
