@@ -52,5 +52,14 @@
     "address": "1606 Findlay Rd, Kelowna, BC V1X 6B8",
     "password": "password",
     "role": "delivery_driver"
+  },
+  {
+    "id": "5b550089-1e93-4483-9a96-65fdbf637fb4",
+    "name": "Admin",
+    "email": "admin@gmail.com",
+    "phone_number": "123-456-7890",
+    "address": "Admin House",
+    "password": "password",
+    "role": "admin"
   }
 ]
