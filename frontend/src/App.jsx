@@ -138,6 +138,42 @@ const [adminUserId, setAdminUserId] = useState("");
 const [adminUserDeleteConfirm, setAdminUserDeleteConfirm] = useState(false);
 const [adminUserDeleteResponse, setAdminUserDeleteResponse] = useState(null);
 
+const [myOrders, setMyOrders] = useState([]);
+const [myOrdersLoading, setMyOrdersLoading] = useState(false);
+const [placeOrderLoading, setPlaceOrderLoading] = useState(false);
+const [placeOrderResponse, setPlaceOrderResponse] = useState(null);
+const [selectedPayOrderId, setSelectedPayOrderId] = useState("");
+const [paymentForm, setPaymentForm] = useState({
+  card_number: "",
+  cvv: "",
+  expiration_date: "",
+});
+const [paymentLoading, setPaymentLoading] = useState(false);
+const [paymentResponse, setPaymentResponse] = useState(null);
+
+const [restaurantOrders, setRestaurantOrders] = useState([]);
+const [restaurantOrdersLoading, setRestaurantOrdersLoading] = useState(false);
+const [restaurantOrdersRestaurantId, setRestaurantOrdersRestaurantId] = useState("");
+const [restaurantOrderStatusForm, setRestaurantOrderStatusForm] = useState({
+  order_id: "",
+  status: "Accepted_by_restaurant",
+});
+const [restaurantOrderStatusResponse, setRestaurantOrderStatusResponse] = useState(null);
+const [restaurantOrderStatusLoading, setRestaurantOrderStatusLoading] = useState(false);
+
+const [driverTab, setDriverTab] = useState("available");
+const [availableOrders, setAvailableOrders] = useState([]);
+const [availableOrdersLoading, setAvailableOrdersLoading] = useState(false);
+const [assignedOrders, setAssignedOrders] = useState([]);
+const [assignedOrdersLoading, setAssignedOrdersLoading] = useState(false);
+const [acceptDeliveryLoading, setAcceptDeliveryLoading] = useState(false);
+const [deliveryStatusForm, setDeliveryStatusForm] = useState({
+  order_id: "",
+  status: "In_transit",
+});
+const [deliveryStatusLoading, setDeliveryStatusLoading] = useState(false);
+const [deliveryStatusResponse, setDeliveryStatusResponse] = useState(null);
+
 const [browseData, setBrowseData] = useState({
   items: [],
   total: 0,
@@ -224,7 +260,7 @@ const [ratingLoading, setRatingLoading] = useState(false);
 const [ratingResponse, setRatingResponse] = useState(null);
 
   useEffect(() => {
-      if (!user) return; // only start after login
+      if (!user) return; 
 
       const es = new EventSource(
         `http://127.0.0.1:8000/notifications/stream?user_id=${user.user_id}`
@@ -241,7 +277,7 @@ const [ratingResponse, setRatingResponse] = useState(null);
       };
 
       return () => {
-        es.close(); // cleanup on logout/unmount
+        es.close(); 
       };
     }, [user]);
 
@@ -1320,6 +1356,342 @@ const handleDeleteFavorite = async (favoriteId) => {
   }
 };
 
+const handlePlaceOrder = async () => {
+  if (!user || user.role !== "customer") return;
+  if (!cartResponse?.id) return setError("Start a cart for a restaurant first.");
+  if ((cartResponse.cart_items || []).length === 0) return setError("Your cart is empty.");
+
+  setError("");
+  setPlaceOrderResponse(null);
+  setPlaceOrderLoading(true);
+
+  try {
+    const res = await fetch("http://127.0.0.1:8000/orders", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "user-id": user.user_id,
+      },
+      body: JSON.stringify(cartResponse),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      let msg = "Failed to place order";
+      if (typeof data.detail === "string") msg = data.detail;
+      else if (Array.isArray(data.detail)) msg = data.detail.map((x) => x.msg).join(", ");
+      else if (data.detail) msg = JSON.stringify(data.detail);
+      throw new Error(msg);
+    }
+
+    setPlaceOrderResponse(data);
+    setCartResponse(null); 
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  } finally {
+    setPlaceOrderLoading(false);
+  }
+};
+
+const loadMyOrders = async () => {
+  if (!user) return;
+  setError("");
+  setMyOrdersLoading(true);
+
+  try {
+    const res = await fetch(`http://127.0.0.1:8000/orders`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "user-id": user.user_id,
+      },
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      if (res.status === 404) { setMyOrders([]); return; }
+      let msg = "Failed to load your orders";
+      if (typeof data.detail === "string") msg = data.detail;
+      else if (Array.isArray(data.detail)) msg = data.detail.map((x) => x.msg).join(", ");
+      else if (data.detail) msg = JSON.stringify(data.detail);
+      throw new Error(msg);
+    }
+
+    setMyOrders(Array.isArray(data) ? data : []);
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  } finally {
+    setMyOrdersLoading(false);
+  }
+};
+
+const handlePayOrder = async (e) => {
+  e.preventDefault();
+  if (!user) return;
+  if (!selectedPayOrderId.trim()) return setError("Select an order to pay for.");
+
+  setError("");
+  setPaymentResponse(null);
+  setPaymentLoading(true);
+
+  try {
+    const payload = {
+      user_id: user.user_id,
+      card_number: paymentForm.card_number,
+      cvv: paymentForm.cvv,
+      expiration_date: paymentForm.expiration_date,
+    };
+
+    const res = await fetch(
+      `http://127.0.0.1:8000/orders/${selectedPayOrderId}/simulate-payment`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.user_id,
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      let msg = "Payment failed";
+      if (typeof data.detail === "string") msg = data.detail;
+      else if (Array.isArray(data.detail)) msg = data.detail.map((x) => x.msg).join(", ");
+      else if (data.detail) msg = JSON.stringify(data.detail);
+      throw new Error(msg);
+    }
+
+    setPaymentResponse(data);
+    setPaymentForm({ card_number: "", cvv: "", expiration_date: "" });
+    setSelectedPayOrderId("");
+    await loadMyOrders();
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  } finally {
+    setPaymentLoading(false);
+  }
+};
+
+const loadRestaurantOrders = async (restaurantId) => {
+  if (!user || user.role !== "restaurant_owner") return;
+  setError("");
+  setRestaurantOrdersLoading(true);
+
+  try {
+    const res = await fetch(
+      `http://127.0.0.1:8000/orders/restaurant/${restaurantId}/past`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.user_id,
+        },
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      let msg = "Failed to load restaurant orders";
+      if (typeof data.detail === "string") msg = data.detail;
+      else if (Array.isArray(data.detail)) msg = data.detail.map((x) => x.msg).join(", ");
+      else if (data.detail) msg = JSON.stringify(data.detail);
+      throw new Error(msg);
+    }
+
+    setRestaurantOrders(Array.isArray(data) ? data : []);
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  } finally {
+    setRestaurantOrdersLoading(false);
+  }
+};
+
+const handleUpdateRestaurantStatus = async (e) => {
+  e.preventDefault();
+  if (!user || user.role !== "restaurant_owner") return;
+  if (!restaurantOrderStatusForm.order_id.trim()) return setError("Order ID is required.");
+
+  setError("");
+  setRestaurantOrderStatusResponse(null);
+  setRestaurantOrderStatusLoading(true);
+
+  try {
+    const res = await fetch(
+    `http://127.0.0.1:8000/orders/${restaurantOrderStatusForm.order_id}/restaurant/${restaurantOrderStatusForm.status}`,
+      {
+        method: "PATCH",
+        headers:  {"Content-Type": "application/json", "user-id": user.user_id },
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      let msg = "Failed to update order status";
+      if (typeof data.detail === "string") msg = data.detail;
+      else if (Array.isArray(data.detail)) msg = data.detail.map((x) => x.msg).join(", ");
+      else if (data.detail) msg = JSON.stringify(data.detail);
+      throw new Error(msg);
+    }
+
+    setRestaurantOrderStatusResponse(data);
+    if (restaurantOrdersRestaurantId.trim()) {
+      await loadRestaurantOrders(restaurantOrdersRestaurantId);
+    }
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  } finally {
+    setRestaurantOrderStatusLoading(false);
+  }
+};
+
+const loadAvailableOrders = async () => {
+  if (!user || user.role !== "delivery_driver") return;
+  setError("");
+  setAvailableOrdersLoading(true);
+
+  try {
+    const res = await fetch("http://127.0.0.1:8000/orders/available", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "user-id": user.user_id,
+      },
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      let msg = "Failed to load available orders";
+      if (typeof data.detail === "string") msg = data.detail;
+      else if (Array.isArray(data.detail)) msg = data.detail.map((x) => x.msg).join(", ");
+      else if (data.detail) msg = JSON.stringify(data.detail);
+      throw new Error(msg);
+    }
+
+    setAvailableOrders(Array.isArray(data) ? data : []);
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  } finally {
+    setAvailableOrdersLoading(false);
+  }
+};
+
+const handleAcceptDelivery = async (orderId) => {
+  if (!user || user.role !== "delivery_driver") return;
+  setError("");
+  setAcceptDeliveryLoading(true);
+
+  try {
+    const res = await fetch(
+      `http://127.0.0.1:8000/orders/${orderId}/accept`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.user_id,
+        },
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      let msg = "Failed to accept delivery";
+      if (typeof data.detail === "string") msg = data.detail;
+      else if (Array.isArray(data.detail)) msg = data.detail.map((x) => x.msg).join(", ");
+      else if (data.detail) msg = JSON.stringify(data.detail);
+      throw new Error(msg);
+    }
+
+    await loadAvailableOrders();
+    await loadAssignedOrders();
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  } finally {
+    setAcceptDeliveryLoading(false);
+  }
+};
+
+const loadAssignedOrders = async () => {
+  if (!user || user.role !== "delivery_driver") return;
+  setError("");
+  setAssignedOrdersLoading(true);
+
+  try {
+    const res = await fetch("http://127.0.0.1:8000/orders/assigned", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "user-id": user.user_id,
+      },
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      if (res.status === 404) { setAssignedOrders([]); return; }
+      let msg = "Failed to load assigned orders";
+      if (typeof data.detail === "string") msg = data.detail;
+      else if (Array.isArray(data.detail)) msg = data.detail.map((x) => x.msg).join(", ");
+      else if (data.detail) msg = JSON.stringify(data.detail);
+      throw new Error(msg);
+    }
+
+    setAssignedOrders(Array.isArray(data) ? data : []);
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  } finally {
+    setAssignedOrdersLoading(false);
+  }
+};
+
+const handleUpdateDeliveryStatus = async (e) => {
+  e.preventDefault();
+  if (!user || user.role !== "delivery_driver") return;
+  if (!deliveryStatusForm.order_id.trim()) return setError("Order ID is required.");
+
+  setError("");
+  setDeliveryStatusResponse(null);
+  setDeliveryStatusLoading(true);
+
+  try {
+    const res = await fetch(
+      `http://127.0.0.1:8000/orders/${deliveryStatusForm.order_id}/${deliveryStatusForm.status}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.user_id,
+        },
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      let msg = "Failed to update delivery status";
+      if (typeof data.detail === "string") msg = data.detail;
+      else if (Array.isArray(data.detail)) msg = data.detail.map((x) => x.msg).join(", ");
+      else if (data.detail) msg = JSON.stringify(data.detail);
+      throw new Error(msg);
+    }
+
+    setDeliveryStatusResponse(data);
+    await loadAssignedOrders();
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  } finally {
+    setDeliveryStatusLoading(false);
+  }
+};
+
 const loadAdminData = async () => {
   setError("");
 
@@ -1339,7 +1711,6 @@ const loadAdminData = async () => {
 
     setOrders(data);
 
-    // 🔥 Count order statuses
     const counts = {};
 
     data.forEach((order) => {
@@ -1826,7 +2197,6 @@ const loadBrowseRestaurantMenu = async (restaurantId, page = 1) => {
   }
 };
 
-// === ADD THIS near your other handler functions ===
 const handleAddRating = async (e) => {
   e.preventDefault();
 
@@ -1892,7 +2262,6 @@ const handleAddRating = async (e) => {
       review: "",
     });
 
-    // Update selected restaurant locally so the new rating appears immediately
     setSelectedBrowseRestaurant((prev) => {
       if (!prev) return prev;
 
@@ -2106,6 +2475,45 @@ return (
           >
           Favorites
           </button>
+          )}
+                   {user.role === "customer" && (
+            <button
+              onClick={() => {
+                setTab("my-orders");
+                setPlaceOrderResponse(null);
+                setPaymentResponse(null);
+                loadMyOrders();
+              }}
+              style={{ marginLeft: "0.5rem" }}
+            >
+              My Orders
+            </button>
+          )}
+
+          {user.role === "restaurant_owner" && (
+            <button
+              onClick={() => {
+                setTab("manage-orders");
+                setRestaurantOrders([]);
+                setRestaurantOrderStatusResponse(null);
+              }}
+              style={{ marginLeft: "0.5rem" }}
+            >
+              Manage Orders
+            </button>
+          )}
+
+          {user.role === "delivery_driver" && (
+            <button
+              onClick={() => {
+                setTab("deliveries");
+                setDriverTab("available");
+                loadAvailableOrders();
+              }}
+              style={{ marginLeft: "0.5rem" }}
+            >
+              Deliveries
+            </button>
           )}
 
 {user.role === "admin" && (
@@ -3105,7 +3513,7 @@ return (
   <button
   onClick={() => {
     setFavoriteTab("delete");
-    loadFavorites(); // load list to choose from
+    loadFavorites(); 
   }}
   style={{ marginLeft: "0.5rem" }}
 >
@@ -3337,7 +3745,6 @@ return (
                 {selectedBrowseRestaurant.average_rating ?? "No ratings yet"}
               </p>
 
-                  {/* === ADD THIS inside the selectedBrowseRestaurant details block === */}
     <h4 style={{ marginTop: "1rem" }}>Leave a Rating</h4>
 
     <form onSubmit={handleAddRating}>
@@ -3647,6 +4054,404 @@ return (
         </div>
       )}
 
+      {tab === "my-orders" && user.role === "customer" && (
+        <div>
+          <h2>My Orders</h2>
+
+          {cartResponse && (cartResponse.cart_items || []).length > 0 && (
+            <div style={{ marginBottom: "1.5rem", border: "1px solid #ccc", padding: "1rem" }}>
+              <h4>Active Cart</h4>
+              <p><strong>Restaurant ID:</strong> {cartResponse.restaurant_id}</p>
+              <p><strong>Total:</strong> ${cartResponse.total}</p>
+              <p><strong>Items:</strong> {(cartResponse.cart_items || []).length}</p>
+
+              <button
+                type="button"
+                onClick={handlePlaceOrder}
+                disabled={placeOrderLoading}
+                style={{ marginTop: "0.5rem" }}
+              >
+                {placeOrderLoading ? "Placing Order..." : "Place Order"}
+              </button>
+
+              {placeOrderResponse && (
+                <div style={{ marginTop: "0.5rem", color: "green" }}>
+                  <p>Order placed!</p>
+                  <p><strong>Order ID:</strong> {placeOrderResponse.id}</p>
+                  <p><strong>Status:</strong> {placeOrderResponse.status}</p>
+                  <p><strong>Total:</strong> ${placeOrderResponse.order_value}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <button type="button" onClick={loadMyOrders} style={{ marginBottom: "1rem" }}>
+            Refresh Orders
+          </button>
+
+          {myOrdersLoading ? (
+            <p>Loading orders...</p>
+          ) : myOrders.length === 0 ? (
+            <p>No orders yet.</p>
+          ) : (
+            <div>
+              {myOrders.map((order) => (
+                <div
+                  key={order.id}
+                  style={{ border: "1px solid #ccc", padding: "0.75rem", marginTop: "0.5rem" }}
+                >
+                  <p><strong>Order ID:</strong> {order.id}</p>
+                  <p><strong>Restaurant ID:</strong> {order.restaurant_id}</p>
+                  <p><strong>Items:</strong> {order.food_items}</p>
+                  <p><strong>Date:</strong> {order.order_date}</p>
+                  <p><strong>Total:</strong> ${order.order_value}</p>
+                  <p><strong>Status:</strong> {order.status}</p>
+
+                  {order.status === "Pending" && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedPayOrderId(order.id);
+                        setPaymentResponse(null);
+                      }}
+                      style={{ marginTop: "0.5rem" }}
+                    >
+                      Pay for this Order
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {selectedPayOrderId && (
+            <div style={{ marginTop: "1.5rem", border: "1px solid #999", padding: "1rem" }}>
+              <h4>Pay for Order {selectedPayOrderId}</h4>
+
+              <form onSubmit={handlePayOrder}>
+                <div>
+                  <input
+                    placeholder="Card number (15 or 16 digits)"
+                    value={paymentForm.card_number}
+                    onChange={(e) =>
+                      setPaymentForm({ ...paymentForm, card_number: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div style={{ marginTop: "0.5rem" }}>
+                  <input
+                    placeholder="CVV"
+                    value={paymentForm.cvv}
+                    onChange={(e) =>
+                      setPaymentForm({ ...paymentForm, cvv: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div style={{ marginTop: "0.5rem" }}>
+                  <input
+                    placeholder="Expiration date (MM/YY)"
+                    value={paymentForm.expiration_date}
+                    onChange={(e) =>
+                      setPaymentForm({ ...paymentForm, expiration_date: e.target.value })
+                    }
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={paymentLoading}
+                  style={{ marginTop: "1rem" }}
+                >
+                  {paymentLoading ? "Processing..." : "Submit Payment"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedPayOrderId("")}
+                  style={{ marginLeft: "0.5rem", marginTop: "1rem" }}
+                >
+                  Cancel
+                </button>
+              </form>
+
+              {paymentResponse && (
+                <p style={{ marginTop: "0.5rem", color: "green" }}>
+                  {paymentResponse.message}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab === "manage-orders" && user.role === "restaurant_owner" && (
+        <div>
+          <h2>Manage Orders</h2>
+
+          <div style={{ marginBottom: "1rem" }}>
+            <input
+              placeholder="Restaurant ID"
+              value={restaurantOrdersRestaurantId}
+              onChange={(e) => setRestaurantOrdersRestaurantId(e.target.value)}
+            />
+            <button
+              type="button"
+              onClick={() => {
+                if (!restaurantOrdersRestaurantId.trim())
+                  return setError("Enter a restaurant ID");
+                setError("");
+                loadRestaurantOrders(restaurantOrdersRestaurantId);
+              }}
+              style={{ marginLeft: "0.5rem" }}
+            >
+              Load Orders
+            </button>
+          </div>
+
+          {restaurantOrdersLoading ? (
+            <p>Loading orders...</p>
+          ) : restaurantOrders.length === 0 ? (
+            <p>No orders found for this restaurant.</p>
+          ) : (
+            <div>
+              {restaurantOrders.map((order) => (
+                <div
+                  key={order.id}
+                  style={{ border: "1px solid #ccc", padding: "0.75rem", marginTop: "0.5rem" }}
+                >
+                  <p><strong>Order ID:</strong> {order.id}</p>
+                  <p><strong>Customer ID:</strong> {order.customer_id}</p>
+                  <p><strong>Items:</strong> {order.food_items}</p>
+                  <p><strong>Date:</strong> {order.order_date}</p>
+                  <p><strong>Total:</strong> ${order.order_value}</p>
+                  <p><strong>Status:</strong> {order.status}</p>
+                  <p><strong>Driver:</strong> {order.assigned_driver_id || "Unassigned"}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div style={{ marginTop: "1.5rem", border: "1px solid #999", padding: "1rem" }}>
+            <h4>Update Order Status</h4>
+
+            <form onSubmit={handleUpdateRestaurantStatus}>
+              <div>
+                <input
+                  placeholder="Order ID"
+                  value={restaurantOrderStatusForm.order_id}
+                  onChange={(e) =>
+                    setRestaurantOrderStatusForm({
+                      ...restaurantOrderStatusForm,
+                      order_id: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div style={{ marginTop: "0.5rem" }}>
+                <select
+                  value={restaurantOrderStatusForm.status}
+                  onChange={(e) =>
+                    setRestaurantOrderStatusForm({
+                      ...restaurantOrderStatusForm,
+                      status: e.target.value,
+                    })
+                  }
+                >
+                  <option value="Accepted_by_restaurant">Accept Order</option>
+                  <option value="Preparing">Preparing</option>
+                  <option value="Ready_for_pickup">Ready for Pickup</option>
+                </select>
+              </div>
+
+              <button
+                type="submit"
+                disabled={restaurantOrderStatusLoading}
+                style={{ marginTop: "1rem" }}
+              >
+                {restaurantOrderStatusLoading ? "Updating..." : "Update Status"}
+              </button>
+            </form>
+
+            {restaurantOrderStatusResponse && (
+              <div style={{ marginTop: "0.5rem", color: "green" }}>
+                <p>Status updated!</p>
+                <p><strong>Order ID:</strong> {restaurantOrderStatusResponse.id}</p>
+                <p><strong>New Status:</strong> {restaurantOrderStatusResponse.status}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {tab === "deliveries" && user.role === "delivery_driver" && (
+        <div>
+          <h2>Deliveries</h2>
+
+          <div style={{ marginBottom: "1rem" }}>
+            <button
+              type="button"
+              onClick={() => {
+                setDriverTab("available");
+                loadAvailableOrders();
+              }}
+            >
+              Available Orders
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setDriverTab("assigned");
+                loadAssignedOrders();
+              }}
+              style={{ marginLeft: "0.5rem" }}
+            >
+              My Deliveries
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setDriverTab("update-status")}
+              style={{ marginLeft: "0.5rem" }}
+            >
+              Update Delivery Status
+            </button>
+          </div>
+
+          {driverTab === "available" && (
+            <div>
+              <h4>Available Orders</h4>
+
+              <button
+                type="button"
+                onClick={loadAvailableOrders}
+                style={{ marginBottom: "0.75rem" }}
+              >
+                Refresh
+              </button>
+
+              {availableOrdersLoading ? (
+                <p>Loading...</p>
+              ) : availableOrders.length === 0 ? (
+                <p>No available orders right now.</p>
+              ) : (
+                availableOrders.map((order) => (
+                  <div
+                    key={order.id}
+                    style={{ border: "1px solid #ccc", padding: "0.75rem", marginTop: "0.5rem" }}
+                  >
+                    <p><strong>Order ID:</strong> {order.id}</p>
+                    <p><strong>Restaurant ID:</strong> {order.restaurant_id}</p>
+                    <p><strong>Items:</strong> {order.food_items}</p>
+                    <p><strong>Total:</strong> ${order.order_value}</p>
+                    <p><strong>Status:</strong> {order.status}</p>
+
+                    <button
+                      type="button"
+                      onClick={() => handleAcceptDelivery(order.id)}
+                      disabled={acceptDeliveryLoading}
+                      style={{ marginTop: "0.5rem" }}
+                    >
+                      {acceptDeliveryLoading ? "Accepting..." : "Accept Delivery"}
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {driverTab === "assigned" && (
+            <div>
+              <h4>My Deliveries</h4>
+
+              <button
+                type="button"
+                onClick={loadAssignedOrders}
+                style={{ marginBottom: "0.75rem" }}
+              >
+                Refresh
+              </button>
+
+              {assignedOrdersLoading ? (
+                <p>Loading...</p>
+              ) : assignedOrders.length === 0 ? (
+                <p>No deliveries assigned to you.</p>
+              ) : (
+                assignedOrders.map((order) => (
+                  <div
+                    key={order.id}
+                    style={{ border: "1px solid #ccc", padding: "0.75rem", marginTop: "0.5rem" }}
+                  >
+                    <p><strong>Order ID:</strong> {order.id}</p>
+                    <p><strong>Restaurant ID:</strong> {order.restaurant_id}</p>
+                    <p><strong>Customer ID:</strong> {order.customer_id}</p>
+                    <p><strong>Items:</strong> {order.food_items}</p>
+                    <p><strong>Total:</strong> ${order.order_value}</p>
+                    <p><strong>Status:</strong> {order.status}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {driverTab === "update-status" && (
+            <div>
+              <h4>Update Delivery Status</h4>
+
+              <form onSubmit={handleUpdateDeliveryStatus}>
+                <div>
+                  <input
+                    placeholder="Order ID"
+                    value={deliveryStatusForm.order_id}
+                    onChange={(e) =>
+                      setDeliveryStatusForm({
+                        ...deliveryStatusForm,
+                        order_id: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+
+                <div style={{ marginTop: "0.5rem" }}>
+                  <select
+                    value={deliveryStatusForm.status}
+                    onChange={(e) =>
+                      setDeliveryStatusForm({
+                        ...deliveryStatusForm,
+                        status: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="In_transit">In Transit</option>
+                    <option value="Complete">Complete</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </select>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={deliveryStatusLoading}
+                  style={{ marginTop: "1rem" }}
+                >
+                  {deliveryStatusLoading ? "Updating..." : "Update Status"}
+                </button>
+              </form>
+
+              {deliveryStatusResponse && (
+                <div style={{ marginTop: "0.5rem", color: "green" }}>
+                  <p>Status updated!</p>
+                  <p><strong>Order ID:</strong> {deliveryStatusResponse.id}</p>
+                  <p><strong>New Status:</strong> {deliveryStatusResponse.status}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
 {tab === "admin" && user.role === "admin" && (
   <div>
     <h2>Admin Dashboard</h2>
@@ -3687,7 +4492,7 @@ return (
         flexWrap: "wrap",
       }}
     >
-      {/* Pie Chart */}
+
       <div>
         <h4 style={{ textAlign: "center" }}>Order Status Distribution</h4>
 
@@ -3711,7 +4516,6 @@ return (
         </PieChart>
       </div>
 
-      {/* Line Chart */}
       <div>
         <h4 style={{ textAlign: "center" }}>Orders Over Time</h4>
 
