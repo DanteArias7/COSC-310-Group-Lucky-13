@@ -261,6 +261,9 @@ const [ratingForm, setRatingForm] = useState({
 const [ratingLoading, setRatingLoading] = useState(false);
 const [ratingResponse, setRatingResponse] = useState(null);
 
+const [pendingRestaurantOrders, setPendingRestaurantOrders] = useState([]);
+const [pendingRestaurantOrdersLoading, setPendingRestaurantOrdersLoading] = useState(false);
+
   useEffect(() => {
       if (!user) return;
 
@@ -1567,7 +1570,7 @@ const handleUpdateRestaurantStatus = async (e) => {
     const res = await fetch(
     `http://127.0.0.1:8000/orders/${restaurantOrderStatusForm.order_id}/restaurant/${restaurantOrderStatusForm.status}`,
       {
-        method: "PATCH",
+        method: "PUT",
         headers:  {"Content-Type": "application/json", "user-id": user.user_id },
       }
     );
@@ -1584,8 +1587,9 @@ const handleUpdateRestaurantStatus = async (e) => {
 
     setRestaurantOrderStatusResponse(data);
     if (restaurantOrdersRestaurantId.trim()) {
-      await loadRestaurantOrders(restaurantOrdersRestaurantId);
-    }
+  await loadPendingRestaurantOrders(restaurantOrdersRestaurantId);
+  await loadRestaurantOrders(restaurantOrdersRestaurantId);
+}
   } catch (err) {
     setError(err.message || "Something went wrong");
   } finally {
@@ -1634,7 +1638,7 @@ const handleAcceptDelivery = async (orderId) => {
     const res = await fetch(
       `http://127.0.0.1:8000/orders/${orderId}/accept`,
       {
-        method: "PATCH",
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
           "user-id": user.user_id,
@@ -1707,7 +1711,7 @@ const handleUpdateDeliveryStatus = async (e) => {
     const res = await fetch(
       `http://127.0.0.1:8000/orders/${deliveryStatusForm.order_id}/${deliveryStatusForm.status}`,
       {
-        method: "PATCH",
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
           "user-id": user.user_id,
@@ -2332,6 +2336,42 @@ const handleAddRating = async (e) => {
   }
 };
 
+const loadPendingRestaurantOrders = async (restaurantId) => {
+  if (!user || user.role !== "restaurant_owner") return;
+
+  setError("");
+  setPendingRestaurantOrdersLoading(true);
+
+  try {
+    const res = await fetch(
+      `http://127.0.0.1:8000/orders/${restaurantId}/pending`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "user-id": user.user_id,
+        },
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      let msg = "Failed to load pending orders";
+      if (typeof data.detail === "string") msg = data.detail;
+      else if (Array.isArray(data.detail)) msg = data.detail.map((x) => x.msg).join(", ");
+      else if (data.detail) msg = JSON.stringify(data.detail);
+      throw new Error(msg);
+    }
+
+    setPendingRestaurantOrders(Array.isArray(data) ? data : []);
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+  } finally {
+    setPendingRestaurantOrdersLoading(false);
+  }
+};
+
   if(!user) {
   return (
     <div style={{ padding: "2rem", fontFamily: "Arial" }}>
@@ -2534,15 +2574,17 @@ return (
 
           {user.role === "restaurant_owner" && (
             <button
-              onClick={() => {
-                setTab("manage-orders");
-                setRestaurantOrders([]);
-                setRestaurantOrderStatusResponse(null);
-              }}
-              style={{ marginLeft: "0.5rem" }}
-            >
-              Manage Orders
-            </button>
+            onClick={() => {
+              setTab("manage-orders");
+              setRestaurantOrders([]);
+              setPendingRestaurantOrders([]);
+              setRestaurantOrderStatusResponse(null);
+              setRestaurantOrdersRestaurantId("");
+            }}
+            style={{ marginLeft: "0.5rem" }}
+          >
+            Manage Orders
+          </button>
           )}
 
           {user.role === "delivery_driver" && (
@@ -4281,18 +4323,81 @@ return (
               onChange={(e) => setRestaurantOrdersRestaurantId(e.target.value)}
             />
             <button
-              type="button"
-              onClick={() => {
-                if (!restaurantOrdersRestaurantId.trim())
-                  return setError("Enter a restaurant ID");
-                setError("");
-                loadRestaurantOrders(restaurantOrdersRestaurantId);
-              }}
-              style={{ marginLeft: "0.5rem" }}
-            >
-              Load Orders
-            </button>
+            type="button"
+            onClick={() => {
+              if (!restaurantOrdersRestaurantId.trim()) {
+                return setError("Enter a restaurant ID");
+              }
+
+              setError("");
+              loadPendingRestaurantOrders(restaurantOrdersRestaurantId);
+              loadRestaurantOrders(restaurantOrdersRestaurantId);
+            }}
+            style={{ marginLeft: "0.5rem" }}
+          >
+            Load Orders
+          </button>
           </div>
+
+          <div style={{ marginTop: "1.5rem" }}>
+  <h3>Pending Paid Orders</h3>
+
+  {pendingRestaurantOrdersLoading ? (
+    <p>Loading pending orders...</p>
+  ) : pendingRestaurantOrders.length === 0 ? (
+    <p>No pending paid orders found for this restaurant.</p>
+  ) : (
+    <div>
+      {pendingRestaurantOrders.map((order) => (
+        <div
+          key={order.id}
+          style={{
+            border: "1px solid #f0ad4e",
+            backgroundColor: "#fff8e1",
+            padding: "0.75rem",
+            marginTop: "0.5rem",
+          }}
+        >
+          <p><strong>Order ID:</strong> {order.id}</p>
+          <p><strong>Customer ID:</strong> {order.customer_id}</p>
+          <p><strong>Restaurant ID:</strong> {order.restaurant_id}</p>
+          <p><strong>Items:</strong> {Array.isArray(order.food_items) ? order.food_items.join(", ") : order.food_items}</p>
+          <p><strong>Date:</strong> {order.order_date}</p>
+          <p><strong>Total:</strong> ${order.order_value}</p>
+          <p><strong>Status:</strong> {order.status}</p>
+
+          <button
+            type="button"
+            style={{ marginTop: "0.5rem" }}
+            onClick={() => {
+              setRestaurantOrderStatusForm({
+                order_id: order.id,
+                status: "Accepted_by_restaurant",
+              });
+              setRestaurantOrderStatusResponse(null);
+            }}
+          >
+            Prepare Accept
+          </button>
+
+          <button
+            type="button"
+            style={{ marginTop: "0.5rem", marginLeft: "0.5rem" }}
+            onClick={() => {
+              setRestaurantOrderStatusForm({
+                order_id: order.id,
+                status: "Rejected_by_restaurant",
+              });
+              setRestaurantOrderStatusResponse(null);
+            }}
+          >
+            Prepare Reject
+          </button>
+        </div>
+      ))}
+    </div>
+  )}
+</div>
 
           {restaurantOrdersLoading ? (
             <p>Loading orders...</p>
